@@ -29,11 +29,11 @@
 └── .gitignore
 ```
 
-## ⚠ 本番反映前の必須作業
+## D1の接続設定
 
-`wrangler.jsonc` の `database_id` は **プレースホルダー** です。Cloudflareの `kintore-db` 詳細画面で表示される完全なUUIDを確認し、`YOUR_D1_DATABASE_UUID` を実際の値に置き換えてください。D1設定には完全なUUIDが必須です。
+Cloudflare D1の `kintore-db` のUUIDは `wrangler.jsonc` に設定済みです。`binding` 名は `DB` です。初期アプリでは `GET /api/health` からDBの疎通を確認できます。
 
-このブランチは `setup` です。未設定のまま`main`にマージ・本番デプロイしないでください。既存のWorkerは現在の公開状態を維持します。
+GitHubのコードがCloudflareに正しく反映されるかは、Cloudflareの Deployments 画面で別途確認してください。
 
 ## ローカル開発
 
@@ -44,7 +44,7 @@ npm install
 npm run dev
 ```
 
-※ `wrangler dev`を実行する前に、上記IDを設定する必要があります。
+※ ローカル開発時は、必要に応じてD1のローカルDBを用意してください。
 
 ## データベース
 
