@@ -19,7 +19,7 @@ function respond(body, status = 200, extraHeaders = {}) {
 
 function secretReady(env) {
   return typeof env.APP_PASSWORD === "string" &&
-    env.APP_PASSWORD.length >= 20 && env.APP_PASSWORD.length <= 200;
+    [...env.APP_PASSWORD].length >= 4 && env.APP_PASSWORD.length <= 200;
 }
 
 async function sha256(input) {
