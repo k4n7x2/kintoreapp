@@ -1,0 +1,62 @@
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+  line-height: 1.6;
+  background: #0c1421;
+  color: #ecf2f8;
+  font-synthesis: none;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button { font: inherit; }
+.app-shell { max-width: 640px; margin: 0 auto; padding: 0 20px 44px; }
+.site-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 0 27px; }
+.brand { display: flex; gap: 11px; align-items: center; font-size: 17px; font-weight: 800; letter-spacing: .015em; }
+.brand-mark { display: inline-flex; justify-content: center; align-items: center; border-radius: 11px; width: 35px; height: 35px; background: #d8ed87; color: #1b2b20; font-size: 20px; }
+.brand-sub { font-weight: 400; color: #b6c3ce; }
+.status-pill { border: 1px solid #354455; border-radius: 100px; padding: 5px 9px; color: #9daec0; font-size: 10px; font-weight: 700; letter-spacing: .085em; }
+.hero { border: 1px solid #344258; border-radius: 23px; padding: 31px 25px 22px; background: radial-gradient(ellipse at 100% 0%, #243750 0%, transparent 55%), linear-gradient(150deg, #1b2b40, #152033 76%); box-shadow: 0 12px 42px rgba(0,0,0,.12); }
+.eyebrow, .section-caption { margin: 0; color: #b9d37e; font-size: 10px; letter-spacing: .20em; font-weight: 800; }
+.hero h1 { font-size: clamp(27px, 7vw, 37px); line-height: 1.43; letter-spacing: -.035em; margin: 16px 0 13px; }
+.hero h1 span { color: #d7ee87; }
+.hero-copy { font-size: 13px; color: #bfccd8; line-height: 1.9; margin: 0; }
+.hero-bottom { border-top: 1px solid #37465a; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 26px; padding-top: 16px; }
+.hero-tag { color: #dce9c6; font-size: 11px; }
+.dot { background: #c6ed79; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+.hero-date { color: #aab9c8; font-size: 11px; }
+.section { margin-top: 32px; }
+.section-heading { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 13px; }
+.section h2 { font-size: 20px; line-height: 1.4; margin: 5px 0 0; }
+.note-chip { background: #263448; border: 1px solid #34475a; border-radius: 7px; color: #acbbca; font-size: 10px; white-space: nowrap; padding: 3px 8px; }
+.panel { border: 1px solid #2d3b4f; border-radius: 17px; padding: 19px; background: #172336; }
+.calendar-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.calendar-topbar h3 { margin: 0; font-size: 16px; }
+.month-controls { display: flex; gap: 8px; }
+.month-controls button { color: #f1f6fc; font-size: 24px; border: 1px solid #38485d; background: #223048; border-radius: 9px; width: 35px; height: 35px; cursor: pointer; line-height: 1; }
+.month-controls button:focus-visible { outline: 2px solid #d8ed87; outline-offset: 2px; }
+.weekday-row, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; gap: 5px; }
+.weekday-row { margin-bottom: 7px; color: #8ca1b4; font-size: 11px; }
+.calendar-day { display: flex; justify-content: center; align-items: center; position: relative; min-height: 42px; border-radius: 10px; font-size: 13px; color: #bfcbda; }
+.calendar-day.is-today { border: 1px solid #c7e67d; color: #e8f4b7; font-weight: 700; }
+.calendar-day.is-scheduled::after { content: ""; width: 4px; height: 4px; border-radius: 50%; background: #c6e782; position: absolute; bottom: 4px; left: calc(50% - 2px); }
+.calendar-day.is-empty { visibility: hidden; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 17px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #314057; color: #aab8c7; font-size: 10px; }
+.legend > span { display: flex; align-items: center; gap: 6px; }
+.legend-dot { height: 7px; width: 7px; display: inline-block; border-radius: 50%; }
+.legend-dot.scheduled { background: #c6e782; }
+.legend-dot.today { border: 1px solid #c6e782; }
+.placeholder { padding: 30px 23px; text-align: center; }
+.placeholder-icon { display: inline-grid; place-items: center; background: #27394c; color: #d9ed8f; width: 45px; height: 45px; border-radius: 14px; font-size: 24px; }
+.placeholder h3 { margin: 15px 0 8px; font-size: 16px; }
+.placeholder p { font-size: 12px; line-height: 1.9; color: #b5c4d2; margin: 0 auto 18px; max-width: 330px; }
+.placeholder button { background: #344257; border: 1px solid #3a4b60; color: #a7b4c2; border-radius: 10px; padding: 12px 22px; cursor: not-allowed; }
+.system-panel { display: flex; justify-content: space-between; align-items: center; }
+.system-label { color: #aebfd0; font-size: 11px; margin: 0 0 3px; }
+.system-message { margin: 0; font-size: 13px; font-weight: 700; }
+.system-indicator { background: #9aaabc; width: 9px; height: 9px; border-radius: 50%; }
+.system-indicator.ok { background: #bede79; }
+.system-indicator.error { background: #e49f76; }
+.security-note { color: #9aabbd; font-size: 11px; line-height: 1.75; }
+footer { padding-top: 38px; text-align: center; font-size: 10px; color: #72889c; }
+@media (max-width: 360px) { .app-shell { padding-inline: 14px; } .hero { padding-inline: 20px; } .panel { padding-inline: 13px; } }
+@media (prefers-reduced-motion: no-preference) { button:hover:not(:disabled) { filter: brightness(1.13); } }
