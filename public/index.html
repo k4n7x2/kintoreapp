@@ -26,6 +26,26 @@
         </div>
       </section>
 
+
+      <!-- 認証後だけ表示する栞のホーム画面。立ち絵ファイルを後から追加可能 -->
+      <section id="shiori-welcome" class="shiori-welcome section" aria-label="朝倉栞からのメッセージ" hidden>
+        <div class="shiori-welcome-card">
+          <div class="shiori-message">
+            <p class="shiori-label">WELCOME BACK · SHIORI</p>
+            <h2>朝倉 栞 <span>Shiori Asakura</span></h2>
+            <p id="shiori-line" class="shiori-line" aria-live="polite">あ、来た。今日はどうする？</p>
+          </div>
+          <div class="shiori-art" aria-label="朝倉栞の立ち絵">
+            <div id="shiori-art-placeholder" class="shiori-art-placeholder" aria-hidden="true">
+              <span>SHIORI</span>
+            </div>
+            <img id="shiori-art-image"
+              src="/assets/shiori/standing/home-default.webp"
+              alt="朝倉栞の立ち絵" hidden>
+          </div>
+        </div>
+      </section>
+
       <section class="section" aria-labelledby="login-heading">
         <div class="section-heading">
           <div><p class="section-caption">PRIVATE ACCESS</p><h2 id="login-heading">自分専用ログイン</h2></div>
