@@ -88,3 +88,22 @@ footer { padding-top: 38px; text-align: center; font-size: 10px; color: #72889c;
 .calendar-day.is-completed { background: #334a38; color: #e4f3ce; font-weight: 800; }
 .calendar-day.is-completed::after { content: "✓"; width: auto; height: auto; background: none; color: #ceef9a; position: absolute; right: 3px; top: 0; left: auto; bottom: auto; font-size: 10px; }
 .legend-dot.completed { background: #82b37c; }
+
+/* パスワードログイン（記録はブラウザに保存しない） */
+#login-form { display: flex; flex-direction: column; gap: 10px; }
+#login-form label { font-size: 12px; font-weight: 700; color: #cbdbe7; }
+#login-password {
+  background: #111c2e; color: #eef6ff; border: 1px solid #43536a;
+  border-radius: 10px; padding: 13px; width: 100%; font: inherit;
+}
+#login-form button[type="submit"] {
+  border: 0; border-radius: 11px; padding: 12px 15px;
+  background: #d8ed87; color: #1d2b27; font: inherit; font-size: 14px; font-weight: 800;
+}
+#login-form button:disabled { background: #38485b; color: #adbdc9; }
+#login-success { padding: 4px 0 11px; }
+#login-success .security-note { margin-top: 0; }
+#login-password:focus-visible, #login-form button:focus-visible {
+  outline: 2px solid #d8ed87; outline-offset: 2px;
+}
+[hidden] { display: none !important; }
