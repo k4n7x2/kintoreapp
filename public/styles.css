@@ -60,3 +60,31 @@ button { font: inherit; }
 footer { padding-top: 38px; text-align: center; font-size: 10px; color: #72889c; }
 @media (max-width: 360px) { .app-shell { padding-inline: 14px; } .hero { padding-inline: 20px; } .panel { padding-inline: 13px; } }
 @media (prefers-reduced-motion: no-preference) { button:hover:not(:disabled) { filter: brightness(1.13); } }
+
+/* Cloudflare D1 に保存する最小限の記録フォーム */
+.record-panel form { display: flex; flex-direction: column; gap: 8px; }
+.record-panel label { display: block; color: #c8d8e4; font-size: 12px; font-weight: 700; margin-top: 6px; }
+.record-panel input, .record-panel textarea {
+  background: #111c2e; color: #eff6fa; border: 1px solid #43536a; border-radius: 10px;
+  padding: 12px; width: 100%; font: inherit; font-size: 14px;
+}
+.record-panel input:focus-visible, .record-panel textarea:focus-visible,
+.record-panel button:focus-visible { outline: 2px solid #d8ed87; outline-offset: 2px; }
+.record-panel input:disabled, .record-panel textarea:disabled { opacity: .5; }
+.record-panel button[type="submit"] {
+  background: #d8ed87; color: #1d2b27; border: none; border-radius: 11px;
+  padding: 13px 15px; font-size: 14px; font-weight: 800; cursor: pointer; margin-top: 7px;
+}
+.record-panel button[type="submit"]:disabled { background: #3a485b; color: #a3b2c3; cursor: not-allowed; }
+.feedback { min-height: 1.6em; color: #d6e6a8; font-size: 12px; margin: 3px 0 0; }
+.record-history { margin-top: 20px; padding-top: 15px; border-top: 1px solid #344359; }
+.record-history h3 { font-size: 14px; margin: 0 0 12px; }
+#record-list { font-size: 12px; color: #b9c9da; }
+.record-item { padding: 13px 0; display: flex; justify-content: space-between; align-items: center; gap: 9px; border-top: 1px solid #303e53; }
+.record-item:first-child { border-top: 0; }
+.record-item strong { color: #eef3fc; }
+.record-item p { margin: 3px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.delete-record { color: #dca8a8; border: 1px solid #815a61; padding: 6px 9px; background: transparent; border-radius: 8px; font-size: 11px; cursor: pointer; flex-shrink: 0; }
+.calendar-day.is-completed { background: #334a38; color: #e4f3ce; font-weight: 800; }
+.calendar-day.is-completed::after { content: "✓"; width: auto; height: auto; background: none; color: #ceef9a; position: absolute; right: 3px; top: 0; left: auto; bottom: auto; font-size: 10px; }
+.legend-dot.completed { background: #82b37c; }
