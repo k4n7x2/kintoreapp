@@ -107,3 +107,67 @@ footer { padding-top: 38px; text-align: center; font-size: 10px; color: #72889c;
   outline: 2px solid #d8ed87; outline-offset: 2px;
 }
 [hidden] { display: none !important; }
+
+
+/* ログイン後の朝倉栞ホーム。立ち絵未設置時は背景のみで安全に表示。 */
+.shiori-welcome { margin-top: 22px; }
+.shiori-welcome-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44%;
+  min-height: 250px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 23px;
+  border: 1px solid #6a607e;
+  background: radial-gradient(circle at 80% 25%, #55496e 0%, transparent 60%),
+    linear-gradient(145deg, #26243c, #192039 76%);
+}
+.shiori-message {
+  position: relative;
+  z-index: 2;
+  padding: 27px 8px 24px 23px;
+  align-self: end;
+}
+.shiori-label { color: #e0bedf; font-size: 10px; letter-spacing: .15em; font-weight: 800; margin: 0 0 12px; }
+.shiori-message h2 { margin: 0 0 18px; color: #f6eef9; font-size: 20px; letter-spacing: .02em; }
+.shiori-message h2 span { display: block; margin-top: 3px; color: #cdb8d8; font-size: 10px; font-weight: 400; letter-spacing: .09em; }
+.shiori-line {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0;
+  padding: 13px 14px;
+  border-radius: 13px 13px 13px 3px;
+  color: #faf6fe;
+  background: rgba(16, 19, 37, .74);
+  border: 1px solid rgba(232, 207, 241, .28);
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.shiori-art { min-height: 250px; position: relative; overflow: hidden; }
+.shiori-art-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(252, 235, 255, .28);
+  font-size: clamp(23px, 6vw, 38px);
+  font-family: Georgia, serif;
+  font-style: italic;
+  letter-spacing: .09em;
+  background: radial-gradient(ellipse at bottom, rgba(202, 149, 221, .18), transparent 70%);
+}
+#shiori-art-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+@media (max-width: 380px) {
+  .shiori-welcome-card { grid-template-columns: minmax(0, 1fr) 41%; min-height: 220px; }
+  .shiori-art { min-height: 220px; }
+  .shiori-message { padding: 22px 4px 20px 15px; }
+  .shiori-line { padding: 10px; font-size: 12px; }
+}
