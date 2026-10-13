@@ -13,24 +13,23 @@
   <div class="app-shell">
     <header class="site-header">
       <div class="brand"><span class="brand-mark" aria-hidden="true">K</span><span>kintore<span class="brand-sub">app</span></span></div>
-      <span class="status-pill">EARLY PREVIEW</span>
+      <span class="status-pill">PERSONAL LOG</span>
     </header>
-
     <main>
       <section class="hero" aria-labelledby="hero-title">
         <p class="eyebrow">YOUR NEXT CHAPTER</p>
         <h1 id="hero-title">今日の一歩を、<br><span>未来の自分へ。</span></h1>
         <p class="hero-copy">完璧な一日より、続けられる一週間。<br>自分のペースで、積み上げていこう。</p>
         <div class="hero-bottom">
-          <span class="hero-tag"><span class="dot"></span> 準備中のプレビュー</span>
+          <span class="hero-tag"><span class="dot"></span> 記録はクラウド保存</span>
           <span class="hero-date" id="today-label"></span>
         </div>
       </section>
 
       <section class="section" aria-labelledby="calendar-heading">
         <div class="section-heading">
-          <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">トレーニング予定</h2></div>
-          <span class="note-chip">仮の曜日設定</span>
+          <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">トレーニングカレンダー</h2></div>
+          <span class="note-chip">月・火・金は仮予定</span>
         </div>
         <div class="panel">
           <div class="calendar-topbar">
@@ -42,27 +41,43 @@
           </div>
           <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
           <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
-          <div class="legend"><span><i class="legend-dot scheduled"></i> 仮のトレーニング日（月・火・金）</span><span><i class="legend-dot today"></i> 今日</span></div>
+          <div class="legend">
+            <span><i class="legend-dot completed"></i> 記録済み</span>
+            <span><i class="legend-dot scheduled"></i> 仮の予定</span>
+            <span><i class="legend-dot today"></i> 今日</span>
+          </div>
         </div>
       </section>
 
       <section class="section" aria-labelledby="log-heading">
         <div class="section-heading">
           <div><p class="section-caption">WORKOUT LOG</p><h2 id="log-heading">トレーニング記録</h2></div>
-          <span class="note-chip">開発予定</span>
+          <span class="note-chip">D1に保存</span>
         </div>
-        <div class="panel placeholder">
-          <span class="placeholder-icon" aria-hidden="true">✦</span>
-          <h3>記録機能はこれから</h3>
-          <p>種目・重量・回数をすばやく登録できるようにします。記録は端末に保存せず、サーバー側のD1で管理する予定です。</p>
-          <button type="button" disabled aria-disabled="true">記録する（準備中）</button>
+        <div class="panel record-panel">
+          <p class="security-note" id="auth-status" role="status">ログイン状態を確認中…</p>
+          <form id="workout-form">
+            <label for="workout-date">実施日</label>
+            <input id="workout-date" name="performed_on" type="date" required disabled>
+            <label for="workout-note">今日のメモ（任意）</label>
+            <textarea id="workout-note" name="note" maxlength="300" rows="3" placeholder="例：ジムに行けた。胸と背中を中心に。" disabled></textarea>
+            <button id="save-workout" type="submit" disabled>実施日をD1に保存</button>
+            <p id="save-feedback" class="feedback" role="status"></p>
+          </form>
+          <div class="record-history">
+            <h3>表示月の記録</h3>
+            <div id="record-list" aria-live="polite">認証後に表示します。</div>
+          </div>
+          <p class="security-note">種目・重量・回数の入力は次の開発段階で追加します。端末のLocalStorageやIndexedDBには記録しません。</p>
         </div>
       </section>
 
       <section class="section" aria-labelledby="system-heading">
         <div class="section-heading"><div><p class="section-caption">SYSTEM</p><h2 id="system-heading">サーバー接続</h2></div></div>
-        <div class="panel system-panel"><div><p class="system-label">Cloudflare D1</p><p class="system-message" id="db-status" role="status">接続状態を確認中…</p></div><span class="system-indicator" id="db-indicator"></span></div>
-        <p class="security-note">現在は公開テスト画面です。個人の筋トレ記録を保存・公開するAPIはまだありません。</p>
+        <div class="panel system-panel">
+          <div><p class="system-label">Cloudflare D1</p><p class="system-message" id="db-status" role="status">接続状態を確認中…</p></div>
+          <span class="system-indicator" id="db-indicator"></span>
+        </div>
       </section>
     </main>
     <footer>kintoreapp · Build your own rhythm.</footer>
