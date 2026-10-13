@@ -26,6 +26,27 @@
         </div>
       </section>
 
+      <section class="section" aria-labelledby="login-heading">
+        <div class="section-heading">
+          <div><p class="section-caption">PRIVATE ACCESS</p><h2 id="login-heading">自分専用ログイン</h2></div>
+          <span class="note-chip">パスワード方式</span>
+        </div>
+        <div class="panel">
+          <form id="login-form">
+            <label for="login-password">パスワード</label>
+            <input id="login-password" type="password" autocomplete="current-password"
+              placeholder="Cloudflareに設定したパスワード" required>
+            <button type="submit" id="login-button">ログイン</button>
+            <p id="login-feedback" class="feedback" role="status"></p>
+          </form>
+          <div id="login-success" hidden>
+            <p class="security-note">認証済み。この端末では14日間ログイン状態を維持します。</p>
+            <button type="button" id="logout-button" class="delete-record">ログアウト</button>
+          </div>
+          <p class="security-note">パスワードはCloudflareのSecretで管理します。筋トレ記録は端末に保存しません。</p>
+        </div>
+      </section>
+
       <section class="section" aria-labelledby="calendar-heading">
         <div class="section-heading">
           <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">トレーニングカレンダー</h2></div>
