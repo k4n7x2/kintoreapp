@@ -12,7 +12,7 @@
     {
       "binding": "DB",
       "database_name": "kintore-db",
-      "database_id": "YOUR_D1_DATABASE_UUID"
+      "database_id": "08e556f8-8c88-47af-bac8-5c3ac4ed2903"
     }
   ]
 }
