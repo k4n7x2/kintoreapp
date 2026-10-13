@@ -1,68 +1,91 @@
 # kintoreapp
 
-筋トレを無理なく続けるためのモバイル向けWebアプリ。
+個人向け筋トレ記録アプリ。コードはGitHub、表示・APIはCloudflare Workers、個人の記録はCloudflare D1に保存します。
 
-## 構成
+## 現在の機能
+- 月間カレンダー（仮の月・火・金の予定＋D1に記録済みの日）
+- Cloudflare Access経由のユーザー認証
+- 日付とメモの作成・月間記録の一覧・削除
+- D1の接続確認
+- 筋トレ記録をブラウザの `localStorage`・`IndexedDB` に永続保存しない
+- 種目・重量・回数は後続実装（DBの `workout_sets` は準備済み）
 
-- **GitHub**: アプリのソースコード・公開用画像・セリフの管理
-- **Cloudflare Workers**: HTML/CSS/JavaScriptの配信、API
-- **Cloudflare D1**: 運動記録・予定などのデータを保存
-- **端末側**: 筋トレ記録をlocalStorage / IndexedDBに保存しない
+**安全性:** 個人記録のAPIは `ctx.access` で確認できるCloudflare Accessの認証済み本人情報を必要とします。Cloudflare Accessを有効化しない限り、未認証の読み書きは `401` で拒否されます。記録はログインメールアドレスごとに分離し、書き込みには同一オリジンとJSONの両方を要求します。
 
-## 安全性と現在の機能
+## 最初にするCloudflareの設定（必須）
 
-現在は初期画面、月間カレンダー、`GET /api/health`（D1疎通確認）のみを実装しています。
-**筋トレ記録の読み書きAPIは、認証ができるまで実装・公開しません。**
-公開中のworkers.dev URLは誰でも閲覧できるためです。画面上の曜日は仮置きで、保存された予定ではありません。
+### 1. Cloudflare Accessの有効化
 
-## ディレクトリ
+1. Workers & Pages → `kintoreapp` → **Access**。
+2. **Protect this Worker behind Access** を選択。
+3. **All traffic**（本番URL・プレビューURLも保護）を指定。
+4. **Authentication policy** を自分のCloudflareアカウントに限定。自分だけを明示的に限定するには、Zero Trust → Access → Applications でメールアドレス完全一致のAllowポリシーを作成してください。
+5. Apply Access を保存。
+6. シークレットウィンドウで `https://kintoreapp.q7m4vx9.workers.dev` を開き、ログイン画面が出ること、許可した本人だけアクセスできることを確認。
+
+**注意:** Worker単位のAccessを有効化するのが重要です。保護対象がPreviewのみになっていないか確認してください。ゼロトラスト初期設定が求められる場合があります。
+
+参考: https://developers.cloudflare.com/workers/configuration/cloudflare-access/
+
+### 2. D1のテーブル作成
+
+Cloudflare → Storage & databases → D1 → `kintore-db` → **Console** で、`migrations/0001_initial.sql` のSQL全文を実行します。
+
+- 初回なら `workout_sessions` と `workout_sets` の2テーブルが作られます。
+- 現時点では**WorkersのコードをGitHubに置くだけではSQLは自動実行されません**。
+- すでに以前のバージョンのテーブルがある場合、`CREATE TABLE IF NOT EXISTS` では既存列の変更はできません。テーブル構造を確認してから対応してください。勝手にDROPしないこと。
+- セットをD1 Consoleで作成する場合はWranglerのマイグレーション管理に登録されないため、後から `db:migrate:remote` を実行する際は重複に注意してください。新規運用では原則Wranglerのマイグレーションを推奨します。
+
+### 3. 動作確認
+
+1. 許可したアカウントでアプリを開く。
+2. 画面に `認証済み` と表示され、D1保存ボタンが有効になること。
+3. 実施日とメモを登録し、ページを再読み込みしても記録が残っていること。
+4. 記録済みの日はカレンダーにチェックがつくこと。
+
+D1テーブルが未作成の間は保存ボタンが有効にならず、画面に `D1のテーブル準備が必要` と表示されます。
+
+## 開発者向け
 
 ```text
-├── wrangler.jsonc         # Workers・静的配信・D1の設定
-├── package.json           # 開発・公開コマンド
-├── src/index.js           # API・Worker
-├── public/index.html      # 画面
-├── public/styles.css      # 画面デザイン
-├── public/app.js          # カレンダー、接続状態
-├── migrations/
-│   └── 0001_initial.sql   # 将来の筋トレ記録用テーブル
-└── .gitignore
+wrangler.jsonc            # Workers, D1 DB=binding、Asset設定
+package.json
+src/index.js               # Access必須の記録API
+public/index.html          # UI
+public/app.js              # D1との送受信
+public/styles.css
+migrations/0001_initial.sql
 ```
 
-## D1の接続設定
+### API
 
-Cloudflare D1の `kintore-db` のUUIDは `wrangler.jsonc` に設定済みです。`binding` 名は `DB` です。初期アプリでは `GET /api/health` からDBの疎通を確認できます。
+| HTTP | パス | 認証 | 概要 |
+|---|---|---|---|
+| GET | `/api/health` | 不要（AccessでWorker全体を保護） | DB疎通 |
+| GET | `/api/me` | 必須 | ログインメール |
+| GET | `/api/workouts?month=YYYY-MM` | 必須 | 自分の月間記録 |
+| POST | `/api/workouts` | 必須 | `{ "performed_on":"YYYY-MM-DD", "note":"..." }` |
+| DELETE | `/api/workouts/:id` | 必須 | 自分の記録を削除 |
 
-GitHubのコードがCloudflareに正しく反映されるかは、Cloudflareの Deployments 画面で別途確認してください。
+操作対象の絞り込みにはAccessで認証したメールアドレスを使用します。外部から送信されるowner指定は受け付けません。パスワードやAPIキーをHTML/JSに埋め込まないこと。
 
-## ローカル開発
-
-Node.jsを用意し、以下を実行します。
+### ローカルでの開発
 
 ```bash
 npm install
 npm run dev
+# 認証がない場合、個人記録APIは401で拒否します（仕様）。
 ```
 
-※ ローカル開発時は、必要に応じてD1のローカルDBを用意してください。
-
-## データベース
-
-認証方式・実際の保存項目が固まった後に、次のマイグレーションを適用します。
+マイグレーションのコマンド:
 
 ```bash
 npm run db:migrate:local
 npm run db:migrate:remote
 ```
 
-`db:migrate:remote` は実際の本番DBを更新します。テーブル仕様を確認してから実行してください。
+`db:migrate:remote` は実際のD1に書き込みます。実行前に既存テーブルとマイグレーション履歴を確認してください。
 
-## GitHub / Cloudflare
+### 公開
 
-Cloudflare Workers Buildsで連携中のGitHubリポジトリ: `k4n7x2/kintoreapp`。
-本番デプロイコマンド: `npx wrangler deploy`。
-`wrangler.jsonc`にD1のbindingを入れて、ダッシュボードとの設定差分をなくします。
-
-## デプロイ確認
-
-GitHub の `main` に push した際、Cloudflare Workers Builds が自動実行される想定です。再接続後の確認では Cloudflare → Workers → kintoreapp → Deployments の新しいビルドが **Success** になっていることを必ず確かめます。公開画面が更新されない場合はビルドログを確認してください。
+GitHub `main` への更新をWorkers Buildsが受信し、`npx wrangler deploy` で公開。成功後、Workers → DeploymentsがReadyであることを確認します。
