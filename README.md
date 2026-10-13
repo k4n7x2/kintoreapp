@@ -1,91 +1,86 @@
 # kintoreapp
 
-個人向け筋トレ記録アプリ。コードはGitHub、表示・APIはCloudflare Workers、個人の記録はCloudflare D1に保存します。
+1人用の筋トレ記録アプリ。GitHubでソース管理、Cloudflare Workersで公開、D1に記録を保存する。
 
-## 現在の機能
-- 月間カレンダー（仮の月・火・金の予定＋D1に記録済みの日）
-- Cloudflare Access経由のユーザー認証
-- 日付とメモの作成・月間記録の一覧・削除
-- D1の接続確認
-- 筋トレ記録をブラウザの `localStorage`・`IndexedDB` に永続保存しない
-- 種目・重量・回数は後続実装（DBの `workout_sets` は準備済み）
+## 今回の認証方式
 
-**安全性:** 個人記録のAPIは `ctx.access` で確認できるCloudflare Accessの認証済み本人情報を必要とします。Cloudflare Accessを有効化しない限り、未認証の読み書きは `401` で拒否されます。記録はログインメールアドレスごとに分離し、書き込みには同一オリジンとJSONの両方を要求します。
+**Cloudflare Zero Trust / Accessは不要。クレジットカード登録も不要。**
 
-## 最初にするCloudflareの設定（必須）
+- Cloudflare WorkersのSecret `APP_PASSWORD` に設定した1つの強いパスワードでログイン。
+- ログインすると14日間有効な署名付きCookie（`HttpOnly; Secure; SameSite=Strict`）を発行。
+- Cookieは認証状態のみで、筋トレ履歴をブラウザのLocalStorageやIndexedDBに保存しない。
+- 公開URLにアクセスすると画面自体は見えるが、記録の読み書きは認証なしでは401になる。
+- パスワードをGitHubのコードに書かない。ChatGPTに送信しない。
 
-### 1. Cloudflare Accessの有効化
+### 1. CloudflareにSecretを1つ登録
 
-1. Workers & Pages → `kintoreapp` → **Access**。
-2. **Protect this Worker behind Access** を選択。
-3. **All traffic**（本番URL・プレビューURLも保護）を指定。
-4. **Authentication policy** を自分のCloudflareアカウントに限定。自分だけを明示的に限定するには、Zero Trust → Access → Applications でメールアドレス完全一致のAllowポリシーを作成してください。
-5. Apply Access を保存。
-6. シークレットウィンドウで `https://kintoreapp.q7m4vx9.workers.dev` を開き、ログイン画面が出ること、許可した本人だけアクセスできることを確認。
+Cloudflareダッシュボードで **Workers & Pages → kintoreapp → Settings → Variables and Secrets → Add** を開く。
 
-**注意:** Worker単位のAccessを有効化するのが重要です。保護対象がPreviewのみになっていないか確認してください。ゼロトラスト初期設定が求められる場合があります。
+| 項目 | 値 |
+|---|---|
+| Type | Secret |
+| Name | `APP_PASSWORD` |
+| Value | 自分で決める20文字以上の推測困難なパスワード |
 
-参考: https://developers.cloudflare.com/workers/configuration/cloudflare-access/
+**必ずSecretとして登録**し、通常の公開変数やリポジトリに入れない。
+数字4桁・誕生日・簡単な単語は避ける。20文字以上のランダムな英数字を推奨。少なくとも20文字未満だと安全のため認証機能を有効にしない。
 
-### 2. D1のテーブル作成
+保存後、必要に応じてデプロイの確認をする。Zero Trustの初期設定は途中で止めてよい。
 
-Cloudflare → Storage & databases → D1 → `kintore-db` → **Console** で、`migrations/0001_initial.sql` のSQL全文を実行します。
+### 2. D1のテーブルを初期化
 
-- 初回なら `workout_sessions` と `workout_sets` の2テーブルが作られます。
-- 現時点では**WorkersのコードをGitHubに置くだけではSQLは自動実行されません**。
-- すでに以前のバージョンのテーブルがある場合、`CREATE TABLE IF NOT EXISTS` では既存列の変更はできません。テーブル構造を確認してから対応してください。勝手にDROPしないこと。
-- セットをD1 Consoleで作成する場合はWranglerのマイグレーション管理に登録されないため、後から `db:migrate:remote` を実行する際は重複に注意してください。新規運用では原則Wranglerのマイグレーションを推奨します。
+Cloudflare → **Storage & databases → D1 → kintore-db → Console** を開き、[初期SQL](migrations/0001_initial.sql)の内容を貼り付けて実行する。
 
-### 3. 動作確認
+このSQLはまだ自動適用していない。GitHubに置くだけではDBへ反映されない。
 
-1. 許可したアカウントでアプリを開く。
-2. 画面に `認証済み` と表示され、D1保存ボタンが有効になること。
-3. 実施日とメモを登録し、ページを再読み込みしても記録が残っていること。
-4. 記録済みの日はカレンダーにチェックがつくこと。
+すでに `workout_sessions` を作成している場合は構造を確認すること（本実装は個人用で `owner_email` 列を使わない）。むやみに既存テーブルを削除しない。
 
-D1テーブルが未作成の間は保存ボタンが有効にならず、画面に `D1のテーブル準備が必要` と表示されます。
+### 3. 初回テスト
 
-## 開発者向け
+公開URL: https://kintoreapp.q7m4vx9.workers.dev
 
-```text
-wrangler.jsonc            # Workers, D1 DB=binding、Asset設定
-package.json
-src/index.js               # Access必須の記録API
-public/index.html          # UI
-public/app.js              # D1との送受信
-public/styles.css
-migrations/0001_initial.sql
-```
+1. ページの「自分専用ログイン」にSecretで設定したパスワードを入力。
+2. 「ログイン済み」が出たら、日付とメモを登録。
+3. 再読み込み後もカレンダーに記録が残れば、D1への保存確認成功。
+4. 「ログアウト」でCookieが無効化され、記録が見えなくなる。
+5. 未ログインの `/api/workouts?month=2026-10` が401で拒否されることも確認する。
 
-### API
+## API（個人用）
 
-| HTTP | パス | 認証 | 概要 |
-|---|---|---|---|
-| GET | `/api/health` | 不要（AccessでWorker全体を保護） | DB疎通 |
-| GET | `/api/me` | 必須 | ログインメール |
-| GET | `/api/workouts?month=YYYY-MM` | 必須 | 自分の月間記録 |
-| POST | `/api/workouts` | 必須 | `{ "performed_on":"YYYY-MM-DD", "note":"..." }` |
-| DELETE | `/api/workouts/:id` | 必須 | 自分の記録を削除 |
+| HTTP | エンドポイント | 内容 |
+|---|---|---|
+| GET | `/api/health` | D1接続とSecret設定有無 |
+| POST | `/api/login` | パスワード認証、署名付きCookie発行 |
+| GET | `/api/session` | ログイン状態確認 |
+| POST | `/api/logout` | 認証Cookie破棄 |
+| GET | `/api/workouts?month=YYYY-MM` | 月別記録一覧 |
+| POST | `/api/workouts` | `{"performed_on":"YYYY-MM-DD","note":"..."}` |
+| DELETE | `/api/workouts/:id` | 記録削除 |
 
-操作対象の絞り込みにはAccessで認証したメールアドレスを使用します。外部から送信されるowner指定は受け付けません。パスワードやAPIキーをHTML/JSに埋め込まないこと。
+書き込みはブラウザからの同一オリジン要求に限定。ログイン成功までは書き込みAPIへアクセスできない。
 
-### ローカルでの開発
+**パスワードの総当たり対策:** 長いランダムパスワードを必須にしている。大量のログイン試行に対する専用のレート制限は現時点では未実装。重要なデータで使用する際はCloudflare WAFなどの追加対策を検討すること。
+
+## 今後の拡張
+
+- 種目・重量・回数を数秒で登録するUI（`workout_sets` スキーマのみ準備済み）
+- トレーニング予定・メニューのD1保存
+- 朝倉栞の演出・セリフ更新
+- ジムWi-Fi連動（Androidで対応可能な方法を別途検討）
+
+## 開発
 
 ```bash
 npm install
 npm run dev
-# 認証がない場合、個人記録APIは401で拒否します（仕様）。
 ```
 
-マイグレーションのコマンド:
+ローカルでは `APP_PASSWORD` 未設定の場合、記録APIは503を返す。開発用Secretはコミットしない。
+本番デプロイは `main` にマージ後、CloudflareのWorkers Builds経由で `npx wrangler deploy` を実行。
 
 ```bash
 npm run db:migrate:local
 npm run db:migrate:remote
 ```
 
-`db:migrate:remote` は実際のD1に書き込みます。実行前に既存テーブルとマイグレーション履歴を確認してください。
-
-### 公開
-
-GitHub `main` への更新をWorkers Buildsが受信し、`npx wrangler deploy` で公開。成功後、Workers → DeploymentsがReadyであることを確認します。
+`db:migrate:remote` は本番DBを変更するため事前確認を要する。Consoleで直接SQLを実行した場合はマイグレーション管理上の扱いに注意。
