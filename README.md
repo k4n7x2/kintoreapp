@@ -62,3 +62,7 @@ npm run db:migrate:remote
 Cloudflare Workers Buildsで連携中のGitHubリポジトリ: `k4n7x2/kintoreapp`。
 本番デプロイコマンド: `npx wrangler deploy`。
 `wrangler.jsonc`にD1のbindingを入れて、ダッシュボードとの設定差分をなくします。
+
+## デプロイ確認
+
+GitHub の `main` に push した際、Cloudflare Workers Builds が自動実行される想定です。再接続後の確認では Cloudflare → Workers → kintoreapp → Deployments の新しいビルドが **Success** になっていることを必ず確かめます。公開画面が更新されない場合はビルドログを確認してください。
