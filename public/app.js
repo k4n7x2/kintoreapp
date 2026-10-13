@@ -186,9 +186,67 @@ byId("prev-month").addEventListener("click", () => changeMonth(-1));
 byId("next-month").addEventListener("click", () => changeMonth(1));
 renderCalendar();
 
+const loginForm = byId("login-form");
+const loginPassword = byId("login-password");
+const loginButton = byId("login-button");
+const loginFeedback = byId("login-feedback");
+const loginSuccess = byId("login-success");
+
+function setAuthenticated(next) {
+  authorized = next;
+  loginForm.hidden = next;
+  loginSuccess.hidden = !next;
+  if (next) {
+    authStatus.textContent = "ログイン済み（自分専用）";
+  } else {
+    authStatus.textContent = "未ログイン：パスワードを入力してください。";
+    setReady(false);
+    workouts = [];
+    completeDates.clear();
+    renderCalendar();
+    list.textContent = "ログインすると記録が表示されます。";
+  }
+}
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginButton.disabled = true;
+  loginFeedback.textContent = "ログイン中…";
+  try {
+    await fetchJSON("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: loginPassword.value })
+    });
+    loginPassword.value = "";
+    setAuthenticated(true);
+    loginFeedback.textContent = "";
+    await loadWorkouts();
+  } catch (error) {
+    loginFeedback.textContent = error.status === 503
+      ? "CloudflareでパスワードのSecretを設定してください。"
+      : "ログインできませんでした。パスワードを確認してください。";
+  } finally {
+    loginButton.disabled = false;
+  }
+});
+
+byId("logout-button").addEventListener("click", async () => {
+  try {
+    await fetchJSON("/api/logout", { method: "POST" });
+  } catch {
+    loginFeedback.textContent = "ログアウト処理に失敗しました。";
+    return;
+  }
+  setAuthenticated(false);
+  loginFeedback.textContent = "ログアウトしました。";
+});
+
 async function initialize() {
+  let loginConfigured = false;
   try {
     const health = await fetchJSON("/api/health");
+    loginConfigured = health.login_configured === true;
     if (health.ok) {
       statusLabel.textContent = "D1 接続確認済み";
       statusIndicator.classList.add("ok");
@@ -198,16 +256,15 @@ async function initialize() {
     statusIndicator.classList.add("error");
   }
   try {
-    const account = await fetchJSON("/api/me");
-    authorized = true;
-    authStatus.textContent = "認証済み：" + account.email;
+    await fetchJSON("/api/session");
+    setAuthenticated(true);
     list.textContent = "記録を読み込み中…";
     await loadWorkouts();
   } catch {
-    authorized = false;
-    setReady(false);
-    authStatus.textContent = "未認証：Cloudflare Accessを有効化し、許可したアカウントでログインしてください。";
-    list.textContent = "認証後に表示します。";
+    setAuthenticated(false);
+    if (!loginConfigured) {
+      loginFeedback.textContent = "CloudflareのSecret APP_PASSWORDを設定してください。";
+    }
   }
 }
 initialize();
