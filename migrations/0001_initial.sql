@@ -1,9 +1,8 @@
--- ユーザー認証方式が決まるまで、記録APIは外部公開しない。
--- 実行前にユーザー識別・アクセス制御の設計を確認すること。
+-- 個人用筋トレ履歴。ログイン中の本人以外にAPIはアクセスさせない。
 CREATE TABLE IF NOT EXISTS workout_sessions (
   id TEXT PRIMARY KEY,
-  performed_on TEXT NOT NULL,            -- YYYY-MM-DD (Asia/Tokyo想定)
-  note TEXT,
+  performed_on TEXT NOT NULL,
+  note TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

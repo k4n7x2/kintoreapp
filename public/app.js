@@ -1,11 +1,27 @@
 const now = new Date();
 let shownYear = now.getFullYear();
 let shownMonth = now.getMonth();
-const scheduledDays = new Set([1, 2, 5]); // 月・火・金。正式な予定ではない。
+const scheduledDays = new Set([1, 2, 5]);
+const completeDates = new Set();
+let workouts = [];
+let authorized = false;
+let dbReady = false;
 
-const monthTitle = document.getElementById("month-title");
-const calendarGrid = document.getElementById("calendar-grid");
-const dateLabel = document.getElementById("today-label");
+const byId = (id) => document.getElementById(id);
+const monthTitle = byId("month-title");
+const calendarGrid = byId("calendar-grid");
+const dateLabel = byId("today-label");
+const authStatus = byId("auth-status");
+const statusLabel = byId("db-status");
+const statusIndicator = byId("db-indicator");
+const saveDate = byId("workout-date");
+const saveNote = byId("workout-note");
+const saveButton = byId("save-workout");
+const saveFeedback = byId("save-feedback");
+const list = byId("record-list");
+
+const localISO = (d) => [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+const currentMonth = () => String(shownYear).padStart(4, "0") + "-" + String(shownMonth + 1).padStart(2, "0");
 const sameDay = (a, b) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
@@ -14,9 +30,10 @@ const sameDay = (a, b) =>
 dateLabel.textContent = new Intl.DateTimeFormat("ja-JP", {
   year: "numeric", month: "long", day: "numeric", weekday: "short"
 }).format(now);
+saveDate.value = localISO(now);
 
 function renderCalendar() {
-  monthTitle.textContent = `${shownYear}年 ${shownMonth + 1}月`;
+  monthTitle.textContent = String(shownYear) + "年 " + String(shownMonth + 1) + "月";
   calendarGrid.replaceChildren();
   const startWeekday = new Date(shownYear, shownMonth, 1).getDay();
   const daysInMonth = new Date(shownYear, shownMonth + 1, 0).getDate();
@@ -24,53 +41,230 @@ function renderCalendar() {
   for (let slot = 0; slot < startWeekday + daysInMonth; slot++) {
     const cell = document.createElement("span");
     cell.className = "calendar-day";
-
     if (slot < startWeekday) {
       cell.classList.add("is-empty");
       cell.setAttribute("aria-hidden", "true");
     } else {
       const day = slot - startWeekday + 1;
       const date = new Date(shownYear, shownMonth, day);
+      const dateKey = localISO(date);
+      const planned = scheduledDays.has(date.getDay());
+      const completed = completeDates.has(dateKey);
       cell.textContent = String(day);
-      const isScheduled = scheduledDays.has(date.getDay());
-      if (isScheduled) cell.classList.add("is-scheduled");
+      if (planned) cell.classList.add("is-scheduled");
+      if (completed) cell.classList.add("is-completed");
       if (sameDay(date, now)) {
         cell.classList.add("is-today");
         cell.setAttribute("aria-current", "date");
       }
-      cell.setAttribute("aria-label", `${shownMonth + 1}月${day}日${isScheduled ? "（仮のトレーニング日）" : ""}`);
+      cell.setAttribute("aria-label", String(shownMonth + 1) + "月" + String(day) + "日" + (completed ? "（記録済み）" : planned ? "（仮予定）" : ""));
     }
     calendarGrid.appendChild(cell);
   }
 }
+
+function setReady(ready) {
+  dbReady = ready;
+  saveDate.disabled = !ready;
+  saveNote.disabled = !ready;
+  saveButton.disabled = !ready;
+}
+
+function renderHistory() {
+  list.replaceChildren();
+  if (!workouts.length) {
+    list.textContent = "この月はまだ記録がありません。";
+    return;
+  }
+  for (const record of workouts) {
+    const row = document.createElement("div");
+    row.className = "record-item";
+    const detail = document.createElement("div");
+    const date = document.createElement("strong");
+    date.textContent = record.performed_on;
+    const note = document.createElement("p");
+    note.textContent = record.note || "実施日を記録しました";
+    detail.append(date, note);
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "delete-record";
+    del.textContent = "削除";
+    del.setAttribute("aria-label", record.performed_on + "の記録を削除");
+    del.addEventListener("click", () => removeWorkout(record.id));
+    row.append(detail, del);
+    list.appendChild(row);
+  }
+}
+
+async function fetchJSON(path, options = {}) {
+  const response = await fetch(path, { credentials: "same-origin", cache: "no-store", ...options });
+  let body = {};
+  try { body = await response.json(); } catch {}
+  if (!response.ok) {
+    const error = new Error(body.error || "request_failed");
+    error.status = response.status;
+    throw error;
+  }
+  return body;
+}
+
+async function loadWorkouts() {
+  const month = currentMonth();
+  try {
+    const result = await fetchJSON("/api/workouts?month=" + encodeURIComponent(month));
+    if (currentMonth() !== month) return;
+    workouts = result.workouts || [];
+    completeDates.clear();
+    workouts.forEach((w) => completeDates.add(w.performed_on));
+    renderCalendar();
+    renderHistory();
+    setReady(true);
+    saveFeedback.textContent = "";
+  } catch (error) {
+    if (currentMonth() !== month) return;
+    workouts = [];
+    completeDates.clear();
+    renderCalendar();
+    setReady(false);
+    list.textContent = error.status === 503
+      ? "D1のテーブル準備が必要です。"
+      : "記録を読み込めませんでした。";
+  }
+}
+
+async function removeWorkout(id) {
+  if (!dbReady || !confirm("この記録を削除しますか？")) return;
+  setReady(false);
+  try {
+    await fetchJSON("/api/workouts/" + encodeURIComponent(id), {
+      method: "DELETE", headers: { "Content-Type": "application/json" }
+    });
+    await loadWorkouts();
+    saveFeedback.textContent = "削除しました。";
+  } catch {
+    setReady(true);
+    saveFeedback.textContent = "削除できませんでした。";
+  }
+}
+
+byId("workout-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!authorized || !dbReady) return;
+  setReady(false);
+  saveFeedback.textContent = "保存中…";
+  try {
+    const result = await fetchJSON("/api/workouts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ performed_on: saveDate.value, note: saveNote.value })
+    });
+    shownYear = Number(result.performed_on.slice(0, 4));
+    shownMonth = Number(result.performed_on.slice(5, 7)) - 1;
+    await loadWorkouts();
+    saveNote.value = "";
+    saveFeedback.textContent = "クラウドに保存しました。";
+  } catch {
+    setReady(true);
+    saveFeedback.textContent = "保存に失敗しました。日付と接続状態を確認してください。";
+  }
+});
+
 function changeMonth(offset) {
   const result = new Date(shownYear, shownMonth + offset, 1);
   shownYear = result.getFullYear();
   shownMonth = result.getMonth();
+  completeDates.clear();
+  workouts = [];
   renderCalendar();
-}
-
-document.getElementById("prev-month").addEventListener("click", () => changeMonth(-1));
-document.getElementById("next-month").addEventListener("click", () => changeMonth(1));
-renderCalendar();
-
-const statusLabel = document.getElementById("db-status");
-const statusIndicator = document.getElementById("db-indicator");
-
-async function checkDatabase() {
-  try {
-    const response = await fetch("/api/health", { cache: "no-store" });
-    if (!response.ok) throw new Error("unavailable");
-    const result = await response.json();
-    if (result.ok && result.database === "connected") {
-      statusLabel.textContent = "接続確認済み（D1）";
-      statusIndicator.classList.add("ok");
-      return;
-    }
-    throw new Error("unavailable");
-  } catch {
-    statusLabel.textContent = "未接続・確認待ち";
-    statusIndicator.classList.add("error");
+  if (authorized) {
+    list.textContent = "読み込み中…";
+    loadWorkouts();
   }
 }
-checkDatabase();
+byId("prev-month").addEventListener("click", () => changeMonth(-1));
+byId("next-month").addEventListener("click", () => changeMonth(1));
+renderCalendar();
+
+const loginForm = byId("login-form");
+const loginPassword = byId("login-password");
+const loginButton = byId("login-button");
+const loginFeedback = byId("login-feedback");
+const loginSuccess = byId("login-success");
+
+function setAuthenticated(next) {
+  authorized = next;
+  loginForm.hidden = next;
+  loginSuccess.hidden = !next;
+  if (next) {
+    authStatus.textContent = "ログイン済み（自分専用）";
+  } else {
+    authStatus.textContent = "未ログイン：パスワードを入力してください。";
+    setReady(false);
+    workouts = [];
+    completeDates.clear();
+    renderCalendar();
+    list.textContent = "ログインすると記録が表示されます。";
+  }
+}
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginButton.disabled = true;
+  loginFeedback.textContent = "ログイン中…";
+  try {
+    await fetchJSON("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: loginPassword.value })
+    });
+    loginPassword.value = "";
+    setAuthenticated(true);
+    loginFeedback.textContent = "";
+    await loadWorkouts();
+  } catch (error) {
+    loginFeedback.textContent = error.status === 503
+      ? "CloudflareでパスワードのSecretを設定してください。"
+      : "ログインできませんでした。パスワードを確認してください。";
+  } finally {
+    loginButton.disabled = false;
+  }
+});
+
+byId("logout-button").addEventListener("click", async () => {
+  try {
+    await fetchJSON("/api/logout", { method: "POST" });
+  } catch {
+    loginFeedback.textContent = "ログアウト処理に失敗しました。";
+    return;
+  }
+  setAuthenticated(false);
+  loginFeedback.textContent = "ログアウトしました。";
+});
+
+async function initialize() {
+  let loginConfigured = false;
+  try {
+    const health = await fetchJSON("/api/health");
+    loginConfigured = health.login_configured === true;
+    if (health.ok) {
+      statusLabel.textContent = "D1 接続確認済み";
+      statusIndicator.classList.add("ok");
+    } else throw new Error("unavailable");
+  } catch {
+    statusLabel.textContent = "D1 接続確認待ち";
+    statusIndicator.classList.add("error");
+  }
+  try {
+    await fetchJSON("/api/session");
+    setAuthenticated(true);
+    list.textContent = "記録を読み込み中…";
+    await loadWorkouts();
+  } catch {
+    setAuthenticated(false);
+    if (!loginConfigured) {
+      loginFeedback.textContent = "CloudflareのSecret APP_PASSWORDを設定してください。";
+    }
+  }
+}
+initialize();
