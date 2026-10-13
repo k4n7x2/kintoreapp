@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "character": "朝倉 栞",
+  "notes": "ログイン演出用。台詞の抽選・表示条件はアプリ実装時に設定。ここにはパスワードやユーザー情報を含めない。",
+  "image": {
+    "recommended_path": "/assets/shiori/standing/login-default.webp",
+    "status": "pending_generation",
+    "transparent_background": true
+  },
+  "lines": {
+    "login_screen": [
+      {
+        "id": "welcome_01",
+        "expression": "soft_smile",
+        "text": "あ、来たんだ。おはよう",
+        "time_of_day": "morning"
+      },
+      {
+        "id": "welcome_02",
+        "expression": "soft_smile",
+        "text": "あ、来たんだ。こんにちは",
+        "time_of_day": "afternoon"
+      },
+      {
+        "id": "welcome_03",
+        "expression": "soft_smile",
+        "text": "こんばんは。今日もお疲れさま",
+        "time_of_day": "evening"
+      },
+      {
+        "id": "welcome_04",
+        "expression": "neutral",
+        "text": "今日は何する予定？"
+      },
+      {
+        "id": "welcome_05",
+        "expression": "soft_smile",
+        "text": "あ、来たんだ。ちょうど暇してたところ"
+      },
+      {
+        "id": "welcome_06",
+        "expression": "playful",
+        "text": "……そんなに見られると、ちょっと気になるんだけど"
+      }
+    ],
+    "login_success": [
+      {
+        "id": "success_01",
+        "expression": "soft_smile",
+        "text": "おかえり。今日はどうする？"
+      },
+      {
+        "id": "success_02",
+        "expression": "neutral",
+        "text": "さて、今日は何から始めようか"
+      },
+      {
+        "id": "success_03",
+        "expression": "soft_smile",
+        "text": "あ、入れたね。じゃあ、続きを見よっか"
+      },
+      {
+        "id": "success_04",
+        "expression": "playful",
+        "text": "ふふ、今日も来たんだ"
+      },
+      {
+        "id": "success_05",
+        "expression": "neutral",
+        "text": "今日の予定、確認しておく？"
+      }
+    ],
+    "conditional_future": [
+      {
+        "id": "planned_day_01",
+        "trigger": "training_scheduled_today",
+        "expression": "neutral",
+        "text": "あ、今日ジムの日だったよね"
+      },
+      {
+        "id": "rest_day_01",
+        "trigger": "no_training_scheduled_today",
+        "expression": "soft_smile",
+        "text": "今日はゆっくりできそう？"
+      },
+      {
+        "id": "return_01",
+        "trigger": "long_absence",
+        "expression": "soft_smile",
+        "text": "久しぶり。最近どうしてた？"
+      }
+    ]
+  }
+}
