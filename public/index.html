@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="筋トレを、続けられる日常へ。筋トレアプリ kintoreapp">
+  <title>kintoreapp | 筋トレ記録</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">K</span><span>kintore<span class="brand-sub">app</span></span></div>
+      <span class="status-pill">EARLY PREVIEW</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <p class="eyebrow">YOUR NEXT CHAPTER</p>
+        <h1 id="hero-title">今日の一歩を、<br><span>未来の自分へ。</span></h1>
+        <p class="hero-copy">完璧な一日より、続けられる一週間。<br>自分のペースで、積み上げていこう。</p>
+        <div class="hero-bottom">
+          <span class="hero-tag"><span class="dot"></span> 準備中のプレビュー</span>
+          <span class="hero-date" id="today-label"></span>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="calendar-heading">
+        <div class="section-heading">
+          <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">トレーニング予定</h2></div>
+          <span class="note-chip">仮の曜日設定</span>
+        </div>
+        <div class="panel">
+          <div class="calendar-topbar">
+            <h3 id="month-title" aria-live="polite"></h3>
+            <div class="month-controls">
+              <button type="button" id="prev-month" aria-label="前の月">‹</button>
+              <button type="button" id="next-month" aria-label="次の月">›</button>
+            </div>
+          </div>
+          <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+          <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
+          <div class="legend"><span><i class="legend-dot scheduled"></i> 仮のトレーニング日（月・火・金）</span><span><i class="legend-dot today"></i> 今日</span></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="log-heading">
+        <div class="section-heading">
+          <div><p class="section-caption">WORKOUT LOG</p><h2 id="log-heading">トレーニング記録</h2></div>
+          <span class="note-chip">開発予定</span>
+        </div>
+        <div class="panel placeholder">
+          <span class="placeholder-icon" aria-hidden="true">✦</span>
+          <h3>記録機能はこれから</h3>
+          <p>種目・重量・回数をすばやく登録できるようにします。記録は端末に保存せず、サーバー側のD1で管理する予定です。</p>
+          <button type="button" disabled aria-disabled="true">記録する（準備中）</button>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="system-heading">
+        <div class="section-heading"><div><p class="section-caption">SYSTEM</p><h2 id="system-heading">サーバー接続</h2></div></div>
+        <div class="panel system-panel"><div><p class="system-label">Cloudflare D1</p><p class="system-message" id="db-status" role="status">接続状態を確認中…</p></div><span class="system-indicator" id="db-indicator"></span></div>
+        <p class="security-note">現在は公開テスト画面です。個人の筋トレ記録を保存・公開するAPIはまだありません。</p>
+      </section>
+    </main>
+    <footer>kintoreapp · Build your own rhythm.</footer>
+  </div>
+</body>
+</html>
