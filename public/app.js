@@ -192,13 +192,58 @@ const loginButton = byId("login-button");
 const loginFeedback = byId("login-feedback");
 const loginSuccess = byId("login-success");
 
+const shioriWelcome = byId("shiori-welcome");
+const shioriLine = byId("shiori-line");
+const shioriImage = byId("shiori-art-image");
+const shioriPlaceholder = byId("shiori-art-placeholder");
+
+function revealShioriArt() {
+  if (!shioriImage.naturalWidth) return;
+  shioriImage.hidden = false;
+  shioriPlaceholder.hidden = true;
+}
+shioriImage.addEventListener("load", revealShioriArt);
+shioriImage.addEventListener("error", () => {
+  shioriImage.hidden = true;
+  shioriPlaceholder.hidden = false;
+});
+if (shioriImage.complete) revealShioriArt();
+
+function greetingPeriod(hour) {
+  if (hour >= 5 && hour < 11) return "morning";
+  if (hour >= 11 && hour < 17) return "afternoon";
+  if (hour >= 17 && hour < 22) return "evening";
+  return "night";
+}
+
+async function showShioriGreeting() {
+  shioriWelcome.hidden = false;
+  shioriLine.textContent = "あ、来た。今日はどうする？";
+  try {
+    const response = await fetch("/data/shiori-greetings.json");
+    if (!response.ok) return;
+    const greetings = await response.json();
+    const period = greetingPeriod(new Date().getHours());
+    const timed = Array.isArray(greetings[period]) ? greetings[period] : [];
+    const common = Array.isArray(greetings.anytime) ? greetings.anytime : [];
+    const pool = [...timed, ...common];
+    if (!authorized || !pool.length) return;
+    const selected = pool[Math.floor(Math.random() * pool.length)];
+    if (typeof selected === "string" && selected.trim()) shioriLine.textContent = selected;
+  } catch {
+    // セリフファイルが読めなくても認証画面や記録処理に影響させない。
+  }
+}
+
 function setAuthenticated(next) {
   authorized = next;
   loginForm.hidden = next;
   loginSuccess.hidden = !next;
   if (next) {
     authStatus.textContent = "ログイン済み（自分専用）";
+    showShioriGreeting();
   } else {
+    shioriWelcome.hidden = true;
     authStatus.textContent = "未ログイン：パスワードを入力してください。";
     setReady(false);
     workouts = [];
