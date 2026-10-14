@@ -1,11 +1,12 @@
 const now = new Date();
 let shownYear = now.getFullYear();
 let shownMonth = now.getMonth();
-const scheduledDays = new Set([1, 2, 5]);
 const completeDates = new Set();
 let workouts = [];
 let authorized = false;
 let dbReady = false;
+let activePage = "home";
+let recordsRequestId = 0;
 
 const byId = (id) => document.getElementById(id);
 const monthTitle = byId("month-title");
@@ -34,35 +35,40 @@ saveDate.value = localISO(now);
 
 function renderCalendar() {
   monthTitle.textContent = String(shownYear) + "年 " + String(shownMonth + 1) + "月";
+  byId("history-month-title").textContent = monthTitle.textContent;
+  byId("month-count").textContent = completeDates.size + "日 記録済み";
   calendarGrid.replaceChildren();
   const startWeekday = new Date(shownYear, shownMonth, 1).getDay();
   const daysInMonth = new Date(shownYear, shownMonth + 1, 0).getDate();
 
   for (let slot = 0; slot < startWeekday + daysInMonth; slot++) {
-    const cell = document.createElement("span");
+    const empty = slot < startWeekday;
+    const cell = document.createElement(empty ? "span" : "button");
     cell.className = "calendar-day";
-    if (slot < startWeekday) {
+    if (empty) {
       cell.classList.add("is-empty");
       cell.setAttribute("aria-hidden", "true");
     } else {
       const day = slot - startWeekday + 1;
       const date = new Date(shownYear, shownMonth, day);
       const dateKey = localISO(date);
-      const planned = scheduledDays.has(date.getDay());
       const completed = completeDates.has(dateKey);
+      cell.type = "button";
       cell.textContent = String(day);
-      if (planned) cell.classList.add("is-scheduled");
       if (completed) cell.classList.add("is-completed");
       if (sameDay(date, now)) {
         cell.classList.add("is-today");
         cell.setAttribute("aria-current", "date");
       }
-      cell.setAttribute("aria-label", String(shownMonth + 1) + "月" + String(day) + "日" + (completed ? "（記録済み）" : planned ? "（仮予定）" : ""));
+      cell.setAttribute("aria-label", String(shownMonth + 1) + "月" + String(day) + "日" + (completed ? "、記録済み" : "") + "。記録画面へ");
+      cell.addEventListener("click", () => {
+        saveDate.value = dateKey;
+        setScreen("record");
+      });
     }
     calendarGrid.appendChild(cell);
   }
 }
-
 function setReady(ready) {
   dbReady = ready;
   saveDate.disabled = !ready;
@@ -111,18 +117,23 @@ async function fetchJSON(path, options = {}) {
 
 async function loadWorkouts() {
   const month = currentMonth();
+  const requestId = ++recordsRequestId;
   try {
     const result = await fetchJSON("/api/workouts?month=" + encodeURIComponent(month));
-    if (currentMonth() !== month) return;
+    if (!authorized || currentMonth() !== month || requestId !== recordsRequestId) return;
     workouts = result.workouts || [];
     completeDates.clear();
     workouts.forEach((w) => completeDates.add(w.performed_on));
     renderCalendar();
     renderHistory();
     setReady(true);
-    saveFeedback.textContent = "";
   } catch (error) {
-    if (currentMonth() !== month) return;
+    if (!authorized || currentMonth() !== month || requestId !== recordsRequestId) return;
+    if (error.status === 401) {
+      setAuthenticated(false);
+      loginFeedback.textContent = "ログインの有効期限が切れました。もう一度ログインしてください。";
+      return;
+    }
     workouts = [];
     completeDates.clear();
     renderCalendar();
@@ -132,7 +143,6 @@ async function loadWorkouts() {
       : "記録を読み込めませんでした。";
   }
 }
-
 async function removeWorkout(id) {
   if (!dbReady || !confirm("この記録を削除しますか？")) return;
   setReady(false);
@@ -174,16 +184,17 @@ function changeMonth(offset) {
   const result = new Date(shownYear, shownMonth + offset, 1);
   shownYear = result.getFullYear();
   shownMonth = result.getMonth();
+  ++recordsRequestId;
+  setReady(false);
   completeDates.clear();
   workouts = [];
   renderCalendar();
-  if (authorized) {
-    list.textContent = "読み込み中…";
-    loadWorkouts();
-  }
-}
-byId("prev-month").addEventListener("click", () => changeMonth(-1));
+  list.textContent = "読み込み中…";
+  if (authorized) loadWorkouts();
+}byId("prev-month").addEventListener("click", () => changeMonth(-1));
 byId("next-month").addEventListener("click", () => changeMonth(1));
+byId("history-prev-month").addEventListener("click", () => changeMonth(-1));
+byId("history-next-month").addEventListener("click", () => changeMonth(1));
 renderCalendar();
 
 const loginForm = byId("login-form");
@@ -235,12 +246,47 @@ async function showShioriGreeting() {
   }
 }
 
+const pages = new Set(["home", "record", "history", "settings"]);
+
+function setScreen(screen, pushHistory = true) {
+  if (!authorized || !pages.has(screen)) return;
+  activePage = screen;
+  document.querySelectorAll("[data-page]").forEach((page) => {
+    page.hidden = page.dataset.page !== screen;
+  });
+  document.querySelectorAll(".nav-item").forEach((item) => {
+    const isCurrent = item.dataset.screen === screen;
+    item.classList.toggle("is-active", isCurrent);
+    if (isCurrent) item.setAttribute("aria-current", "page");
+    else item.removeAttribute("aria-current");
+  });
+  if (pushHistory && location.hash !== "#" + screen) {
+    history.pushState({ screen }, "", "#" + screen);
+  }
+  window.scrollTo(0, 0);
+}
+
+document.querySelectorAll("[data-screen]").forEach((button) => {
+  button.addEventListener("click", () => setScreen(button.dataset.screen));
+});
+
+window.addEventListener("popstate", () => {
+  if (!authorized) return;
+  const screen = location.hash.slice(1);
+  setScreen(pages.has(screen) ? screen : "home", false);
+});
+
 function setAuthenticated(next) {
   authorized = next;
-  loginForm.hidden = next;
+  ++recordsRequestId;
+  byId("boot-screen").hidden = true;
+  byId("auth-screen").hidden = next;
+  byId("app-screen").hidden = !next;
+  byId("bottom-nav").hidden = !next;
   loginSuccess.hidden = !next;
   if (next) {
     authStatus.textContent = "ログイン済み（自分専用）";
+    setScreen("home", false);
     showShioriGreeting();
   } else {
     shioriWelcome.hidden = true;
@@ -250,9 +296,10 @@ function setAuthenticated(next) {
     completeDates.clear();
     renderCalendar();
     list.textContent = "ログインすると記録が表示されます。";
+    history.replaceState(null, "", location.pathname + location.search);
+    window.scrollTo(0, 0);
   }
 }
-
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   loginButton.disabled = true;
