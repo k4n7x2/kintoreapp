@@ -11,8 +11,11 @@
 3. [dialogue.md](./dialogue.md) — 口調・会話例・セリフ設計・NG表現
 4. [reference/shiori-master-v1.jpg](./reference/shiori-master-v1.jpg) — **基準絵その1：顔・髪型・瞳・表情の最優先基準**
 5. [reference/shiori-style-fullbody-v1.png](./reference/shiori-style-fullbody-v1.png) — **基準絵その2：水彩の透明感・光・アニメ調の塗り・全身バランス・花飾り**
+6. [character-sheet-spec.md](./character-sheet-spec.md) — **三面図・身長と体型・私服・喜怒哀楽4表情の正式制作仕様**（画像は未作成）
 
 これらの内容を省略して過去の会話や短いプロジェクト指示だけからキャラクターを推測しない。詳細を確認できなければ、その旨をユーザーに伝える。
+
+**全身立ち絵・衣装差分・体型や表情を扱う場合は、`character-sheet-spec.md` を必ず参照すること。** 現時点では仕様書のみ確定し、完成した「基準絵その3」の画像はまだ存在しない。
 
 ## 設定の優先順位
 
