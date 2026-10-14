@@ -33,28 +33,14 @@
 
       <div id="app-screen" hidden>
         <section class="app-page" id="page-home" data-page="home" aria-labelledby="home-heading">
-          <div class="page-heading">
-            <p class="section-caption">DASHBOARD</p>
-            <h1 id="home-heading">ダッシュボード</h1>
-            <p class="page-description" id="today-label"></p>
+          <div class="page-heading workout-heading">
+            <div><p class="section-caption">WORKOUT DASHBOARD</p><h1 id="home-heading">トレーニング管理</h1><p class="page-description" id="today-label"></p></div>
+            <button class="heading-action" type="button" data-screen="record">＋ 記録</button>
           </div>
-          <section id="shiori-welcome" class="shiori-welcome section" aria-label="朝倉栞からのメッセージ" hidden>
-        <div class="shiori-welcome-card">
-          <div class="shiori-message">
-            <p class="shiori-label">WELCOME BACK · SHIORI</p>
-            <h2>朝倉 栞 <span>Shiori Asakura</span></h2>
-            <p id="shiori-line" class="shiori-line" aria-live="polite">あ、来た。今日はどうする？</p>
+          <div class="overview-grid" aria-label="表示月のトレーニング概要">
+            <article class="stat-card"><p class="stat-label">表示月の実施日数</p><p class="stat-number"><strong id="stat-days">—</strong><span>日</span></p><p class="stat-description">トレーニングした日</p></article>
+            <article class="stat-card"><p class="stat-label">表示月の記録件数</p><p class="stat-number"><strong id="stat-sessions">—</strong><span>件</span></p><p class="stat-description">保存した記録</p></article>
           </div>
-          <div class="shiori-art" aria-label="朝倉栞の立ち絵">
-            <div id="shiori-art-placeholder" class="shiori-art-placeholder" aria-hidden="true">
-              <span>SHIORI</span>
-            </div>
-            <img id="shiori-art-image"
-              src="/assets/shiori/standing/training-default.svg"
-              alt="朝倉栞の立ち絵" hidden>
-          </div>
-        </div>
-      </section>
           <section class="section" aria-labelledby="calendar-heading">
         <div class="section-heading">
           <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">トレーニングカレンダー</h2></div>
@@ -71,11 +57,11 @@
           <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
           <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
           <div class="legend">
-            <span><i class="legend-dot completed"></i> 記録済み</span>
+            <span><i class="legend-dot completed"></i> 実施日</span>
             
             <span><i class="legend-dot today"></i> 今日</span>
           </div>
-          <p class="calendar-hint">日付をタップすると、その日の記録画面へ移動します。</p>
+          <p class="calendar-hint">日付をタップして記録を追加できます。</p>
         </div>
       </section>
           <div class="shortcuts" aria-label="クイックアクセス">
@@ -90,6 +76,10 @@
               <span class="shortcut-chevron" aria-hidden="true">›</span>
             </button>
           </div>
+          <section class="section recent-section" aria-labelledby="recent-heading">
+            <div class="section-heading"><div><p class="section-caption">RECENT</p><h2 id="recent-heading">表示月の最新記録</h2></div><button class="recent-history-action" type="button" data-screen="history">履歴一覧 ›</button></div>
+            <div id="recent-record" class="panel recent-panel" aria-live="polite">読み込み中…</div>
+          </section>
         </section>
 
         <section class="app-page" id="page-record" data-page="record" aria-labelledby="record-heading" hidden>
@@ -105,7 +95,7 @@
             <input id="workout-date" name="performed_on" type="date" required disabled>
             <label for="workout-note">今日のメモ（任意）</label>
             <textarea id="workout-note" name="note" maxlength="300" rows="3" placeholder="例：ジムに行けた。胸と背中を中心に。" disabled></textarea>
-            <button id="save-workout" type="submit" disabled>実施日をD1に保存</button>
+            <button id="save-workout" type="submit" disabled>記録を保存</button>
             <p id="save-feedback" class="feedback" role="status"></p>
           </form>
             <p class="security-note">種目・重量・回数は今後の機能追加で対応します。記録はCloudflare D1に保存されます。</p>
