@@ -109,70 +109,6 @@ footer { padding-top: 38px; text-align: center; font-size: 10px; color: #72889c;
 [hidden] { display: none !important; }
 
 
-/* ログイン後の朝倉栞ホーム。立ち絵未設置時は背景のみで安全に表示。 */
-.shiori-welcome { margin-top: 22px; }
-.shiori-welcome-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 44%;
-  min-height: 250px;
-  overflow: hidden;
-  position: relative;
-  border-radius: 23px;
-  border: 1px solid #6a607e;
-  background: radial-gradient(circle at 80% 25%, #55496e 0%, transparent 60%),
-    linear-gradient(145deg, #26243c, #192039 76%);
-}
-.shiori-message {
-  position: relative;
-  z-index: 2;
-  padding: 27px 8px 24px 23px;
-  align-self: end;
-}
-.shiori-label { color: #e0bedf; font-size: 10px; letter-spacing: .15em; font-weight: 800; margin: 0 0 12px; }
-.shiori-message h2 { margin: 0 0 18px; color: #f6eef9; font-size: 20px; letter-spacing: .02em; }
-.shiori-message h2 span { display: block; margin-top: 3px; color: #cdb8d8; font-size: 10px; font-weight: 400; letter-spacing: .09em; }
-.shiori-line {
-  display: inline-block;
-  max-width: 100%;
-  margin: 0;
-  padding: 13px 14px;
-  border-radius: 13px 13px 13px 3px;
-  color: #faf6fe;
-  background: rgba(16, 19, 37, .74);
-  border: 1px solid rgba(232, 207, 241, .28);
-  font-size: 14px;
-  line-height: 1.7;
-  overflow-wrap: anywhere;
-}
-.shiori-art { min-height: 250px; position: relative; overflow: hidden; }
-.shiori-art-placeholder {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: rgba(252, 235, 255, .28);
-  font-size: clamp(23px, 6vw, 38px);
-  font-family: Georgia, serif;
-  font-style: italic;
-  letter-spacing: .09em;
-  background: radial-gradient(ellipse at bottom, rgba(202, 149, 221, .18), transparent 70%);
-}
-#shiori-art-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center bottom;
-}
-@media (max-width: 380px) {
-  .shiori-welcome-card { grid-template-columns: minmax(0, 1fr) 41%; min-height: 220px; }
-  .shiori-art { min-height: 220px; }
-  .shiori-message { padding: 22px 4px 20px 15px; }
-  .shiori-line { padding: 10px; font-size: 12px; }
-}
-
-
 /* 画面分割: ログイン・ダッシュボード・記録・履歴・設定 */
 .app-shell { padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
 .boot-screen { margin-top: 45px; padding: 48px 15px; text-align: center; color: #b9c9d8; font-size: 13px; }
@@ -182,9 +118,7 @@ footer { padding-top: 38px; text-align: center; font-size: 10px; color: #72889c;
 .page-heading { padding-top: 6px; }
 .page-heading h1 { font-size: clamp(23px, 6vw, 29px); line-height: 1.45; margin: 7px 0 3px; letter-spacing: -.02em; }
 .page-description { font-size: 12px; color: #aebfd0; margin: 0; }
-#page-home .shiori-welcome { margin-top: 19px; }
 #page-home > .section { margin-top: 23px; }
-#page-home .shiori-welcome + .section { margin-top: 25px; }
 .calendar-day { font-family: inherit; border: 1px solid transparent; background: transparent; padding: 0; width: 100%; cursor: pointer; }
 .calendar-day.is-today { border-color: #c7e67d; }
 .calendar-day:focus-visible { outline: 2px solid #d8ed87; outline-offset: 2px; }
@@ -230,3 +164,40 @@ body:not(.is-authenticated) .app-shell { min-height: 100dvh; max-width: none; pa
 }
 .anonymous-login .feedback { margin: 0; min-height: 0; text-align: center; color: #d8b3b3; }
 .anonymous-login .feedback:empty { display: none; }
+
+/* Workout-first dashboard */
+body.is-authenticated { background: #0c1523; }
+body.is-authenticated .site-header { padding: 16px 0 18px; border-bottom: 1px solid #27354b; }
+body.is-authenticated .app-page { padding-top: 10px; }
+.workout-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:17px; }
+.workout-heading > div { min-width:0; }
+.workout-heading h1 { font-size:clamp(23px,6vw,29px); }
+.heading-action { flex:none; min-height:42px; padding:0 15px; border:0; border-radius:11px; color:#17231b; background:#d8ed87; font-size:13px; font-weight:800; }
+.overview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:2px; }
+.stat-card { padding:16px 15px 13px; min-width:0; border-radius:16px; border:1px solid #314359; background:#18293a; }
+.stat-label { margin:0; font-size:11px; color:#b6c5d1; }
+.stat-number { display:flex; align-items:baseline; gap:5px; margin:4px 0 2px; }
+.stat-number strong { font-size:clamp(30px,9vw,43px); line-height:1.2; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.035em; }
+.stat-number span { font-size:12px; color:#b0c1cd; }
+.stat-description { margin:2px 0 0; font-size:10px; color:#90a7b7; }
+#page-home > .section { margin-top:25px; }
+#page-home .calendar-topbar { margin-bottom:13px; }
+#page-home .calendar-day { min-height:44px; }
+#page-home .calendar-day.is-completed { background:#344b3a; }
+#page-home .calendar-day.is-completed::after { content:""; left:calc(50% - 2.5px); right:auto; top:auto; bottom:4px; width:5px; height:5px; background:#c8ef8d; border-radius:50%; }
+#page-home .calendar-day.is-completed.is-today { border:1px solid #c7e67d; }
+#page-home .panel { background:#172438; }
+#page-home .shortcuts { margin-top:13px; }
+#page-home .shortcut-card { min-height:101px; border-color:#314559; background:#192a3d; }
+#page-home .shortcut-icon { height:29px; width:29px; }
+.recent-history-action { border:0; background:transparent; color:#d4ed9d; padding:5px 0 5px 8px; font-size:12px; font-weight:700; }
+.recent-panel { min-height:70px; font-size:12px; color:#a7bac8; }
+.recent-date { display:block; font-size:13px; color:#ecf3f9; margin-bottom:5px; font-variant-numeric:tabular-nums; }
+.recent-note { margin:0; color:#b6c8d4; white-space:pre-wrap; overflow-wrap:anywhere; }
+#page-record .record-panel, #page-history > .panel { background:#172438; }
+#page-record .record-panel button[type="submit"] { min-height:47px; }
+#page-history .record-item { padding-top:17px; padding-bottom:17px; }
+#page-history .record-item:last-child { padding-bottom:0; }
+.bottom-nav { background:rgba(13,22,35,.97); }
+.nav-item.is-active { background:#2b4044; }
+@media(max-width:360px) { .stat-card{padding:13px 10px;} .stat-label{font-size:10px;} #page-home .calendar-day{min-height:40px;} .heading-action{padding:0 12px;} }
