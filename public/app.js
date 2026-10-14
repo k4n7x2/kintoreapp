@@ -283,6 +283,10 @@ function setAuthenticated(next) {
   byId("auth-screen").hidden = next;
   byId("app-screen").hidden = !next;
   byId("bottom-nav").hidden = !next;
+  byId("app-header").hidden = !next;
+  byId("app-footer").hidden = !next;
+  document.body.classList.toggle("is-authenticated", next);
+  document.title = next ? "kintoreapp | 筋トレ記録" : "ログイン";
   loginSuccess.hidden = !next;
   if (next) {
     authStatus.textContent = "ログイン済み（自分専用）";
@@ -316,8 +320,8 @@ loginForm.addEventListener("submit", async (event) => {
     await loadWorkouts();
   } catch (error) {
     loginFeedback.textContent = error.status === 503
-      ? "CloudflareでパスワードのSecretを設定してください。"
-      : "ログインできませんでした。パスワードを確認してください。";
+      ? "現在ログインできません。"
+      : "パスワードを確認してください。";
   } finally {
     loginButton.disabled = false;
   }
@@ -355,7 +359,7 @@ async function initialize() {
   } catch {
     setAuthenticated(false);
     if (!loginConfigured) {
-      loginFeedback.textContent = "CloudflareのSecret APP_PASSWORDを設定してください。";
+      loginFeedback.textContent = "現在ログインできません。";
     }
   }
 }
