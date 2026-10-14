@@ -59,7 +59,8 @@ button { font: inherit; }
 .security-note { color: #9aabbd; font-size: 11px; line-height: 1.75; }
 footer { padding-top: 38px; text-align: center; font-size: 10px; color: #72889c; }
 @media (max-width: 360px) { .app-shell { padding-inline: 14px; } .hero { padding-inline: 20px; } .panel { padding-inline: 13px; } }
-@media (prefers-reduced-motion: no-preference) { button:hover:not(:disabled) { filter: brightness(1.13); } }
+/* 栞の立ち絵はボタンだが、共通 hover の輝度変更を適用しない。Android のタップ後に hover が残る場合も同様。 */
+@media (prefers-reduced-motion: no-preference) { button:hover:not(:disabled):not(.character-layer__touch) { filter: brightness(1.13); } }
 
 /* Cloudflare D1 に保存する最小限の記録フォーム */
 .record-panel form { display: flex; flex-direction: column; gap: 8px; }
