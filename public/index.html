@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#101827">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css">
-  <script type="module" src="/app.js"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261015-touchfix2">
+  <script type="module" src="/app.js?v=20261015-touchfix2"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -53,9 +53,9 @@
             </nav>
             <div class="character-scene character-scene--home" data-character-scene="home">
               <div id="character-layer-home" class="character-layer character-layer--home" data-character-layer="home">
-                <button type="button" id="shiori-home-touch" class="character-layer__touch" aria-label="栞に話しかける（セリフを変える）" aria-controls="shiori-home-dialogue">
-                  <img class="character-layer__art" src="/assets/shiori/shiori-home-training-bust-v1.webp" alt="" aria-hidden="true" width="800" height="1067" decoding="async">
-                </button>
+                <div id="shiori-home-touch" class="character-layer__touch" role="button" tabindex="0" aria-label="栞に話しかける（セリフを変える）" aria-controls="shiori-home-dialogue">
+                  <img class="character-layer__art" src="/assets/shiori/shiori-home-training-bust-v1.webp" alt="" aria-hidden="true" draggable="false" width="800" height="1067" decoding="async">
+                </div>
                 <div id="shiori-home-dialogue" class="character-layer__dialogue" role="status" aria-live="polite" aria-atomic="true" hidden></div>
               </div>
             </div>
@@ -174,6 +174,19 @@
           <span class="system-indicator" id="db-indicator"></span>
         </div>
       </section>
+          <section class="section settings-project-links" aria-labelledby="project-links-heading">
+            <div class="section-heading"><h2 id="project-links-heading">開発・管理</h2></div>
+            <div class="panel settings-project-link-list">
+              <a class="settings-project-link" href="https://github.com/k4n7x2/kintoreapp" target="_blank" rel="noopener noreferrer" aria-label="GitHub リポジトリを新しいタブで開く">
+                <span><strong>GitHub</strong><small>ソースコード・更新履歴</small></span>
+                <span class="settings-link-arrow" aria-hidden="true">↗</span>
+              </a>
+              <a class="settings-project-link" href="https://dash.cloudflare.com/4dbbbb25feb2a259a17f9dcd779a4efb/workers/services/view/kintoreapp/production" target="_blank" rel="noopener noreferrer" aria-label="Cloudflare Workers の管理画面を新しいタブで開く">
+                <span><strong>Cloudflare</strong><small>Workers・デプロイ管理</small></span>
+                <span class="settings-link-arrow" aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </section>
 
         </section>
       </div>

@@ -426,11 +426,27 @@ body.is-authenticated .app-page { padding-top: 10px; }
   padding: 0;
   border: 0;
   background: transparent;
-  appearance: none;
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  filter: none;
+  box-shadow: none;
+}
+#page-home .character-layer__touch img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  filter: none;
+}
+#page-home .character-layer__touch:focus:not(:focus-visible) {
+  outline: none;
 }
 #page-home .character-layer__touch:focus-visible {
   outline: 2px solid #d9ebfa;
@@ -524,3 +540,39 @@ body.is-authenticated .app-page { padding-top: 10px; }
   border-radius: 50%;
 }
 #page-history .history-records-section .record-history { margin: 0; padding: 0; border: 0; }
+
+/* 外部の開発・管理画面へ進む設定リンク */
+#page-settings .settings-project-links { margin-top: 25px; }
+.settings-project-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-project-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 11px 14px;
+  border: 1px solid #37495c;
+  border-radius: 12px;
+  background: #1c2c40;
+  color: #e6eff8;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+.settings-project-link strong,
+.settings-project-link small {
+  display: block;
+}
+.settings-project-link strong { font-size: 14px; font-weight: 700; }
+.settings-project-link small { font-size: 11px; color: #a2b6c8; margin-top: 3px; }
+.settings-link-arrow { color: #bbd48b; font-size: 20px; }
+.settings-project-link:focus-visible {
+  outline: 2px solid #d8ed87;
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .settings-project-link:hover { background: #253a51; }
+}

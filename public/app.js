@@ -233,6 +233,13 @@ shioriHomeTouch.addEventListener("click", () => {
   shioriHomeTouch.classList.add("is-poked");
   showHomeGreeting();
 });
+// ネイティブのボタン押下ハイライトを避けつつ、キーボードでの操作性は維持する。
+shioriHomeTouch.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  if (!authorized || activePage !== "home" || event.repeat) return;
+  shioriHomeTouch.click();
+});
 shioriHomeArt.addEventListener("animationend", () => {
   shioriHomeTouch.classList.remove("is-poked");
 });
