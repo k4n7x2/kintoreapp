@@ -215,9 +215,68 @@ const loginSuccess = byId("login-success");
 
 const pages = new Set(["home", "record", "history", "settings"]);
 
+// ホームの既存セリフ候補を必要時だけ取得する。端末には永続保存しない。
+const homeDialogue = byId("shiori-home-dialogue");
+let greetingData = null;
+let greetingLoading = null;
+let lastHomeGreeting = "";
+let greetingRequestId = 0;
+
+function greetingTimeSlot(hour) {
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 17) return "afternoon";
+  if (hour >= 17 && hour < 21) return "evening";
+  return "night";
+}
+
+async function showHomeGreeting() {
+  const requestId = ++greetingRequestId;
+  try {
+    if (!greetingData) {
+      if (!greetingLoading) {
+        greetingLoading = fetch("/data/shiori-greetings.json", { cache: "force-cache" })
+          .then((response) => {
+            if (!response.ok) throw new Error("greetings_unavailable");
+            return response.json();
+          })
+          .then((data) => {
+            greetingData = data;
+            return data;
+          })
+          .finally(() => { greetingLoading = null; });
+      }
+      await greetingLoading;
+    }
+    if (!authorized || activePage !== "home" || requestId !== greetingRequestId) return;
+
+    const slot = greetingTimeSlot(new Date().getHours());
+    const candidates = [greetingData?.[slot], greetingData?.anytime]
+      .flat()
+      .filter((line) => typeof line === "string" && line.trim());
+    const alternatives = candidates.filter((line) => line !== lastHomeGreeting);
+    const pool = alternatives.length ? alternatives : candidates;
+    const line = pool.length ? pool[Math.floor(Math.random() * pool.length)] : "あ、来た。今日はどうする？";
+    lastHomeGreeting = line;
+    homeDialogue.textContent = line;
+    homeDialogue.hidden = false;
+  } catch {
+    if (!authorized || activePage !== "home" || requestId !== greetingRequestId) return;
+    // 読み込み失敗時にも、未確認の実績などを語らない短い一言だけ表示する。
+    homeDialogue.textContent = "あ、来た。今日はどうする？";
+    homeDialogue.hidden = false;
+  }
+}
+
+
 function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
+  const previousPage = activePage;
   activePage = screen;
+  if (screen === "home") {
+    if (previousPage !== "home" || homeDialogue.hidden) showHomeGreeting();
+  } else {
+    ++greetingRequestId;
+  }
   document.querySelectorAll("[data-page]").forEach((page) => {
     page.hidden = page.dataset.page !== screen;
   });
@@ -259,6 +318,10 @@ function setAuthenticated(next) {
     authStatus.textContent = "ログイン済み（自分専用）";
     setScreen("home", false);
   } else {
+    ++greetingRequestId;
+    homeDialogue.hidden = true;
+    homeDialogue.textContent = "";
+    lastHomeGreeting = "";
     authStatus.textContent = "未ログイン：パスワードを入力してください。";
     setReady(false);
     workouts = [];
