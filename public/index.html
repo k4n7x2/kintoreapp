@@ -15,8 +15,11 @@
       <div class="brand"><span class="brand-mark" aria-hidden="true">K</span><span>kintore<span class="brand-sub">app</span></span></div>
       <span class="status-pill">PERSONAL LOG</span>
     </header>
+
     <main>
-      <section class="hero" aria-labelledby="hero-title">
+      <div id="boot-screen" class="boot-screen" role="status">ログイン状態を確認中…</div>
+      <div id="auth-screen" hidden>
+        <section class="hero login-hero" aria-labelledby="hero-title">
         <p class="eyebrow">YOUR NEXT CHAPTER</p>
         <h1 id="hero-title">今日の一歩を、<br><span>未来の自分へ。</span></h1>
         <p class="hero-copy">完璧な一日より、続けられる一週間。<br>自分のペースで、積み上げていこう。</p>
@@ -25,10 +28,32 @@
           <span class="hero-date" id="today-label"></span>
         </div>
       </section>
+        <section class="section auth-section" aria-labelledby="login-heading">
+          <div class="section-heading">
+            <div><p class="section-caption">PRIVATE ACCESS</p><h2 id="login-heading">ログイン</h2></div>
+            <span class="note-chip">自分専用</span>
+          </div>
+          <div class="panel auth-panel">
+            <form id="login-form">
+            <label for="login-password">パスワード</label>
+            <input id="login-password" type="password" autocomplete="current-password"
+              placeholder="Cloudflareに設定したパスワード" required>
+            <button type="submit" id="login-button">ログイン</button>
+            <p id="login-feedback" class="feedback" role="status"></p>
+          </form>
+            <p class="security-note">パスワードはCloudflareで管理。記録データは端末に保存しません。</p>
+          </div>
+        </section>
+      </div>
 
-
-      <!-- 認証後だけ表示する栞のホーム画面。立ち絵ファイルを後から追加可能 -->
-      <section id="shiori-welcome" class="shiori-welcome section" aria-label="朝倉栞からのメッセージ" hidden>
+      <div id="app-screen" hidden>
+        <section class="app-page" id="page-home" data-page="home" aria-labelledby="home-heading">
+          <div class="page-heading">
+            <p class="section-caption">DASHBOARD</p>
+            <h1 id="home-heading">ダッシュボード</h1>
+            <p class="page-description" id="today-label"></p>
+          </div>
+          <section id="shiori-welcome" class="shiori-welcome section" aria-label="朝倉栞からのメッセージ" hidden>
         <div class="shiori-welcome-card">
           <div class="shiori-message">
             <p class="shiori-label">WELCOME BACK · SHIORI</p>
@@ -45,32 +70,10 @@
           </div>
         </div>
       </section>
-
-      <section class="section" aria-labelledby="login-heading">
-        <div class="section-heading">
-          <div><p class="section-caption">PRIVATE ACCESS</p><h2 id="login-heading">自分専用ログイン</h2></div>
-          <span class="note-chip">パスワード方式</span>
-        </div>
-        <div class="panel">
-          <form id="login-form">
-            <label for="login-password">パスワード</label>
-            <input id="login-password" type="password" autocomplete="current-password"
-              placeholder="Cloudflareに設定したパスワード" required>
-            <button type="submit" id="login-button">ログイン</button>
-            <p id="login-feedback" class="feedback" role="status"></p>
-          </form>
-          <div id="login-success" hidden>
-            <p class="security-note">認証済み。この端末では14日間ログイン状態を維持します。</p>
-            <button type="button" id="logout-button" class="delete-record">ログアウト</button>
-          </div>
-          <p class="security-note">パスワードはCloudflareのSecretで管理します。筋トレ記録は端末に保存しません。</p>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="calendar-heading">
+          <section class="section" aria-labelledby="calendar-heading">
         <div class="section-heading">
           <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">トレーニングカレンダー</h2></div>
-          <span class="note-chip">月・火・金は仮予定</span>
+          <span class="note-chip" id="month-count">読み込み中</span>
         </div>
         <div class="panel">
           <div class="calendar-topbar">
@@ -84,20 +87,35 @@
           <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
           <div class="legend">
             <span><i class="legend-dot completed"></i> 記録済み</span>
-            <span><i class="legend-dot scheduled"></i> 仮の予定</span>
+            
             <span><i class="legend-dot today"></i> 今日</span>
           </div>
+          <p class="calendar-hint">日付をタップすると、その日の記録画面へ移動します。</p>
         </div>
       </section>
+          <div class="shortcuts" aria-label="クイックアクセス">
+            <button type="button" class="shortcut-card" data-screen="record">
+              <span class="shortcut-icon" aria-hidden="true">＋</span>
+              <span><strong>トレーニングを記録</strong><small>実施日やメモを残す</small></span>
+              <span class="shortcut-chevron" aria-hidden="true">›</span>
+            </button>
+            <button type="button" class="shortcut-card" data-screen="history">
+              <span class="shortcut-icon" aria-hidden="true">▤</span>
+              <span><strong>過去の記録を見る</strong><small>振り返り・削除</small></span>
+              <span class="shortcut-chevron" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </section>
 
-      <section class="section" aria-labelledby="log-heading">
-        <div class="section-heading">
-          <div><p class="section-caption">WORKOUT LOG</p><h2 id="log-heading">トレーニング記録</h2></div>
-          <span class="note-chip">D1に保存</span>
-        </div>
-        <div class="panel record-panel">
-          <p class="security-note" id="auth-status" role="status">ログイン状態を確認中…</p>
-          <form id="workout-form">
+        <section class="app-page" id="page-record" data-page="record" aria-labelledby="record-heading" hidden>
+          <div class="page-heading">
+            <p class="section-caption">WORKOUT LOG</p>
+            <h1 id="record-heading">トレーニング記録</h1>
+            <p class="page-description">今日の一歩を、記録に残そう。</p>
+          </div>
+          <div class="panel record-panel">
+            <p class="security-note" id="auth-status" role="status">ログイン状態を確認中…</p>
+            <form id="workout-form">
             <label for="workout-date">実施日</label>
             <input id="workout-date" name="performed_on" type="date" required disabled>
             <label for="workout-note">今日のメモ（任意）</label>
@@ -105,22 +123,64 @@
             <button id="save-workout" type="submit" disabled>実施日をD1に保存</button>
             <p id="save-feedback" class="feedback" role="status"></p>
           </form>
-          <div class="record-history">
+            <p class="security-note">種目・重量・回数は今後の機能追加で対応します。記録はCloudflare D1に保存されます。</p>
+          </div>
+        </section>
+
+        <section class="app-page" id="page-history" data-page="history" aria-labelledby="history-heading" hidden>
+          <div class="page-heading">
+            <p class="section-caption">HISTORY</p>
+            <h1 id="history-heading">トレーニング履歴</h1>
+            <p class="page-description">積み重ねてきた記録を振り返る。</p>
+          </div>
+          <div class="panel">
+            <div class="calendar-topbar">
+              <h3 id="history-month-title" aria-live="polite"></h3>
+              <div class="month-controls">
+                <button type="button" id="history-prev-month" aria-label="履歴の前の月">‹</button>
+                <button type="button" id="history-next-month" aria-label="履歴の次の月">›</button>
+              </div>
+            </div>
+            <div class="record-history">
             <h3>表示月の記録</h3>
             <div id="record-list" aria-live="polite">認証後に表示します。</div>
           </div>
-          <p class="security-note">種目・重量・回数の入力は次の開発段階で追加します。端末のLocalStorageやIndexedDBには記録しません。</p>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section class="section" aria-labelledby="system-heading">
+        <section class="app-page" id="page-settings" data-page="settings" aria-labelledby="settings-heading" hidden>
+          <div class="page-heading">
+            <p class="section-caption">SETTINGS</p>
+            <h1 id="settings-heading">設定</h1>
+            <p class="page-description">アカウントと接続状態を確認する。</p>
+          </div>
+          <section class="section settings-section" aria-labelledby="account-heading">
+            <div class="section-heading"><h2 id="account-heading">アカウント</h2></div>
+            <div class="panel">
+              <div id="login-success" hidden>
+                <p class="security-note">認証済み。この端末では14日間ログイン状態を維持します。</p>
+                <button type="button" id="logout-button" class="delete-record logout-action">ログアウト</button>
+              </div>
+            </div>
+          </section>
+          <section class="section" aria-labelledby="system-heading">
         <div class="section-heading"><div><p class="section-caption">SYSTEM</p><h2 id="system-heading">サーバー接続</h2></div></div>
         <div class="panel system-panel">
           <div><p class="system-label">Cloudflare D1</p><p class="system-message" id="db-status" role="status">接続状態を確認中…</p></div>
           <span class="system-indicator" id="db-indicator"></span>
         </div>
       </section>
+        </section>
+      </div>
     </main>
+    <nav id="bottom-nav" class="bottom-nav" aria-label="アプリの画面切り替え" hidden>
+      <div class="bottom-nav-inner">
+        <button type="button" class="nav-item" data-screen="home" aria-label="ホーム"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>ホーム</span></button>
+        <button type="button" class="nav-item" data-screen="record" aria-label="記録"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5 4 7l3 3-3 3 2 2 3-3 6 6 3-3-6-6 3-3-2-2-3 3-3-3z"/><path d="M4 16v4m-2-2h4m12-14v4m-2-2h4"/></svg><span>記録</span></button>
+        <button type="button" class="nav-item" data-screen="history" aria-label="履歴"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/><path d="M2 21h20"/></svg><span>履歴</span></button>
+        <button type="button" class="nav-item" data-screen="settings" aria-label="設定"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.9 2.9-.06-.06a1.7 1.7 0 0 0-1.88-.34l-.1.04V22H9.14v-2.52l-.1-.04a1.7 1.7 0 0 0-1.88.34l-.06.06-2.9-2.9.06-.06A1.7 1.7 0 0 0 4.6 15l-.04-.1H2v-5.8h2.56l.04-.1a1.7 1.7 0 0 0-.34-1.88L4.2 7.06l2.9-2.9.06.06a1.7 1.7 0 0 0 1.88.34l.1-.04V2h5.72v2.52l.1.04a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.9 2.9-.06.06A1.7 1.7 0 0 0 19.4 9l.04.1H22v5.8h-2.56z"/></svg><span>設定</span></button>
+      </div>
+    </nav>
     <footer>kintoreapp · Build your own rhythm.</footer>
   </div>
 </body>
