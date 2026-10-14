@@ -208,3 +208,25 @@ footer { padding-top: 38px; text-align: center; font-size: 10px; color: #72889c;
 .nav-item.is-active { color: #d8ed87; background: #283a47; }
 .nav-item:focus-visible { outline: 2px solid #d8ed87; outline-offset: -2px; }
 @media (max-width: 360px) { .shortcuts { gap: 8px; } .shortcut-card { padding: 12px 9px; } .shortcut-card strong { font-size: 11px; } .bottom-nav-inner { padding-inline: 8px; } }
+
+/* Anonymous, centered sign-in; app chrome is only visible after authentication. */
+body:not(.is-authenticated) .app-shell { min-height: 100dvh; max-width: none; padding: 0 20px; }
+#auth-screen, #boot-screen { width: 100%; min-height: 100dvh; display: grid; place-items: center; }
+#boot-screen { margin: 0; padding: 0; font-size: 12px; color: #8393a6; }
+.anonymous-login {
+  width: min(100%, 320px); padding: 26px 23px; border-radius: 14px;
+  border: 1px solid #293547; background: #151e2c;
+}
+.anonymous-login h1 { margin: 0 0 22px; font-size: 19px; font-weight: 600; letter-spacing: .02em; text-align: center; }
+.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+.anonymous-login #login-form { display: flex; flex-direction: column; gap: 12px; }
+.anonymous-login #login-password {
+  background: #101827; border: 1px solid #39495c; color: #f1f4f8;
+  border-radius: 8px; min-height: 47px; padding: 12px 13px; font-size: 14px;
+}
+.anonymous-login #login-form button[type="submit"] {
+  background: #e9edf2; color: #17212f; border-radius: 8px;
+  min-height: 46px; cursor: pointer;
+}
+.anonymous-login .feedback { margin: 0; min-height: 0; text-align: center; color: #d8b3b3; }
+.anonymous-login .feedback:empty { display: none; }
