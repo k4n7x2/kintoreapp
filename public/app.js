@@ -217,10 +217,25 @@ const pages = new Set(["home", "record", "history", "settings"]);
 
 // ホームの既存セリフ候補を必要時だけ取得する。端末には永続保存しない。
 const homeDialogue = byId("shiori-home-dialogue");
+const shioriHomeTouch = byId("shiori-home-touch");
+const shioriHomeArt = shioriHomeTouch.querySelector(".character-layer__art");
 let greetingData = null;
 let greetingLoading = null;
 let lastHomeGreeting = "";
 let greetingRequestId = 0;
+
+// 画像へのタップ／キーボードの操作で、一言と控えめなリアクションを返す。
+shioriHomeTouch.addEventListener("click", () => {
+  if (!authorized || activePage !== "home") return;
+  shioriHomeTouch.classList.remove("is-poked");
+  // 同じアニメーションを連続タップでも先頭から再生する。
+  void shioriHomeArt.offsetWidth;
+  shioriHomeTouch.classList.add("is-poked");
+  showHomeGreeting();
+});
+shioriHomeArt.addEventListener("animationend", () => {
+  shioriHomeTouch.classList.remove("is-poked");
+});
 
 function greetingTimeSlot(hour) {
   if (hour >= 5 && hour < 12) return "morning";
@@ -319,6 +334,7 @@ function setAuthenticated(next) {
     setScreen("home", false);
   } else {
     ++greetingRequestId;
+    shioriHomeTouch.classList.remove("is-poked");
     homeDialogue.hidden = true;
     homeDialogue.textContent = "";
     lastHomeGreeting = "";

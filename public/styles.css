@@ -413,18 +413,75 @@ body.is-authenticated .app-page { padding-top: 10px; }
   height: 100%;
   pointer-events: none;
 }
+/* 透明画像を実際に触るための操作面。立ち絵以外のナビは z-index: 5 を維持。 */
+#page-home .character-layer__touch {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 800 / 1067;
+  max-height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#page-home .character-layer__touch:focus-visible {
+  outline: 2px solid #d9ebfa;
+  outline-offset: -3px;
+  border-radius: 12px;
+}
 #page-home .character-layer__art {
   object-fit: contain;
   object-position: right bottom;
+  transform-origin: 54% 75%;
+  will-change: auto;
+}
+#page-home .character-layer__touch.is-poked .character-layer__art {
+  animation: shiori-puni 420ms cubic-bezier(.2, .7, .3, 1) both;
+}
+@keyframes shiori-puni {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  28% { transform: translateY(5px) scale(1.035, .955); }
+  57% { transform: translateY(-4px) scale(.982, 1.025); }
+  79% { transform: translateY(1px) scale(1.008, .993); }
 }
 #page-home .character-layer__dialogue {
   z-index: 3;
-  left: 5%;
-  bottom: 16px;
-  width: min(320px, 91%);
+  top: clamp(28px, 11%, 96px);
+  bottom: auto;
+  left: 2%;
+  width: min(242px, 71%);
   box-sizing: border-box;
-  font-size: clamp(12px, 3.5vw, 14px);
+  padding: 12px 14px;
+  border: 1px solid rgba(221, 203, 236, .55);
+  border-radius: 16px 16px 7px 16px;
+  background: rgba(20, 24, 40, .92);
   box-shadow: 0 8px 24px rgba(0, 0, 0, .24);
+  font-size: clamp(12px, 3.5vw, 14px);
+  pointer-events: none;
+}
+#page-home .character-layer__dialogue::after {
+  content: "";
+  position: absolute;
+  right: 25px;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  background: rgba(20, 24, 40, .92);
+  border-right: 1px solid rgba(221, 203, 236, .55);
+  border-bottom: 1px solid rgba(221, 203, 236, .55);
+  transform: rotate(45deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  #page-home .character-layer__touch.is-poked .character-layer__art {
+    animation: none;
+  }
 }
 @media (max-width: 380px) {
   #page-home .home-stage { min-height: clamp(405px, 73svh, 665px); }
@@ -440,7 +497,12 @@ body.is-authenticated .app-page { padding-top: 10px; }
   #page-home .hub-link svg { width: 25px; height: 25px; }
   #page-home .character-scene--home { right: -13px; width: calc(100% + 13px); }
   #page-home .character-layer--home { width: 95%; }
-  #page-home .character-layer__dialogue { left: 4%; width: 92%; padding: 10px 12px; }
+  #page-home .character-layer__dialogue {
+    top: 7%;
+    left: 2%;
+    width: min(212px, 72%);
+    padding: 10px 12px;
+  }
 }
 
 /* History is where the saved calendar and workout summary now live. */
