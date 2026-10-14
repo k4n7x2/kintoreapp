@@ -321,84 +321,123 @@ body.is-authenticated .app-page { padding-top: 10px; }
   .hub-link small { font-size: 9px; }
 }
 
-/* Game-like dashboard hub: left-side navigation, portrait overlay space to the right.
-   No statistics, records or calendar on the dashboard itself. */
-#page-home { min-height: calc(100svh - 170px - env(safe-area-inset-bottom)); }
-#page-home .home-heading { margin-bottom: 5px; position: relative; z-index: 3; }
-#page-home .home-heading h1 { margin-bottom: 4px; }
-.home-stage {
+/* 立ち絵を主役にするホーム：中央～右に大きく重ね、左端だけアイコンメニュー。 */
+#page-home {
+  min-height: calc(100svh - 170px - env(safe-area-inset-bottom));
+  padding-top: 0;
+}
+#page-home .home-date {
   position: relative;
-  min-height: clamp(385px, 67svh, 650px);
-  display: flex;
-  align-items: center;
+  z-index: 4;
+  margin: 14px 0 0;
+  font-size: 11px;
+  color: #a7bacb;
+  letter-spacing: .02em;
+}
+#page-home .home-stage {
+  position: relative;
   width: 100%;
+  min-height: clamp(440px, 76svh, 810px);
   isolation: isolate;
 }
-.home-stage::before {
+#page-home .home-stage::before {
   content: "";
   position: absolute;
-  pointer-events: none;
-  inset: 7% -20px 6% 28%;
+  inset: 3% -20px 2% 5%;
   z-index: -1;
-  background: radial-gradient(ellipse at 75% 44%, rgba(126, 103, 163, .20), transparent 70%);
+  pointer-events: none;
+  background: radial-gradient(ellipse at 71% 43%, rgba(135, 111, 169, .19), transparent 70%);
 }
 #page-home .dashboard-hub {
-  flex: 0 0 43%;
-  position: relative;
-  z-index: 3;
+  position: absolute;
+  z-index: 5;
+  top: 49%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 64px;
   margin: 0;
-  padding: 0 0 12px;
+  padding: 0;
 }
-#page-home .hub-caption { margin-bottom: 14px; }
 #page-home .hub-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 15px;
+  align-items: flex-start;
 }
 #page-home .hub-link {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  min-height: 76px;
-  padding: 12px 10px;
-  border-radius: 13px;
-  border: 1px solid #43566d;
-  background: rgba(24, 38, 55, .91);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, .11);
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  min-width: 62px;
+  min-height: 62px;
+  padding: 0;
+  border: 1px solid rgba(148, 168, 186, .32);
+  border-radius: 18px;
+  color: #e3f1d1;
+  background: rgba(22, 37, 54, .79);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .16);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
-#page-home .hub-link__symbol {
-  flex: 0 0 30px;
-  width: 30px;
-  height: 30px;
-  margin: 0;
-  font-size: 18px;
+#page-home .hub-link svg {
+  display: block;
+  width: 27px;
+  height: 27px;
+  flex: none;
 }
-#page-home .hub-link__label { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
-#page-home .hub-link strong { font-size: 14px; }
-#page-home .hub-link small { font-size: 10px; white-space: normal; line-height: 1.45; }
-#page-home .hub-link__chevron { margin-left: auto; font-size: 19px; line-height: 1; color: #aebfc8; }
+#page-home .hub-link:focus-visible {
+  outline: 2px solid #d8ed87;
+  outline-offset: 3px;
+}
+#page-home .hub-link:active {
+  background: rgba(58, 83, 83, .95);
+}
 #page-home .character-scene--home {
   position: absolute;
   z-index: 1;
-  top: 0;
-  right: -15px;
-  width: 66%;
-  height: 100%;
+  top: -9px;
+  right: -18px;
+  width: calc(100% + 18px);
+  height: calc(100% + 9px);
   pointer-events: none;
   background: transparent;
   overflow: visible;
 }
 #page-home .character-layer--home {
-  inset: auto 0 0 auto;
-  width: 100%;
+  position: absolute;
+  inset: 0 0 auto auto;
+  width: 94%;
   height: 100%;
   pointer-events: none;
 }
-#page-home .character-layer__art { object-position: right bottom; }
-#page-home .character-layer__dialogue { left: -16%; bottom: 16px; width: min(320px, 132%); }
+#page-home .character-layer__art {
+  object-fit: contain;
+  object-position: right bottom;
+}
+#page-home .character-layer__dialogue {
+  left: 5%;
+  bottom: 16px;
+  width: min(320px, 91%);
+}
+@media (max-width: 380px) {
+  #page-home .home-stage { min-height: clamp(405px, 73svh, 665px); }
+  #page-home .dashboard-hub { width: 58px; }
+  #page-home .hub-grid { gap: 13px; }
+  #page-home .hub-link {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    border-radius: 16px;
+  }
+  #page-home .hub-link svg { width: 25px; height: 25px; }
+  #page-home .character-scene--home { right: -13px; width: calc(100% + 13px); }
+  #page-home .character-layer--home { width: 95%; }
+}
+
 /* History is where the saved calendar and workout summary now live. */
 #page-history .history-overview { margin-top: 14px; }
 #page-history .overview-grid { margin-bottom: 8px; }
@@ -417,13 +456,3 @@ body.is-authenticated .app-page { padding-top: 10px; }
   border-radius: 50%;
 }
 #page-history .history-records-section .record-history { margin: 0; padding: 0; border: 0; }
-@media (max-width: 380px) {
-  .home-stage { min-height: clamp(345px, 62svh, 540px); }
-  #page-home .dashboard-hub { flex-basis: 48%; }
-  #page-home .hub-link { gap: 7px; padding: 11px 7px; }
-  #page-home .hub-link__symbol { flex-basis: 26px; width: 26px; height: 26px; font-size: 17px; }
-  #page-home .hub-link strong { font-size: 12px; }
-  #page-home .hub-link small { font-size: 9px; }
-  #page-home .hub-link__chevron { font-size: 16px; }
-  #page-home .character-scene--home { width: 65%; right: -13px; }
-}
