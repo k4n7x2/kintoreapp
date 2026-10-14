@@ -1,6 +1,6 @@
 # 朝倉栞 — キャラクターシート制作仕様書 v1
 
-> ステータス：**制作仕様確定・基準絵その3の画像正式採用済み**。正式画像：[reference/shiori-character-sheet-v1.jpg](./reference/shiori-character-sheet-v1.jpg)（JPEG、1448×1086）。
+> ステータス：**制作仕様確定・基準絵その3の画像正式採用済み**。正式画像：[reference/shiori-character-sheet-v1.jpg](./reference/shiori-character-sheet-v1.jpg)（JPEG、1536×1024）。
 
 ## 1. 目的と参照順序
 
@@ -98,7 +98,7 @@
 1. ユーザーが明示的に「生成」を依頼する。
 2. 上記の2枚の正式画像を生成の参照入力に使用し、本書の三面図・体型・衣装・表情を適用する。
 3. 三面図の整合性、4表情の差、画風、花飾り、衣装、160cm相当の比率を確認する。
-4. **正式採用済みの基準絵その3**は [reference/shiori-character-sheet-v1.jpg](./reference/shiori-character-sheet-v1.jpg) に保存されている（1448 × 1086 px）。
+4. **正式採用済みの基準絵その3**は [reference/shiori-character-sheet-v1.jpg](./reference/shiori-character-sheet-v1.jpg) に保存されている（1536 × 1024 px）。
 5. 今後の差分制作では基準絵その1・その2・その3の役割を区別し、原則として3枚とも実際の参照画像として使用する。
 6. シートの改訂・更新はユーザーの承認を得たうえで `shiori-character-sheet-v2.jpg` などの別名で世代管理し、[README.md](./README.md) と [visual.md](./visual.md) の現行参照を更新する。
 

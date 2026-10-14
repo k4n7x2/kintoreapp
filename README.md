@@ -39,9 +39,9 @@ Cloudflare → **Storage & databases → D1 → kintore-db → Console** を開�
 
 公開URL: https://kintoreapp.q7m4vx9.workers.dev
 
-1. ページの「自分専用ログイン」にSecretで設定したパスワードを入力。
-2. 「ログイン済み」が出たら、日付とメモを登録。
-3. 再読み込み後もカレンダーに記録が残れば、D1への保存確認成功。
+1. ページの「ログイン」にSecretで設定したパスワードを入力。
+2. ホームの記録アイコンから記録画面へ進み、日付とメモを登録。
+3. 再読み込み後も履歴画面のカレンダーに記録が残れば、D1への保存確認成功。
 4. 「ログアウト」でCookieが無効化され、記録が見えなくなる。
 5. 未ログインの `/api/workouts?month=2026-10` が401で拒否されることも確認する。
 
@@ -92,3 +92,11 @@ npm run db:migrate:remote
 画像の正式基準は3枚：**[基準絵その1：顔・瞳・表情](docs/shiori/reference/shiori-master-v1.jpg)**、**[基準絵その2：塗り・光・透明感](docs/shiori/reference/shiori-style-fullbody-v1.jpg)**、**[基準絵その3：体型・三面図・標準私服](docs/shiori/reference/shiori-character-sheet-v1.jpg)**。要素別の優先順位と生成手順は **[キャラクター制作資料](docs/shiori/README.md)** を正本とする。画像生成時は基準絵3枚を原則実際の参照画像として渡す。アプリ用立ち絵は背景透過PNGを原則とする。
 
 詳細設定はプロジェクト指示へ重複記載せず、`docs/shiori/` を唯一の保守対象とする。個別の実装状態は `public/` と `src/` の最新コードを確認すること。
+
+## 開発引き継ぎ・現行状態
+
+- [開発引き継ぎプロンプト](docs/development-handoff.md)：新しいチャットに渡す運用指示。
+- [実装状況](docs/implementation-status.md)：画面・API・データの接続状況、確認範囲と制約。
+- [画像の照合記録](docs/shiori/reference-audit.md)：正式JPEGとプロジェクトPNGの内容差。
+
+静的配信元は `public/` のみ。`docs/shiori/reference/` はGitHub上の制作資料であり、Workersの `/docs/...` URLでは配信しない。ログイン前に見せるUIを簡素にしても、公開リポジトリや静的ファイルそのものが非公開になるわけではない。

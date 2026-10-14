@@ -71,7 +71,7 @@ GitHub実体：`docs/shiori/reference/shiori-style-fullbody-v1.jpg`
 **[reference/shiori-character-sheet-v1.jpg](./reference/shiori-character-sheet-v1.jpg)**
 
 保存先：`docs/shiori/reference/shiori-character-sheet-v1.jpg`
-画像形式：JPEG、1448 × 1086 px、背景付きのキャラクター設定資料。
+画像形式：JPEG、1536 × 1024 px、背景付きのキャラクター設定資料。
 
 制作仕様：[character-sheet-spec.md](./character-sheet-spec.md)
 

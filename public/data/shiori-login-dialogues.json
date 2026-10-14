@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "character": "朝倉 栞",
-  "notes": "ログイン演出用。台詞の抽選・表示条件はアプリ実装時に設定。ここにはパスワードやユーザー情報を含めない。",
+  "notes": "未接続の演出候補。login_screenは旧案として保留し、現行の簡素なログイン前画面には表示しない。login_success/conditional_futureも未実装。台詞の抽選・条件は別途決定。パスワード・ユーザー情報は含めない。",
   "image": {
-    "recommended_path": "/assets/shiori/standing/login-default.webp",
-    "status": "pending_generation",
+    "recommended_path": "/assets/shiori/home/home-default.png",
+    "status": "pending_generation_and_adoption",
     "transparent_background": true
   },
   "lines": {
