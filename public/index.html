@@ -33,67 +33,43 @@
 
       <div id="app-screen" hidden>
         <section class="app-page" id="page-home" data-page="home" aria-labelledby="home-heading">
-          <div class="page-heading workout-heading">
-            <div><p class="section-caption">WORKOUT DASHBOARD</p><h1 id="home-heading">トレーニング管理</h1><p class="page-description" id="today-label"></p></div>
-            <button class="heading-action" type="button" data-screen="record">＋ 記録</button>
+          <div class="page-heading home-heading">
+            <div>
+              <p class="section-caption">DASHBOARD</p>
+              <h1 id="home-heading">ホーム</h1>
+              <p class="page-description" id="today-label"></p>
+            </div>
           </div>
 
-          <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
-
-          <!-- UI操作面とは独立した、立ち絵用の自然な余白。画像・セリフは未表示。 -->
-          <div class="character-scene character-scene--home" data-character-scene="home">
-            <div id="character-layer-home" class="character-layer character-layer--home" data-character-layer="home" aria-hidden="true">
-            <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
-            <div class="character-layer__dialogue" hidden></div>
-          </div>
-          </div>
-          <section class="dashboard-hub" aria-labelledby="dashboard-menu-heading">
-            <div class="section-heading">
-              <div><p class="section-caption">QUICK ACCESS</p><h2 id="dashboard-menu-heading">メニュー</h2></div>
-            </div>
-            <div class="hub-grid">
-              <button class="hub-link" type="button" data-screen="record">
-                <span class="hub-link__symbol" aria-hidden="true">＋</span><strong>記録</strong><small>トレーニング入力</small>
-              </button>
-              <button class="hub-link" type="button" data-screen="history">
-                <span class="hub-link__symbol" aria-hidden="true">▤</span><strong>履歴</strong><small>過去の記録</small>
-              </button>
-              <button class="hub-link" type="button" data-screen="settings">
-                <span class="hub-link__symbol" aria-hidden="true">⚙</span><strong>設定</strong><small>アカウント・接続</small>
-              </button>
-            </div>
-          </section>
-          <div class="overview-grid" aria-label="表示月のトレーニング概要">
-            <article class="stat-card"><p class="stat-label">表示月の実施日数</p><p class="stat-number"><strong id="stat-days">—</strong><span>日</span></p><p class="stat-description">トレーニングした日</p></article>
-            <article class="stat-card"><p class="stat-label">表示月の記録件数</p><p class="stat-number"><strong id="stat-sessions">—</strong><span>件</span></p><p class="stat-description">保存した記録</p></article>
-          </div>
-          <section class="section" aria-labelledby="calendar-heading">
-        <div class="section-heading">
-          <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">トレーニングカレンダー</h2></div>
-          <span class="note-chip" id="month-count">読み込み中</span>
-        </div>
-        <div class="panel">
-          <div class="calendar-topbar">
-            <h3 id="month-title" aria-live="polite"></h3>
-            <div class="month-controls">
-              <button type="button" id="prev-month" aria-label="前の月">‹</button>
-              <button type="button" id="next-month" aria-label="次の月">›</button>
+          <!-- 立ち絵は専用カードを設けず、右側の空間に透過PNGを重ねる。 -->
+          <div class="home-stage">
+            <nav class="dashboard-hub" aria-label="ダッシュボードのメニュー">
+              <p class="section-caption hub-caption">MENU</p>
+              <div class="hub-grid">
+                <button class="hub-link" type="button" data-screen="record">
+                  <span class="hub-link__symbol" aria-hidden="true">＋</span>
+                  <span class="hub-link__label"><strong>記録</strong><small>トレーニング入力</small></span>
+                  <span class="hub-link__chevron" aria-hidden="true">›</span>
+                </button>
+                <button class="hub-link" type="button" data-screen="history">
+                  <span class="hub-link__symbol" aria-hidden="true">▤</span>
+                  <span class="hub-link__label"><strong>履歴</strong><small>カレンダー・実績</small></span>
+                  <span class="hub-link__chevron" aria-hidden="true">›</span>
+                </button>
+                <button class="hub-link" type="button" data-screen="settings">
+                  <span class="hub-link__symbol" aria-hidden="true">⚙</span>
+                  <span class="hub-link__label"><strong>設定</strong><small>アカウント・接続</small></span>
+                  <span class="hub-link__chevron" aria-hidden="true">›</span>
+                </button>
+              </div>
+            </nav>
+            <div class="character-scene character-scene--home" data-character-scene="home">
+              <div id="character-layer-home" class="character-layer character-layer--home" data-character-layer="home" aria-hidden="true">
+                <!-- 採用済みの背景透過PNGを追加したときに、このレイヤー上へ描画する。 -->
+                <div class="character-layer__dialogue" hidden></div>
+              </div>
             </div>
           </div>
-          <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
-          <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
-          <div class="legend">
-            <span><i class="legend-dot completed"></i> 実施日</span>
-            
-            <span><i class="legend-dot today"></i> 今日</span>
-          </div>
-          <p class="calendar-hint">日付をタップして記録を追加できます。</p>
-        </div>
-      </section>
-          <section class="section recent-section" aria-labelledby="recent-heading">
-            <div class="section-heading"><div><p class="section-caption">RECENT</p><h2 id="recent-heading">表示月の最新記録</h2></div><button class="recent-history-action" type="button" data-screen="history">履歴一覧 ›</button></div>
-            <div id="recent-record" class="panel recent-panel" aria-live="polite">読み込み中…</div>
-          </section>
         </section>
 
         <section class="app-page" id="page-record" data-page="record" aria-labelledby="record-heading" hidden>
@@ -122,8 +98,6 @@
             <p class="security-note">種目・重量・回数は今後の機能追加で対応します。記録はCloudflare D1に保存されます。</p>
           </div>
 
-          <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
-
         </section>
 
         <section class="app-page" id="page-history" data-page="history" aria-labelledby="history-heading" hidden>
@@ -139,21 +113,45 @@
             <div class="character-layer__dialogue" hidden></div>
           </div>
           </div>
-          <div class="panel">
-            <div class="calendar-topbar">
-              <h3 id="history-month-title" aria-live="polite"></h3>
-              <div class="month-controls">
-                <button type="button" id="history-prev-month" aria-label="履歴の前の月">‹</button>
-                <button type="button" id="history-next-month" aria-label="履歴の次の月">›</button>
+          <div class="history-overview">
+          <div class="overview-grid" aria-label="表示月のトレーニング概要">
+            <article class="stat-card"><p class="stat-label">表示月の実施日数</p><p class="stat-number"><strong id="stat-days">—</strong><span>日</span></p><p class="stat-description">トレーニングした日</p></article>
+            <article class="stat-card"><p class="stat-label">表示月の記録件数</p><p class="stat-number"><strong id="stat-sessions">—</strong><span>件</span></p><p class="stat-description">保存した記録</p></article>
+          </div>
+          </div>
+          <section class="section" aria-labelledby="calendar-heading">
+        <div class="section-heading">
+          <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">トレーニングカレンダー</h2></div>
+          <span class="note-chip" id="month-count">読み込み中</span>
+        </div>
+        <div class="panel">
+          <div class="calendar-topbar">
+            <h3 id="month-title" aria-live="polite"></h3>
+            <div class="month-controls">
+              <button type="button" id="prev-month" aria-label="前の月">‹</button>
+              <button type="button" id="next-month" aria-label="次の月">›</button>
+            </div>
+          </div>
+          <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+          <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
+          <div class="legend">
+            <span><i class="legend-dot completed"></i> 実施日</span>
+            
+            <span><i class="legend-dot today"></i> 今日</span>
+          </div>
+          <p class="calendar-hint">日付をタップして記録を追加できます。</p>
+        </div>
+      </section>
+          <section class="section history-records-section" aria-labelledby="history-record-list-heading">
+            <div class="section-heading">
+              <div><p class="section-caption">LOGS</p><h2 id="history-record-list-heading">表示月の記録</h2></div>
+            </div>
+            <div class="panel history-records-panel">
+              <div class="record-history">
+                <div id="record-list" aria-live="polite">認証後に表示します。</div>
               </div>
             </div>
-            <div class="record-history">
-            <h3>表示月の記録</h3>
-            <div id="record-list" aria-live="polite">認証後に表示します。</div>
-          </div>
-          </div>
-
-          <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
+          </section>
 
         </section>
 
@@ -186,8 +184,6 @@
           <span class="system-indicator" id="db-indicator"></span>
         </div>
       </section>
-
-          <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
 
         </section>
       </div>
