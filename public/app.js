@@ -10,6 +10,27 @@ let recordsRequestId = 0;
 let recordsLoaded = false;
 
 const byId = (id) => document.getElementById(id);
+// テーマは操作中のメモリにのみ保持。ユーザー設定をブラウザストレージへ保存しない。
+const themeToggle = byId("theme-toggle");
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+let currentTheme = "dark";
+
+function applyTheme(nextTheme) {
+  currentTheme = nextTheme === "light" ? "light" : "dark";
+  document.documentElement.dataset.theme = currentTheme;
+  const isLight = currentTheme === "light";
+  themeToggle.setAttribute("aria-pressed", String(isLight));
+  const toggleLabel = isLight ? "ダークモードに切り替える" : "ライトモードに切り替える";
+  themeToggle.setAttribute("aria-label", toggleLabel);
+  themeToggle.title = toggleLabel;
+  if (themeMeta) themeMeta.content = isLight ? "#f5f1f7" : "#1c1a28";
+}
+applyTheme(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+themeToggle.addEventListener("click", () => {
+  applyTheme(currentTheme === "light" ? "dark" : "light");
+});
+
+
 const monthTitle = byId("month-title");
 const calendarGrid = byId("calendar-grid");
 const dateLabel = byId("today-label");
@@ -294,6 +315,7 @@ function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
   const previousPage = activePage;
   activePage = screen;
+  document.body.classList.toggle("is-home", screen === "home");
   if (screen === "home") {
     if (previousPage !== "home" || homeDialogue.hidden) showHomeGreeting();
   } else {
@@ -334,6 +356,7 @@ function setAuthenticated(next) {
   byId("app-header").hidden = !next;
   byId("app-footer").hidden = !next;
   document.body.classList.toggle("is-authenticated", next);
+  if (!next) document.body.classList.remove("is-home");
   document.title = next ? "kintoreapp | 筋トレ記録" : "ログイン";
   loginSuccess.hidden = !next;
   if (next) {

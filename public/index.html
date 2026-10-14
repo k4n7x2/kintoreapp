@@ -3,17 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101827">
+  <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261015-touchfix2">
-  <script type="module" src="/app.js?v=20261015-touchfix2"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261015-theme-layout1">
+  <script type="module" src="/app.js?v=20261015-theme-layout1"></script>
 </head>
 <body>
   <div class="app-shell">
     <header class="site-header" id="app-header" hidden>
       <div class="brand"><span class="brand-mark" aria-hidden="true">K</span><span>kintore<span class="brand-sub">app</span></span></div>
-      <span class="status-pill">PERSONAL LOG</span>
+      <div class="header-actions">
+        <span class="status-pill">PERSONAL LOG</span>
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="ライトモードに切り替える" aria-pressed="false" title="ライトモードに切り替える">
+          <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+          <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.2A8.5 8.5 0 0 1 9.8 3.6a8.5 8.5 0 1 0 10.6 10.6Z"/></svg>
+        </button>
+      </div>
     </header>
 
     <main>
