@@ -183,7 +183,7 @@ public/assets/shiori/
 6. GitHubへの登録結果をファイル実体で確認。必要な場合だけ画面の参照先を修正。
 7. デプロイ状態・本番画面での表示を別途確認。「生成」「保存」「表示」を混同しない。
 
-基準画像の更新は旧版を残し、顔基準は `shiori-master-v2.jpg`、塗り基準は `shiori-style-fullbody-v2.png` のように別々に世代管理する。ユーザー承認後に [README.md](./README.md) の現行基準指定を変更する。
+基準画像の更新は旧版を残し、顔基準は `shiori-master-v2.jpg`、塗り基準は `shiori-style-fullbody-v2.jpg` のように別々に世代管理する。ユーザー承認後に [README.md](./README.md) の現行基準指定を変更する。
 
 ## 8. 生成時の指示例（文章だけで完結させない）
 
