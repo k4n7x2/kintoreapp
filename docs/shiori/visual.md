@@ -20,10 +20,10 @@ GitHub実体：`docs/shiori/reference/shiori-master-v1.jpg`
 
 ### 補助マスター画像その2：塗り・透明感・光・全身バランス（正式採用）
 
-**[reference/shiori-style-fullbody-v1.png](./reference/shiori-style-fullbody-v1.png)**
+**[reference/shiori-style-fullbody-v1.jpg](./reference/shiori-style-fullbody-v1.jpg)**
 
-GitHub実体：`docs/shiori/reference/shiori-style-fullbody-v1.png`  
-画像形式：PNG、1024 × 1536 px、背景付きの全身一枚絵（**参照資料であり、透過立ち絵ではない**）。
+GitHub実体：`docs/shiori/reference/shiori-style-fullbody-v1.jpg`  
+画像形式：JPEG、1024 × 1536 px、背景付きの全身一枚絵（**参照資料であり、透過立ち絵ではない**）。
 
 この画像を**「基準絵その2」**として採用する。役割は次のとおり。
 
@@ -39,10 +39,10 @@ GitHub実体：`docs/shiori/reference/shiori-style-fullbody-v1.png`
 | 項目 | 最優先で参照する画像 |
 |---|---|
 | 顔・目・髪型・瞳・表情・同一人物性 | **基準絵その1：`shiori-master-v1.jpg`** |
-| 塗り・光・透明感・水彩の空気感・服の動き | **基準絵その2：`shiori-style-fullbody-v1.png`** |
-| 全身比率・三面図・標準私服の構造・表情配置 | **基準絵その3：`shiori-character-sheet-v1.png`** |
+| 塗り・光・透明感・水彩の空気感・服の動き | **基準絵その2：`shiori-style-fullbody-v1.jpg`** |
+| 全身比率・三面図・標準私服の構造・表情配置 | **基準絵その3：`shiori-character-sheet-v1.jpg`** |
 | 花飾り | **基準絵その2**（衣装・ポーズの完全再現は不要） |
-| トレーニングウェアの衣装構造・配色 | **対象の衣装設定画AまたはB**：`shiori-training-outfit-v1.png` / `shiori-training-outfit-v2.png` |
+| トレーニングウェアの衣装構造・配色 | **対象の衣装設定画AまたはB**：`shiori-training-outfit-v1.jpg` / `shiori-training-outfit-v2.jpg` |
 | **髪の毛先の滑らかさ・健康的なまとまり** | **この `visual.md` の「髪の仕上がり（必須）」を画像より優先** |
 
 **原則として画像生成時には基準絵3枚を実際の参照画像として渡し、トレーニング衣装の生成時には指定された衣装設定画AまたはBも渡す。**
@@ -58,10 +58,10 @@ GitHub実体：`docs/shiori/reference/shiori-style-fullbody-v1.png`
 
 ### キャラクターシート v1（正式採用済み：基準絵その3）
 
-**[reference/shiori-character-sheet-v1.png](./reference/shiori-character-sheet-v1.png)**
+**[reference/shiori-character-sheet-v1.jpg](./reference/shiori-character-sheet-v1.jpg)**
 
-保存先：`docs/shiori/reference/shiori-character-sheet-v1.png`
-画像形式：PNG、1448 × 1086 px、背景付きのキャラクター設定資料。
+保存先：`docs/shiori/reference/shiori-character-sheet-v1.jpg`
+画像形式：JPEG、1448 × 1086 px、背景付きのキャラクター設定資料。
 
 制作仕様：[character-sheet-spec.md](./character-sheet-spec.md)
 
@@ -77,8 +77,8 @@ GitHub実体：`docs/shiori/reference/shiori-style-fullbody-v1.png`
 
 ### トレーニングウェア設定資料（2種類・両方採用）
 
-- **衣装A：** [reference/shiori-training-outfit-v1.png](./reference/shiori-training-outfit-v1.png) — スポーツブラ、レギンス、軽い羽織り、トレーニングシューズを中心とする三面図。
-- **衣装B：** [reference/shiori-training-outfit-v2.png](./reference/shiori-training-outfit-v2.png) — スポーツTシャツ、ジョガーパンツ、トレーニングシューズを中心とする三面図。
+- **衣装A：** [reference/shiori-training-outfit-v1.jpg](./reference/shiori-training-outfit-v1.jpg) — スポーツブラ、レギンス、軽い羽織り、トレーニングシューズを中心とする三面図。
+- **衣装B：** [reference/shiori-training-outfit-v2.jpg](./reference/shiori-training-outfit-v2.jpg) — スポーツTシャツ、ジョガーパンツ、トレーニングシューズを中心とする三面図。
 
 保存場所はいずれも `docs/shiori/reference/`。2枚は**異なるトレーニングウェアの選択肢**であり、`v2` が `v1` を置き換えるという意味ではない。衣装を生成・修正する場合は指定された方の設定画を**実際の画像参照として**使用する。衣装指定がなければどちらにするか確認する。
 
@@ -166,7 +166,7 @@ public/assets/shiori/
 └── event/
 ```
 
-顔基準JPEG・塗り基準PNG・三面図基準PNGの3枚は、いずれも表示用立ち絵と別の `docs/shiori/reference/` に置く。
+顔基準JPEG・塗り基準JPEG・三面図基準JPEGの3枚は、いずれも表示用立ち絵と別の `docs/shiori/reference/` に置く。
 
 ### 旧素材との整合
 
@@ -176,7 +176,7 @@ public/assets/shiori/
 ## 7. 生成・採用・反映のワークフロー
 
 1. ユーザーが明示的に **「生成」** を依頼。
-2. GitHub最新 `main` の本書・[README.md](./README.md)・[character.md](./character.md)・[dialogue.md](./dialogue.md) と関連仕様を読み、**顔基準JPEG・塗り基準PNG・三面図基準PNGの3枚を実際に生成入力に使う**。トレーニング衣装なら指定された衣装設定画も加える。
+2. GitHub最新 `main` の本書・[README.md](./README.md)・[character.md](./character.md)・[dialogue.md](./dialogue.md) と関連仕様を読み、**顔基準JPEG・塗り基準JPEG・三面図基準JPEGの3枚を実際に生成入力に使う**。トレーニング衣装なら指定された衣装設定画も加える。
 3. **顔・髪・体型・衣装・画風・形式**について今回の必須条件を抽出し、画像ごとに再現する要素と再現しない要素（特に枝毛状の毛先）を明確にして生成する。アプリ用立ち絵は透過PNG。
 4. **[README.md](./README.md) の「画像生成前後の品質管理」に従って**顔→髪（毛先最優先）→体型→衣装→画風→形式の順に検証する。アプリ用立ち絵はPNGの実アルファも確認する。未達項目は具体的に報告する。
 5. **ユーザーの採用・保存指示**に基づいて正式名で登録。採用が不明なら勝手に置き換えない。

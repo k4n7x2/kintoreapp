@@ -10,11 +10,11 @@
 2. [visual.md](./visual.md) — 顔・画風・基準画像・画像生成／保存仕様
 3. [dialogue.md](./dialogue.md) — 口調・会話例・セリフ設計・NG表現
 4. [reference/shiori-master-v1.jpg](./reference/shiori-master-v1.jpg) — **基準絵その1：顔・髪型・瞳・表情の最優先基準**
-5. [reference/shiori-style-fullbody-v1.png](./reference/shiori-style-fullbody-v1.png) — **基準絵その2：水彩の透明感・光・アニメ調の塗り・全身バランス・花飾り**
+5. [reference/shiori-style-fullbody-v1.jpg](./reference/shiori-style-fullbody-v1.jpg) — **基準絵その2：水彩の透明感・光・アニメ調の塗り・全身バランス・花飾り**
 6. [character-sheet-spec.md](./character-sheet-spec.md) — **三面図・身長と体型・私服・喜怒哀楽4表情の制作仕様書**
-7. [reference/shiori-character-sheet-v1.png](./reference/shiori-character-sheet-v1.png) — **基準絵その3：正式採用済みの三面図・標準私服・喜怒哀楽・花飾り・色見本**
-8. [reference/shiori-training-outfit-v1.png](./reference/shiori-training-outfit-v1.png) — **トレーニングウェアA：スポーツブラ・レギンス・羽織りの三面図**
-9. [reference/shiori-training-outfit-v2.png](./reference/shiori-training-outfit-v2.png) — **トレーニングウェアB：スポーツTシャツ・ジョガーパンツの三面図**
+7. [reference/shiori-character-sheet-v1.jpg](./reference/shiori-character-sheet-v1.jpg) — **基準絵その3：正式採用済みの三面図・標準私服・喜怒哀楽・花飾り・色見本**
+8. [reference/shiori-training-outfit-v1.jpg](./reference/shiori-training-outfit-v1.jpg) — **トレーニングウェアA：スポーツブラ・レギンス・羽織りの三面図**
+9. [reference/shiori-training-outfit-v2.jpg](./reference/shiori-training-outfit-v2.jpg) — **トレーニングウェアB：スポーツTシャツ・ジョガーパンツの三面図**
 
 これらの内容を省略して過去の会話や短いプロジェクト指示だけからキャラクターを推測しない。詳細を確認できなければ、その旨をユーザーに伝える。
 
@@ -37,9 +37,9 @@
 | 生成する要素 | 最優先する資料 |
 |---|---|
 | 顔立ち・目・瞳・表情・同一人物性 | **基準絵その1**：`reference/shiori-master-v1.jpg` |
-| アニメ調の塗り・光・水彩の透明感・空気感 | **基準絵その2**：`reference/shiori-style-fullbody-v1.png` |
-| 身長約160cm・体型・頭身・全身バランス・標準私服 | **基準絵その3**：`reference/shiori-character-sheet-v1.png` および `character-sheet-spec.md` |
-| トレーニングウェアの形状・構造・配色 | **指定された衣装設定画**：`reference/shiori-training-outfit-v1.png`（A）または `reference/shiori-training-outfit-v2.png`（B） |
+| アニメ調の塗り・光・水彩の透明感・空気感 | **基準絵その2**：`reference/shiori-style-fullbody-v1.jpg` |
+| 身長約160cm・体型・頭身・全身バランス・標準私服 | **基準絵その3**：`reference/shiori-character-sheet-v1.jpg` および `character-sheet-spec.md` |
+| トレーニングウェアの形状・構造・配色 | **指定された衣装設定画**：`reference/shiori-training-outfit-v1.jpg`（A）または `reference/shiori-training-outfit-v2.jpg`（B） |
 | **髪の毛先の仕上がり・健康的なサラサラ感** | **最新の文章仕様**：`visual.md` の「髪の仕上がり（必須）」 |
 
 **競合時の処理：** 各要素について、当該要素を担当する主参照を優先する。**とくに髪の毛先は、参考画像の描写より最新の `visual.md` の明示的な文章条件を優先する。** 参考画像に散り毛・枝毛状の裂け・パサついた毛先が見えても、それを意図的に引き継がない。サラサラした柔らかな質感は残し、毛先まで健康的でなめらかな、外周のつながったボブに仕上げる。
@@ -71,10 +71,10 @@
 
 - 設定資料：`docs/shiori/`（このディレクトリ）
 - 顔・表情の基準絵その1：`docs/shiori/reference/shiori-master-v1.jpg`
-- 塗り・光の基準絵その2：`docs/shiori/reference/shiori-style-fullbody-v1.png`
-- 全身三面図・標準衣装・表情整理の基準絵その3：`docs/shiori/reference/shiori-character-sheet-v1.png`
-- トレーニングウェア衣装A：`docs/shiori/reference/shiori-training-outfit-v1.png`
-- トレーニングウェア衣装B：`docs/shiori/reference/shiori-training-outfit-v2.png`
+- 塗り・光の基準絵その2：`docs/shiori/reference/shiori-style-fullbody-v1.jpg`
+- 全身三面図・標準衣装・表情整理の基準絵その3：`docs/shiori/reference/shiori-character-sheet-v1.jpg`
+- トレーニングウェア衣装A：`docs/shiori/reference/shiori-training-outfit-v1.jpg`
+- トレーニングウェア衣装B：`docs/shiori/reference/shiori-training-outfit-v2.jpg`
 - 表示用キャラクター画像：`public/assets/shiori/`
 - ホームの時間帯別セリフ：`public/data/shiori-greetings.json`
 - ログイン演出の候補セリフ：`public/data/shiori-login-dialogues.json`
@@ -85,7 +85,7 @@
 ## 画像生成の必須ルール
 
 - ユーザーの依頼に **「生成」** が明記されない限り画像生成しない。
-- 生成時は**顔基準JPEG・塗り基準PNG・キャラクターシートPNGの3枚**を原則実際に読み込み、生成への参照画像として渡す。GitHubのURLを文章に貼っただけで「参照済み」としない。
+- 生成時は**顔基準JPEG・塗り基準JPEG・キャラクターシートJPEGの3枚**を原則実際に読み込み、生成への参照画像として渡す。GitHubのURLを文章に貼っただけで「参照済み」としない。
 - トレーニングウェア画像の生成時は、上記3枚に加えて選んだ**ウェア設定画AまたはB**を衣装の参照資料として使う。2種類は別衣装であり、v2はv1の上書き・廃止を意味しない。顔・体型・塗りはそれぞれ既存の基準絵その1〜3を優先する。
 - 参照画像を渡せない場合は制約を説明し、必要に応じて添付を求める。
 - **アプリに表示する立ち絵系は背景透過PNG（実アルファチャンネル必須）**。マスター画像などの制作資料はこの制限を受けない。

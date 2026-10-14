@@ -1,6 +1,6 @@
 # 朝倉栞 — キャラクターシート制作仕様書 v1
 
-> ステータス：**制作仕様確定・基準絵その3の画像正式採用済み**。正式画像：[reference/shiori-character-sheet-v1.png](./reference/shiori-character-sheet-v1.png)（PNG、1448×1086）。
+> ステータス：**制作仕様確定・基準絵その3の画像正式採用済み**。正式画像：[reference/shiori-character-sheet-v1.jpg](./reference/shiori-character-sheet-v1.jpg)（JPEG、1448×1086）。
 
 ## 1. 目的と参照順序
 
@@ -12,7 +12,7 @@
 2. [visual.md](./visual.md)：外見・制作方針
 3. [dialogue.md](./dialogue.md)：表情の解釈に関係する口調・キャラクター性
 4. [reference/shiori-master-v1.jpg](./reference/shiori-master-v1.jpg)：**顔・目・髪・表情・同一人物性の最優先基準**
-5. [reference/shiori-style-fullbody-v1.png](./reference/shiori-style-fullbody-v1.png)：**アニメ調の色面、水彩の透明感、光・全身の空気感、花飾り**
+5. [reference/shiori-style-fullbody-v1.jpg](./reference/shiori-style-fullbody-v1.jpg)：**アニメ調の色面、水彩の透明感、光・全身の空気感、花飾り**
 
 両画像は生成時に**実際の画像入力として参照**する。URLを本文に書くだけで参照したことにはしない。ユーザーが明示的に「生成」と依頼するまで画像生成を実行しない。
 
@@ -98,8 +98,8 @@
 1. ユーザーが明示的に「生成」を依頼する。
 2. 上記の2枚の正式画像を生成の参照入力に使用し、本書の三面図・体型・衣装・表情を適用する。
 3. 三面図の整合性、4表情の差、画風、花飾り、衣装、160cm相当の比率を確認する。
-4. **正式採用済みの基準絵その3**は [reference/shiori-character-sheet-v1.png](./reference/shiori-character-sheet-v1.png) に保存されている（1448 × 1086 px）。
+4. **正式採用済みの基準絵その3**は [reference/shiori-character-sheet-v1.jpg](./reference/shiori-character-sheet-v1.jpg) に保存されている（1448 × 1086 px）。
 5. 今後の差分制作では基準絵その1・その2・その3の役割を区別し、原則として3枚とも実際の参照画像として使用する。
-6. シートの改訂・更新はユーザーの承認を得たうえで `shiori-character-sheet-v2.png` などの別名で世代管理し、[README.md](./README.md) と [visual.md](./visual.md) の現行参照を更新する。
+6. シートの改訂・更新はユーザーの承認を得たうえで `shiori-character-sheet-v2.jpg` などの別名で世代管理し、[README.md](./README.md) と [visual.md](./visual.md) の現行参照を更新する。
 
 このキャラクターシートは**背景付きの制作資料**であり、アプリに表示する立ち絵ではない。アプリ用の立ち絵は別途背景透過PNGとして制作・採用する。
