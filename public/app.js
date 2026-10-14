@@ -7,6 +7,7 @@ let authorized = false;
 let dbReady = false;
 let activePage = "home";
 let recordsRequestId = 0;
+let recordsLoaded = false;
 
 const byId = (id) => document.getElementById(id);
 const monthTitle = byId("month-title");
@@ -36,7 +37,8 @@ saveDate.value = localISO(now);
 function renderCalendar() {
   monthTitle.textContent = String(shownYear) + "年 " + String(shownMonth + 1) + "月";
   byId("history-month-title").textContent = monthTitle.textContent;
-  byId("month-count").textContent = completeDates.size + "日 記録済み";
+  byId("month-count").textContent = recordsLoaded ? completeDates.size + "日実施" : "読み込み中";
+  renderOverview();
   calendarGrid.replaceChildren();
   const startWeekday = new Date(shownYear, shownMonth, 1).getDay();
   const daysInMonth = new Date(shownYear, shownMonth + 1, 0).getDate();
@@ -69,6 +71,27 @@ function renderCalendar() {
     calendarGrid.appendChild(cell);
   }
 }
+function renderOverview() {
+  byId("stat-days").textContent = recordsLoaded ? String(completeDates.size) : "—";
+  byId("stat-sessions").textContent = recordsLoaded ? String(workouts.length) : "—";
+  const recent = byId("recent-record");
+  recent.replaceChildren();
+  if (!recordsLoaded) {
+    recent.textContent = "読み込み中…";
+  } else if (!workouts.length) {
+    recent.textContent = "この月はまだ記録がありません。";
+  } else {
+    const latest = workouts[0];
+    const date = document.createElement("strong");
+    date.className = "recent-date";
+    date.textContent = latest.performed_on;
+    const note = document.createElement("p");
+    note.className = "recent-note";
+    note.textContent = latest.note || "メモなし";
+    recent.append(date, note);
+  }
+}
+
 function setReady(ready) {
   dbReady = ready;
   saveDate.disabled = !ready;
@@ -122,6 +145,7 @@ async function loadWorkouts() {
     const result = await fetchJSON("/api/workouts?month=" + encodeURIComponent(month));
     if (!authorized || currentMonth() !== month || requestId !== recordsRequestId) return;
     workouts = result.workouts || [];
+    recordsLoaded = true;
     completeDates.clear();
     workouts.forEach((w) => completeDates.add(w.performed_on));
     renderCalendar();
@@ -135,8 +159,11 @@ async function loadWorkouts() {
       return;
     }
     workouts = [];
+    recordsLoaded = false;
     completeDates.clear();
     renderCalendar();
+    byId("month-count").textContent = "取得できません";
+    byId("recent-record").textContent = "記録を読み込めませんでした。";
     setReady(false);
     list.textContent = error.status === 503
       ? "D1のテーブル準備が必要です。"
@@ -185,13 +212,15 @@ function changeMonth(offset) {
   shownYear = result.getFullYear();
   shownMonth = result.getMonth();
   ++recordsRequestId;
+  recordsLoaded = false;
   setReady(false);
   completeDates.clear();
   workouts = [];
   renderCalendar();
   list.textContent = "読み込み中…";
   if (authorized) loadWorkouts();
-}byId("prev-month").addEventListener("click", () => changeMonth(-1));
+}
+byId("prev-month").addEventListener("click", () => changeMonth(-1));
 byId("next-month").addEventListener("click", () => changeMonth(1));
 byId("history-prev-month").addEventListener("click", () => changeMonth(-1));
 byId("history-next-month").addEventListener("click", () => changeMonth(1));
@@ -202,49 +231,6 @@ const loginPassword = byId("login-password");
 const loginButton = byId("login-button");
 const loginFeedback = byId("login-feedback");
 const loginSuccess = byId("login-success");
-
-const shioriWelcome = byId("shiori-welcome");
-const shioriLine = byId("shiori-line");
-const shioriImage = byId("shiori-art-image");
-const shioriPlaceholder = byId("shiori-art-placeholder");
-
-function revealShioriArt() {
-  if (!shioriImage.naturalWidth) return;
-  shioriImage.hidden = false;
-  shioriPlaceholder.hidden = true;
-}
-shioriImage.addEventListener("load", revealShioriArt);
-shioriImage.addEventListener("error", () => {
-  shioriImage.hidden = true;
-  shioriPlaceholder.hidden = false;
-});
-if (shioriImage.complete) revealShioriArt();
-
-function greetingPeriod(hour) {
-  if (hour >= 5 && hour < 11) return "morning";
-  if (hour >= 11 && hour < 17) return "afternoon";
-  if (hour >= 17 && hour < 22) return "evening";
-  return "night";
-}
-
-async function showShioriGreeting() {
-  shioriWelcome.hidden = false;
-  shioriLine.textContent = "あ、来た。今日はどうする？";
-  try {
-    const response = await fetch("/data/shiori-greetings.json");
-    if (!response.ok) return;
-    const greetings = await response.json();
-    const period = greetingPeriod(new Date().getHours());
-    const timed = Array.isArray(greetings[period]) ? greetings[period] : [];
-    const common = Array.isArray(greetings.anytime) ? greetings.anytime : [];
-    const pool = [...timed, ...common];
-    if (!authorized || !pool.length) return;
-    const selected = pool[Math.floor(Math.random() * pool.length)];
-    if (typeof selected === "string" && selected.trim()) shioriLine.textContent = selected;
-  } catch {
-    // セリフファイルが読めなくても認証画面や記録処理に影響させない。
-  }
-}
 
 const pages = new Set(["home", "record", "history", "settings"]);
 
@@ -291,12 +277,11 @@ function setAuthenticated(next) {
   if (next) {
     authStatus.textContent = "ログイン済み（自分専用）";
     setScreen("home", false);
-    showShioriGreeting();
   } else {
-    shioriWelcome.hidden = true;
     authStatus.textContent = "未ログイン：パスワードを入力してください。";
     setReady(false);
     workouts = [];
+    recordsLoaded = false;
     completeDates.clear();
     renderCalendar();
     list.textContent = "ログインすると記録が表示されます。";
