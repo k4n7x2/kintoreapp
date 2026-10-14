@@ -36,7 +36,6 @@ saveDate.value = localISO(now);
 
 function renderCalendar() {
   monthTitle.textContent = String(shownYear) + "年 " + String(shownMonth + 1) + "月";
-  byId("history-month-title").textContent = monthTitle.textContent;
   byId("month-count").textContent = recordsLoaded ? completeDates.size + "日実施" : "読み込み中";
   renderOverview();
   calendarGrid.replaceChildren();
@@ -74,22 +73,7 @@ function renderCalendar() {
 function renderOverview() {
   byId("stat-days").textContent = recordsLoaded ? String(completeDates.size) : "—";
   byId("stat-sessions").textContent = recordsLoaded ? String(workouts.length) : "—";
-  const recent = byId("recent-record");
-  recent.replaceChildren();
-  if (!recordsLoaded) {
-    recent.textContent = "読み込み中…";
-  } else if (!workouts.length) {
-    recent.textContent = "この月はまだ記録がありません。";
-  } else {
-    const latest = workouts[0];
-    const date = document.createElement("strong");
-    date.className = "recent-date";
-    date.textContent = latest.performed_on;
-    const note = document.createElement("p");
-    note.className = "recent-note";
-    note.textContent = latest.note || "メモなし";
-    recent.append(date, note);
-  }
+
 }
 
 function setReady(ready) {
@@ -163,7 +147,6 @@ async function loadWorkouts() {
     completeDates.clear();
     renderCalendar();
     byId("month-count").textContent = "取得できません";
-    byId("recent-record").textContent = "記録を読み込めませんでした。";
     setReady(false);
     list.textContent = error.status === 503
       ? "D1のテーブル準備が必要です。"
@@ -222,8 +205,6 @@ function changeMonth(offset) {
 }
 byId("prev-month").addEventListener("click", () => changeMonth(-1));
 byId("next-month").addEventListener("click", () => changeMonth(1));
-byId("history-prev-month").addEventListener("click", () => changeMonth(-1));
-byId("history-next-month").addEventListener("click", () => changeMonth(1));
 renderCalendar();
 
 const loginForm = byId("login-form");
