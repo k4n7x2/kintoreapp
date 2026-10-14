@@ -33,39 +33,27 @@
 
       <div id="app-screen" hidden>
         <section class="app-page" id="page-home" data-page="home" aria-labelledby="home-heading">
-          <div class="page-heading home-heading">
-            <div>
-              <p class="section-caption">DASHBOARD</p>
-              <h1 id="home-heading">ホーム</h1>
-              <p class="page-description" id="today-label"></p>
-            </div>
-          </div>
+          <h1 id="home-heading" class="visually-hidden">ホーム</h1>
+          <p class="home-date" id="today-label"></p>
 
-          <!-- 立ち絵は専用カードを設けず、右側の空間に透過PNGを重ねる。 -->
+          <!-- 左のアイコンメニューと、右から中央へ大きく重ねる透過立ち絵。 -->
           <div class="home-stage">
-            <nav class="dashboard-hub" aria-label="ダッシュボードのメニュー">
-              <p class="section-caption hub-caption">MENU</p>
+            <nav class="dashboard-hub" aria-label="ホームメニュー">
               <div class="hub-grid">
-                <button class="hub-link" type="button" data-screen="record">
-                  <span class="hub-link__symbol" aria-hidden="true">＋</span>
-                  <span class="hub-link__label"><strong>記録</strong><small>トレーニング入力</small></span>
-                  <span class="hub-link__chevron" aria-hidden="true">›</span>
+                <button class="hub-link" type="button" data-screen="record" aria-label="トレーニングを記録" title="記録">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 6.5 11 11M4 10 10 4m-8 4 6-6m6 18 6-6m-2 8 4-4"/></svg>
                 </button>
-                <button class="hub-link" type="button" data-screen="history">
-                  <span class="hub-link__symbol" aria-hidden="true">▤</span>
-                  <span class="hub-link__label"><strong>履歴</strong><small>カレンダー・実績</small></span>
-                  <span class="hub-link__chevron" aria-hidden="true">›</span>
+                <button class="hub-link" type="button" data-screen="history" aria-label="履歴とカレンダーを見る" title="履歴">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h3v3H8z"/></svg>
                 </button>
-                <button class="hub-link" type="button" data-screen="settings">
-                  <span class="hub-link__symbol" aria-hidden="true">⚙</span>
-                  <span class="hub-link__label"><strong>設定</strong><small>アカウント・接続</small></span>
-                  <span class="hub-link__chevron" aria-hidden="true">›</span>
+                <button class="hub-link" type="button" data-screen="settings" aria-label="設定を開く" title="設定">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2m0 15v2m9.5-9.5h-2m-15 0h-2m16.22-6.72-1.41 1.41M6.69 17.31l-1.41 1.41m13.44 0-1.41-1.41M6.69 6.69 5.28 5.28"/></svg>
                 </button>
               </div>
             </nav>
             <div class="character-scene character-scene--home" data-character-scene="home">
               <div id="character-layer-home" class="character-layer character-layer--home" data-character-layer="home" aria-hidden="true">
-                <!-- 採用済みの背景透過PNGを追加したときに、このレイヤー上へ描画する。 -->
+                <!-- 正式な透過PNGが採用されたら立ち絵だけを配置する。現時点では表示しない。 -->
                 <div class="character-layer__dialogue" hidden></div>
               </div>
             </div>
