@@ -37,6 +37,32 @@
             <div><p class="section-caption">WORKOUT DASHBOARD</p><h1 id="home-heading">トレーニング管理</h1><p class="page-description" id="today-label"></p></div>
             <button class="heading-action" type="button" data-screen="record">＋ 記録</button>
           </div>
+
+          <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
+          <section id="character-slot-home" class="character-stage character-stage--home" data-character-slot="home" aria-label="キャラクター表示エリア">
+            <div class="character-stage__content">
+              <p class="character-stage__eyebrow">CHARACTER</p>
+              <h2>キャラクター表示エリア</h2>
+              <p class="character-stage__hint">今後、立ち絵とセリフをここに表示します。</p>
+            </div>
+            <div class="character-stage__portrait" data-character-image-container aria-hidden="true"><span>IMAGE</span></div>
+          </section>
+          <section class="dashboard-hub" aria-labelledby="dashboard-menu-heading">
+            <div class="section-heading">
+              <div><p class="section-caption">QUICK ACCESS</p><h2 id="dashboard-menu-heading">メニュー</h2></div>
+            </div>
+            <div class="hub-grid">
+              <button class="hub-link" type="button" data-screen="record">
+                <span class="hub-link__symbol" aria-hidden="true">＋</span><strong>記録</strong><small>トレーニング入力</small>
+              </button>
+              <button class="hub-link" type="button" data-screen="history">
+                <span class="hub-link__symbol" aria-hidden="true">▤</span><strong>履歴</strong><small>過去の記録</small>
+              </button>
+              <button class="hub-link" type="button" data-screen="settings">
+                <span class="hub-link__symbol" aria-hidden="true">⚙</span><strong>設定</strong><small>アカウント・接続</small>
+              </button>
+            </div>
+          </section>
           <div class="overview-grid" aria-label="表示月のトレーニング概要">
             <article class="stat-card"><p class="stat-label">表示月の実施日数</p><p class="stat-number"><strong id="stat-days">—</strong><span>日</span></p><p class="stat-description">トレーニングした日</p></article>
             <article class="stat-card"><p class="stat-label">表示月の記録件数</p><p class="stat-number"><strong id="stat-sessions">—</strong><span>件</span></p><p class="stat-description">保存した記録</p></article>
@@ -64,18 +90,6 @@
           <p class="calendar-hint">日付をタップして記録を追加できます。</p>
         </div>
       </section>
-          <div class="shortcuts" aria-label="クイックアクセス">
-            <button type="button" class="shortcut-card" data-screen="record">
-              <span class="shortcut-icon" aria-hidden="true">＋</span>
-              <span><strong>トレーニングを記録</strong><small>実施日やメモを残す</small></span>
-              <span class="shortcut-chevron" aria-hidden="true">›</span>
-            </button>
-            <button type="button" class="shortcut-card" data-screen="history">
-              <span class="shortcut-icon" aria-hidden="true">▤</span>
-              <span><strong>過去の記録を見る</strong><small>振り返り・削除</small></span>
-              <span class="shortcut-chevron" aria-hidden="true">›</span>
-            </button>
-          </div>
           <section class="section recent-section" aria-labelledby="recent-heading">
             <div class="section-heading"><div><p class="section-caption">RECENT</p><h2 id="recent-heading">表示月の最新記録</h2></div><button class="recent-history-action" type="button" data-screen="history">履歴一覧 ›</button></div>
             <div id="recent-record" class="panel recent-panel" aria-live="polite">読み込み中…</div>
@@ -100,6 +114,16 @@
           </form>
             <p class="security-note">種目・重量・回数は今後の機能追加で対応します。記録はCloudflare D1に保存されます。</p>
           </div>
+
+          <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
+          <section id="character-slot-record" class="character-stage character-stage--compact" data-character-slot="record" aria-label="記録画面のキャラクター">
+            <div class="character-stage__content">
+              <p class="character-stage__eyebrow">CHARACTER SPACE</p>
+              <h2>記録画面のキャラクター</h2>
+              <p class="character-stage__hint">今後、画面に合わせた立ち絵やセリフを表示する領域です。</p>
+            </div>
+            <div class="character-stage__portrait" data-character-image-container aria-hidden="true"><span>IMAGE</span></div>
+          </section>
         </section>
 
         <section class="app-page" id="page-history" data-page="history" aria-labelledby="history-heading" hidden>
@@ -121,6 +145,16 @@
             <div id="record-list" aria-live="polite">認証後に表示します。</div>
           </div>
           </div>
+
+          <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
+          <section id="character-slot-history" class="character-stage character-stage--compact" data-character-slot="history" aria-label="履歴画面のキャラクター">
+            <div class="character-stage__content">
+              <p class="character-stage__eyebrow">CHARACTER SPACE</p>
+              <h2>履歴画面のキャラクター</h2>
+              <p class="character-stage__hint">今後、画面に合わせた立ち絵やセリフを表示する領域です。</p>
+            </div>
+            <div class="character-stage__portrait" data-character-image-container aria-hidden="true"><span>IMAGE</span></div>
+          </section>
         </section>
 
         <section class="app-page" id="page-settings" data-page="settings" aria-labelledby="settings-heading" hidden>
@@ -145,6 +179,16 @@
           <span class="system-indicator" id="db-indicator"></span>
         </div>
       </section>
+
+          <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
+          <section id="character-slot-settings" class="character-stage character-stage--compact" data-character-slot="settings" aria-label="設定画面のキャラクター">
+            <div class="character-stage__content">
+              <p class="character-stage__eyebrow">CHARACTER SPACE</p>
+              <h2>設定画面のキャラクター</h2>
+              <p class="character-stage__hint">今後、画面に合わせた立ち絵やセリフを表示する領域です。</p>
+            </div>
+            <div class="character-stage__portrait" data-character-image-container aria-hidden="true"><span>IMAGE</span></div>
+          </section>
         </section>
       </div>
     </main>
