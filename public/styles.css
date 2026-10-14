@@ -171,3 +171,40 @@ footer { padding-top: 38px; text-align: center; font-size: 10px; color: #72889c;
   .shiori-message { padding: 22px 4px 20px 15px; }
   .shiori-line { padding: 10px; font-size: 12px; }
 }
+
+
+/* 画面分割: ログイン・ダッシュボード・記録・履歴・設定 */
+.app-shell { padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
+.boot-screen { margin-top: 45px; padding: 48px 15px; text-align: center; color: #b9c9d8; font-size: 13px; }
+.login-hero { margin-top: 5px; }
+.auth-section { margin-top: 24px; }
+.auth-panel .security-note { margin: 15px 0 0; }
+.page-heading { padding-top: 6px; }
+.page-heading h1 { font-size: clamp(23px, 6vw, 29px); line-height: 1.45; margin: 7px 0 3px; letter-spacing: -.02em; }
+.page-description { font-size: 12px; color: #aebfd0; margin: 0; }
+#page-home .shiori-welcome { margin-top: 19px; }
+#page-home > .section { margin-top: 23px; }
+#page-home .shiori-welcome + .section { margin-top: 25px; }
+.calendar-day { font-family: inherit; border: 1px solid transparent; background: transparent; padding: 0; width: 100%; cursor: pointer; }
+.calendar-day.is-today { border-color: #c7e67d; }
+.calendar-day:focus-visible { outline: 2px solid #d8ed87; outline-offset: 2px; }
+.calendar-day:active { background: #293b4e; }
+.calendar-hint { margin: 12px 0 0; font-size: 11px; color: #9aafc1; }
+.shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; margin-top: 18px; }
+.shortcut-card { display: flex; position: relative; flex-direction: column; gap: 10px; text-align: left; padding: 15px 13px; border: 1px solid #33485b; background: #192a3d; border-radius: 15px; color: #e6eff8; cursor: pointer; min-height: 123px; }
+.shortcut-icon { width: 31px; height: 31px; display: grid; place-items: center; color: #d7ed8a; background: #293c49; border-radius: 10px; font-size: 20px; }
+.shortcut-card strong { display: block; font-size: 12px; font-weight: 700; }
+.shortcut-card small { display: block; font-size: 10px; color: #a7b9c8; padding-top: 4px; }
+.shortcut-chevron { position: absolute; right: 13px; top: 12px; color: #9eb2c5; font-size: 20px; }
+.shortcut-card:focus-visible { outline: 2px solid #d8ed87; outline-offset: 2px; }
+#page-history .record-history { margin-top: 0; padding-top: 0; border-top: 0; }
+#page-history .calendar-topbar { margin-bottom: 12px; }
+.settings-section { margin-top: 26px; }
+.logout-action { min-height: 40px; padding: 9px 14px; font-size: 13px; }
+.bottom-nav { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; padding-bottom: env(safe-area-inset-bottom); background: rgba(17, 28, 44, .97); border-top: 1px solid #35475a; box-shadow: 0 -8px 28px rgba(0,0,0,.28); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.bottom-nav-inner { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 640px; margin: 0 auto; padding: 7px 14px 5px; gap: 5px; }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: transparent; border-radius: 12px; color: #98aabc; cursor: pointer; min-height: 55px; font-size: 10px; font-weight: 700; }
+.nav-item svg { height: 22px; width: 22px; }
+.nav-item.is-active { color: #d8ed87; background: #283a47; }
+.nav-item:focus-visible { outline: 2px solid #d8ed87; outline-offset: -2px; }
+@media (max-width: 360px) { .shortcuts { gap: 8px; } .shortcut-card { padding: 12px 9px; } .shortcut-card strong { font-size: 11px; } .bottom-nav-inner { padding-inline: 8px; } }
