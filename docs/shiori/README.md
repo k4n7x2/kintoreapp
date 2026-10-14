@@ -13,10 +13,12 @@
 5. [reference/shiori-style-fullbody-v1.png](./reference/shiori-style-fullbody-v1.png) — **基準絵その2：水彩の透明感・光・アニメ調の塗り・全身バランス・花飾り**
 6. [character-sheet-spec.md](./character-sheet-spec.md) — **三面図・身長と体型・私服・喜怒哀楽4表情の制作仕様書**
 7. [reference/shiori-character-sheet-v1.png](./reference/shiori-character-sheet-v1.png) — **基準絵その3：正式採用済みの三面図・標準私服・喜怒哀楽・花飾り・色見本**
+8. [reference/shiori-training-outfit-v1.png](./reference/shiori-training-outfit-v1.png) — **トレーニングウェアA：スポーツブラ・レギンス・羽織りの三面図**
+9. [reference/shiori-training-outfit-v2.png](./reference/shiori-training-outfit-v2.png) — **トレーニングウェアB：スポーツTシャツ・ジョガーパンツの三面図**
 
 これらの内容を省略して過去の会話や短いプロジェクト指示だけからキャラクターを推測しない。詳細を確認できなければ、その旨をユーザーに伝える。
 
-**全身立ち絵・衣装差分・体型や表情を扱う場合は、`character-sheet-spec.md` を必ず参照すること。** 基準絵その3の画像も正式登録済み。作画資料として画像と仕様書の両方を確認する。
+**全身立ち絵・衣装差分・体型や表情を扱う場合は、`character-sheet-spec.md` を必ず参照すること。** 基準絵その3の画像も正式登録済み。作画資料として画像と仕様書の両方を確認する。**トレーニング衣装を制作する際は、該当するウェア設定画AまたはBも実際に参照する。**
 
 ## 設定の優先順位
 
@@ -34,6 +36,8 @@
 - 顔・表情の基準絵その1：`docs/shiori/reference/shiori-master-v1.jpg`
 - 塗り・光の基準絵その2：`docs/shiori/reference/shiori-style-fullbody-v1.png`
 - 全身三面図・標準衣装・表情整理の基準絵その3：`docs/shiori/reference/shiori-character-sheet-v1.png`
+- トレーニングウェア衣装A：`docs/shiori/reference/shiori-training-outfit-v1.png`
+- トレーニングウェア衣装B：`docs/shiori/reference/shiori-training-outfit-v2.png`
 - 表示用キャラクター画像：`public/assets/shiori/`
 - ホームの時間帯別セリフ：`public/data/shiori-greetings.json`
 - ログイン演出の候補セリフ：`public/data/shiori-login-dialogues.json`
@@ -45,6 +49,7 @@
 
 - ユーザーの依頼に **「生成」** が明記されない限り画像生成しない。
 - 生成時は**顔基準JPEG・塗り基準PNG・キャラクターシートPNGの3枚**を原則実際に読み込み、生成への参照画像として渡す。GitHubのURLを文章に貼っただけで「参照済み」としない。
+- トレーニングウェア画像の生成時は、上記3枚に加えて選んだ**ウェア設定画AまたはB**を衣装の参照資料として使う。2種類は別衣装であり、v2はv1の上書き・廃止を意味しない。顔・体型・塗りはそれぞれ既存の基準絵その1〜3を優先する。
 - 参照画像を渡せない場合は制約を説明し、必要に応じて添付を求める。
 - **アプリに表示する立ち絵系は背景透過PNG（実アルファチャンネル必須）**。マスター画像などの制作資料はこの制限を受けない。
 - 画像生成の成功、GitHubへの登録、アプリへの反映、デプロイ完了をそれぞれ別に確認する。
