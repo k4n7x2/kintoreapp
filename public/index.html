@@ -39,9 +39,13 @@
           </div>
 
           <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
-          <div id="character-layer-home" class="character-layer character-layer--home" data-character-layer="home" aria-hidden="true">
+
+          <!-- UI操作面とは独立した、立ち絵用の自然な余白。画像・セリフは未表示。 -->
+          <div class="character-scene character-scene--home" data-character-scene="home">
+            <div id="character-layer-home" class="character-layer character-layer--home" data-character-layer="home" aria-hidden="true">
             <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
             <div class="character-layer__dialogue" hidden></div>
+          </div>
           </div>
           <section class="dashboard-hub" aria-labelledby="dashboard-menu-heading">
             <div class="section-heading">
@@ -98,6 +102,13 @@
             <h1 id="record-heading">トレーニング記録</h1>
             <p class="page-description">今日の一歩を、記録に残そう。</p>
           </div>
+          <!-- UI操作面とは独立した、立ち絵用の自然な余白。画像・セリフは未表示。 -->
+          <div class="character-scene character-scene--record" data-character-scene="record">
+            <div id="character-layer-record" class="character-layer character-layer--record" data-character-layer="record" aria-hidden="true">
+            <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
+            <div class="character-layer__dialogue" hidden></div>
+          </div>
+          </div>
           <div class="panel record-panel">
             <p class="security-note" id="auth-status" role="status">ログイン状態を確認中…</p>
             <form id="workout-form">
@@ -112,10 +123,7 @@
           </div>
 
           <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
-          <div id="character-layer-record" class="character-layer character-layer--record" data-character-layer="record" aria-hidden="true">
-            <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
-            <div class="character-layer__dialogue" hidden></div>
-          </div>
+
         </section>
 
         <section class="app-page" id="page-history" data-page="history" aria-labelledby="history-heading" hidden>
@@ -123,6 +131,13 @@
             <p class="section-caption">HISTORY</p>
             <h1 id="history-heading">トレーニング履歴</h1>
             <p class="page-description">積み重ねてきた記録を振り返る。</p>
+          </div>
+          <!-- UI操作面とは独立した、立ち絵用の自然な余白。画像・セリフは未表示。 -->
+          <div class="character-scene character-scene--history" data-character-scene="history">
+            <div id="character-layer-history" class="character-layer character-layer--history" data-character-layer="history" aria-hidden="true">
+            <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
+            <div class="character-layer__dialogue" hidden></div>
+          </div>
           </div>
           <div class="panel">
             <div class="calendar-topbar">
@@ -139,10 +154,7 @@
           </div>
 
           <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
-          <div id="character-layer-history" class="character-layer character-layer--history" data-character-layer="history" aria-hidden="true">
-            <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
-            <div class="character-layer__dialogue" hidden></div>
-          </div>
+
         </section>
 
         <section class="app-page" id="page-settings" data-page="settings" aria-labelledby="settings-heading" hidden>
@@ -150,6 +162,13 @@
             <p class="section-caption">SETTINGS</p>
             <h1 id="settings-heading">設定</h1>
             <p class="page-description">アカウントと接続状態を確認する。</p>
+          </div>
+          <!-- UI操作面とは独立した、立ち絵用の自然な余白。画像・セリフは未表示。 -->
+          <div class="character-scene character-scene--settings" data-character-scene="settings">
+            <div id="character-layer-settings" class="character-layer character-layer--settings" data-character-layer="settings" aria-hidden="true">
+            <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
+            <div class="character-layer__dialogue" hidden></div>
+          </div>
           </div>
           <section class="section settings-section" aria-labelledby="account-heading">
             <div class="section-heading"><h2 id="account-heading">アカウント</h2></div>
@@ -169,10 +188,7 @@
       </section>
 
           <!-- キャラクターを再導入する際に利用する独立表示スロット。現在は画像・セリフを読み込まない。 -->
-          <div id="character-layer-settings" class="character-layer character-layer--settings" data-character-layer="settings" aria-hidden="true">
-            <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
-            <div class="character-layer__dialogue" hidden></div>
-          </div>
+
         </section>
       </div>
     </main>

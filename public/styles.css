@@ -203,55 +203,68 @@ body.is-authenticated .app-page { padding-top: 10px; }
 @media(max-width:360px) { .stat-card{padding:13px 10px;} .stat-label{font-size:10px;} #page-home .calendar-day{min-height:40px;} .heading-action{padding:0 12px;} }
 
 
-/* Character artwork is a composited, transparent layer, not a layout card.
-   Actual PNG assets and dialogue are intentionally not loaded yet.
-   Future illustration must have real alpha and contain no baked-in UI or speech. */
+
+/* ソシャゲ型レイアウト: 立ち絵を見せる空白をレイアウト上で確保する。
+   独立カードやフレームを作らず、背景の一部として扱う。 */
 .app-page { position: relative; isolation: isolate; }
 .app-page::before {
   content: "";
-  pointer-events: none;
   position: absolute;
+  pointer-events: none;
   z-index: -1;
   inset: -10px -20px auto;
-  height: 360px;
-  background: radial-gradient(ellipse at 86% 20%, rgba(104, 80, 142, .13), transparent 64%);
+  height: min(540px, 65svh);
+  background: radial-gradient(ellipse at 82% 24%, rgba(111, 84, 159, .16), transparent 66%);
+}
+/* 空白そのものは透明で、画像・吹き出しの重ね合わせ位置を定義する。 */
+.character-scene {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  pointer-events: none;
+  background: transparent;
+  overflow: visible;
+}
+.character-scene--home {
+  height: clamp(255px, 42svh, 390px);
+}
+.character-scene--record,
+.character-scene--history,
+.character-scene--settings {
+  height: clamp(168px, 29svh, 245px);
 }
 .character-layer {
   position: absolute;
   z-index: 2;
   pointer-events: none;
-  overflow: visible;
-  width: min(74%, 370px);
-  height: 330px;
+  width: min(86%, 420px);
+  height: calc(100% + 28px);
+  top: -7px;
   right: -17px;
-  top: 8px;
-  transform: translateZ(0);
 }
-.character-layer--record,
-.character-layer--history,
-.character-layer--settings {
-  width: min(48%, 240px);
-  height: 215px;
-  top: 16px;
+.character-scene--record .character-layer,
+.character-scene--history .character-layer,
+.character-scene--settings .character-layer {
+  width: min(68%, 320px);
+  height: calc(100% + 20px);
   right: -12px;
 }
 .character-layer__art {
+  display: block;
   position: absolute;
   inset: 0;
-  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
   object-position: right bottom;
-  /* Fade the lower edge into the regular page content. */
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
 }
 .character-layer__dialogue {
   position: absolute;
-  left: 6%;
-  bottom: 19px;
-  max-width: 89%;
+  bottom: 18px;
+  left: 3%;
+  width: min(100%, 305px);
   padding: 12px 15px;
   border: 1px solid rgba(221, 203, 236, .4);
   border-radius: 13px 13px 13px 3px;
@@ -263,21 +276,29 @@ body.is-authenticated .app-page { padding-top: 10px; }
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
-#page-home .page-heading,
-#page-home .dashboard-hub,
-#page-home .overview-grid,
-#page-home .section,
-#page-record > .page-heading,
+/* 操作用コンテンツは常に立ち絵より前面にする。 */
+.app-page > .page-heading,
+#page-home > .dashboard-hub,
+#page-home > .overview-grid,
+#page-home > .section,
 #page-record > .record-panel,
-#page-history > .page-heading,
 #page-history > .panel,
-#page-settings > .page-heading,
 #page-settings > .section {
   position: relative;
   z-index: 3;
 }
-#page-home .workout-heading { padding-right: 0; }
-#page-home .dashboard-hub { margin-top: 10px; }
+@media (max-width: 380px) {
+  .character-scene--home { height: clamp(235px, 40svh, 330px); }
+  .character-scene--record,
+  .character-scene--history,
+  .character-scene--settings { height: clamp(155px, 26svh, 205px); }
+  .character-layer { width: min(92%, 330px); right: -14px; }
+  .character-scene--record .character-layer,
+  .character-scene--history .character-layer,
+  .character-scene--settings .character-layer { width: 68%; right: -10px; }
+}
+
+.dashboard-hub { margin-top: 10px; }
 @media (max-width: 380px) {
   .character-layer--home { right: -14px; width: min(79%, 295px); height: 278px; }
   .character-layer--record,
