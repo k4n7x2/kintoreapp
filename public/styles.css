@@ -320,3 +320,110 @@ body.is-authenticated .app-page { padding-top: 10px; }
   .hub-link strong { font-size: 12px; }
   .hub-link small { font-size: 9px; }
 }
+
+/* Game-like dashboard hub: left-side navigation, portrait overlay space to the right.
+   No statistics, records or calendar on the dashboard itself. */
+#page-home { min-height: calc(100svh - 170px - env(safe-area-inset-bottom)); }
+#page-home .home-heading { margin-bottom: 5px; position: relative; z-index: 3; }
+#page-home .home-heading h1 { margin-bottom: 4px; }
+.home-stage {
+  position: relative;
+  min-height: clamp(385px, 67svh, 650px);
+  display: flex;
+  align-items: center;
+  width: 100%;
+  isolation: isolate;
+}
+.home-stage::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: 7% -20px 6% 28%;
+  z-index: -1;
+  background: radial-gradient(ellipse at 75% 44%, rgba(126, 103, 163, .20), transparent 70%);
+}
+#page-home .dashboard-hub {
+  flex: 0 0 43%;
+  position: relative;
+  z-index: 3;
+  margin: 0;
+  padding: 0 0 12px;
+}
+#page-home .hub-caption { margin-bottom: 14px; }
+#page-home .hub-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#page-home .hub-link {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 76px;
+  padding: 12px 10px;
+  border-radius: 13px;
+  border: 1px solid #43566d;
+  background: rgba(24, 38, 55, .91);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .11);
+}
+#page-home .hub-link__symbol {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  font-size: 18px;
+}
+#page-home .hub-link__label { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+#page-home .hub-link strong { font-size: 14px; }
+#page-home .hub-link small { font-size: 10px; white-space: normal; line-height: 1.45; }
+#page-home .hub-link__chevron { margin-left: auto; font-size: 19px; line-height: 1; color: #aebfc8; }
+#page-home .character-scene--home {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: -15px;
+  width: 66%;
+  height: 100%;
+  pointer-events: none;
+  background: transparent;
+  overflow: visible;
+}
+#page-home .character-layer--home {
+  inset: auto 0 0 auto;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+#page-home .character-layer__art { object-position: right bottom; }
+#page-home .character-layer__dialogue { left: -16%; bottom: 16px; width: min(320px, 132%); }
+/* History is where the saved calendar and workout summary now live. */
+#page-history .history-overview { margin-top: 14px; }
+#page-history .overview-grid { margin-bottom: 8px; }
+#page-history > .section { margin-top: 24px; }
+#page-history .calendar-day { min-height: 43px; }
+#page-history .calendar-day.is-completed { background: #344b3a; }
+#page-history .calendar-day.is-completed::after {
+  content: "";
+  left: calc(50% - 2.5px);
+  right: auto;
+  top: auto;
+  bottom: 4px;
+  width: 5px;
+  height: 5px;
+  background: #c8ef8d;
+  border-radius: 50%;
+}
+#page-history .history-records-section .record-history { margin: 0; padding: 0; border: 0; }
+@media (max-width: 380px) {
+  .home-stage { min-height: clamp(345px, 62svh, 540px); }
+  #page-home .dashboard-hub { flex-basis: 48%; }
+  #page-home .hub-link { gap: 7px; padding: 11px 7px; }
+  #page-home .hub-link__symbol { flex-basis: 26px; width: 26px; height: 26px; font-size: 17px; }
+  #page-home .hub-link strong { font-size: 12px; }
+  #page-home .hub-link small { font-size: 9px; }
+  #page-home .hub-link__chevron { font-size: 16px; }
+  #page-home .character-scene--home { width: 65%; right: -13px; }
+}
