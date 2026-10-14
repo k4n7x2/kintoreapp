@@ -202,27 +202,89 @@ body.is-authenticated .app-page { padding-top: 10px; }
 .nav-item.is-active { background:#2b4044; }
 @media(max-width:360px) { .stat-card{padding:13px 10px;} .stat-label{font-size:10px;} #page-home .calendar-day{min-height:40px;} .heading-action{padding:0 12px;} }
 
-/* Character-ready dashboard architecture: placeholder only; no assets or dialogue loaded. */
-.character-stage {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(94px, 38%);
-  align-items: stretch;
-  gap: 10px;
-  overflow: hidden;
-  border: 1px solid #50465f;
-  border-radius: 19px;
-  background: radial-gradient(ellipse at 90% 10%, rgba(126, 103, 160, .19), transparent 65%), linear-gradient(135deg, #26273e, #1a2638);
+
+/* Character artwork is a composited, transparent layer, not a layout card.
+   Actual PNG assets and dialogue are intentionally not loaded yet.
+   Future illustration must have real alpha and contain no baked-in UI or speech. */
+.app-page { position: relative; isolation: isolate; }
+.app-page::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+  inset: -10px -20px auto;
+  height: 360px;
+  background: radial-gradient(ellipse at 86% 20%, rgba(104, 80, 142, .13), transparent 64%);
 }
-.character-stage--home { min-height: 234px; margin: 4px 0 22px; }
-.character-stage--compact { min-height: 142px; margin-top: 24px; grid-template-columns: minmax(0, 1fr) minmax(84px, 28%); border-color: #3c4055; }
-.character-stage__content { position: relative; z-index: 1; padding: 23px 0 22px 21px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-.character-stage--compact .character-stage__content { padding: 17px 0 17px 18px; }
-.character-stage__eyebrow { margin: 0 0 10px; color: #d2bfe1; font-size: 10px; letter-spacing: .16em; font-weight: 800; }
-.character-stage__content h2 { margin: 0; font-size: 17px; line-height: 1.4; letter-spacing: -.02em; color: #f4ebfa; }
-.character-stage__hint { margin: 11px 0 0; max-width: 205px; color: #b5b6cc; font-size: 11px; line-height: 1.75; }
-.character-stage__portrait { align-self: stretch; margin: 14px 14px 14px 0; display: grid; place-items: center; border: 1px dashed rgba(194, 174, 217, .29); border-radius: 13px; background: rgba(156, 133, 184, .08); }
-.character-stage__portrait span { color: rgba(217, 205, 229, .48); letter-spacing: .2em; font-size: 10px; }
+.character-layer {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+  width: min(74%, 370px);
+  height: 330px;
+  right: -17px;
+  top: 8px;
+  transform: translateZ(0);
+}
+.character-layer--record,
+.character-layer--history,
+.character-layer--settings {
+  width: min(48%, 240px);
+  height: 215px;
+  top: 16px;
+  right: -12px;
+}
+.character-layer__art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: right bottom;
+  /* Fade the lower edge into the regular page content. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);
+}
+.character-layer__dialogue {
+  position: absolute;
+  left: 6%;
+  bottom: 19px;
+  max-width: 89%;
+  padding: 12px 15px;
+  border: 1px solid rgba(221, 203, 236, .4);
+  border-radius: 13px 13px 13px 3px;
+  background: rgba(20, 24, 40, .84);
+  color: #f3eff8;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+#page-home .page-heading,
+#page-home .dashboard-hub,
+#page-home .overview-grid,
+#page-home .section,
+#page-record > .page-heading,
+#page-record > .record-panel,
+#page-history > .page-heading,
+#page-history > .panel,
+#page-settings > .page-heading,
+#page-settings > .section {
+  position: relative;
+  z-index: 3;
+}
+#page-home .workout-heading { padding-right: 0; }
+#page-home .dashboard-hub { margin-top: 10px; }
+@media (max-width: 380px) {
+  .character-layer--home { right: -14px; width: min(79%, 295px); height: 278px; }
+  .character-layer--record,
+  .character-layer--history,
+  .character-layer--settings { right: -10px; width: 48%; height: 185px; }
+}
+
 .dashboard-hub { margin-bottom: 24px; }
 .dashboard-hub .section-heading { margin-bottom: 11px; }
 .hub-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
@@ -230,14 +292,8 @@ body.is-authenticated .app-page { padding-top: 10px; }
 .hub-link__symbol { width: 29px; height: 29px; display: grid; place-items: center; margin-bottom: 2px; border-radius: 8px; color: #d6edac; background: #314a49; font-size: 20px; }
 .hub-link strong { font-size: 13px; }
 .hub-link small { font-size: 10px; color: #9db0c1; white-space: nowrap; letter-spacing: -.02em; }
+
 @media (max-width: 380px) {
-  .character-stage--home { min-height: 210px; grid-template-columns: minmax(0, 1fr) 35%; }
-  .character-stage__content { padding-left: 14px; }
-  .character-stage__content h2 { font-size: 14px; }
-  .character-stage__hint { font-size: 10px; }
-  .character-stage--compact { min-height: 130px; grid-template-columns: minmax(0, 1fr) 29%; }
-  .character-stage--compact .character-stage__content { padding-left: 14px; }
-  .character-stage__portrait { margin: 10px 10px 10px 0; }
   .hub-grid { gap: 7px; }
   .hub-link { padding-inline: 8px; }
   .hub-link strong { font-size: 12px; }
