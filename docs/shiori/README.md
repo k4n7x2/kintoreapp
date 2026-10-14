@@ -9,7 +9,8 @@
 1. [character.md](./character.md) — 人物像・性格・趣味・言動の設定
 2. [visual.md](./visual.md) — 顔・画風・基準画像・画像生成／保存仕様
 3. [dialogue.md](./dialogue.md) — 口調・会話例・セリフ設計・NG表現
-4. [reference/shiori-master-v1.jpg](./reference/shiori-master-v1.jpg) — **正式マスター基準画像**（画像生成時には実際に画像として参照すること）
+4. [reference/shiori-master-v1.jpg](./reference/shiori-master-v1.jpg) — **基準絵その1：顔・髪型・瞳・表情の最優先基準**
+5. [reference/shiori-style-fullbody-v1.png](./reference/shiori-style-fullbody-v1.png) — **基準絵その2：水彩の透明感・光・アニメ調の塗り・全身バランス・花飾り**
 
 これらの内容を省略して過去の会話や短いプロジェクト指示だけからキャラクターを推測しない。詳細を確認できなければ、その旨をユーザーに伝える。
 
@@ -20,13 +21,14 @@
 3. 既存アプリの実コード・画像・セリフデータ（**実装状態**の確認に使用）
 4. 過去の会話や仮案
 
-マスター画像は顔・髪型・瞳・画風・表情の基準。生成する衣装やポーズまでは固定しない。
+**「顔はその1、塗りと光はその2」**を最優先ルールとする。画像生成には原則2枚を同時参照する。基準絵その2は背景付きの一枚絵であり、透過立ち絵ではない。衣装・ポーズ・背景は固定しない。
 「確定」「仮」「未決定」を区別し、仮案を既成事実にしない。
 
 ## 保存先と実装との境界
 
 - 設定資料：`docs/shiori/`（このディレクトリ）
-- マスター画像：`docs/shiori/reference/shiori-master-v1.jpg`
+- 顔・表情の基準絵その1：`docs/shiori/reference/shiori-master-v1.jpg`
+- 塗り・光・全身の基準絵その2：`docs/shiori/reference/shiori-style-fullbody-v1.png`
 - 表示用キャラクター画像：`public/assets/shiori/`
 - ホームの時間帯別セリフ：`public/data/shiori-greetings.json`
 - ログイン演出の候補セリフ：`public/data/shiori-login-dialogues.json`
@@ -37,7 +39,7 @@
 ## 画像生成の必須ルール
 
 - ユーザーの依頼に **「生成」** が明記されない限り画像生成しない。
-- 生成時はマスターJPEGを実際に読み込み、画像生成への参照画像として渡す。GitHubのURLを文章に貼っただけで「参照済み」としない。
+- 生成時は**顔基準JPEGと塗り基準PNGの両方**を実際に読み込み、画像生成への参照画像として渡す。GitHubのURLを文章に貼っただけで「参照済み」としない。
 - 参照画像を渡せない場合は制約を説明し、必要に応じて添付を求める。
 - **アプリに表示する立ち絵系は背景透過PNG（実アルファチャンネル必須）**。マスター画像などの制作資料はこの制限を受けない。
 - 画像生成の成功、GitHubへの登録、アプリへの反映、デプロイ完了をそれぞれ別に確認する。

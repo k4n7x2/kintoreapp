@@ -89,6 +89,6 @@ npm run db:migrate:remote
 
 キャラクター関連の作業を始める前に、**[docs/shiori/README.md](docs/shiori/README.md)** を開き、リンク先の人物設定・画風・セリフ仕様を最新 `main` からすべて確認すること。
 
-正式な顔・画風の基準画像は [shiori-master-v1.jpg](docs/shiori/reference/shiori-master-v1.jpg)。画像生成時は実際に参照画像として渡す。アプリ用立ち絵は背景透過PNGを原則とする。
+画像の正式基準は2枚：**[顔・表情の基準絵その1](docs/shiori/reference/shiori-master-v1.jpg)** と **[水彩の塗り・光・全身の基準絵その2](docs/shiori/reference/shiori-style-fullbody-v1.png)**。**顔はその1、塗りと光はその2**を優先する。画像生成時は原則両方を実際に参照画像として渡す。アプリ用立ち絵は背景透過PNGを原則とする。
 
 詳細設定はプロジェクト指示へ重複記載せず、`docs/shiori/` を唯一の保守対象とする。個別の実装状態は `public/` と `src/` の最新コードを確認すること。
