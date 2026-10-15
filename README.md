@@ -1,132 +1,83 @@
 # kintoreapp
 
-1人用の筋トレ記録アプリ。GitHubでソース管理、Cloudflare Workersで公開、D1に記録を保存する。
+1人用の筋トレ記録アプリ。簡単な記録と朝倉栞との日常を通じて、また開きたくなる体験を作る。Android縦画面、データ保全、原則無料、休んだ日を責めない設計を重視する。
 
-## 今回の認証方式
+## 作業の入口
 
-**Cloudflare Zero Trust / Accessは不要。クレジットカード登録も不要。**
+- **[3プロジェクトの共通案内・導入手順](docs/project-guide.md)**：担当、登録資料、制作物の受け渡し、ChatGPTで行う操作。
+- 専用指示：[アプリ開発](docs/development-handoff.md) ／ [ビジュアル制作](docs/visual-production-instructions.md) ／ [セリフ・物語制作](docs/dialogue-production-instructions.md)。各ファイルの全文を対応プロジェクトの指示欄へ貼る。
+- **[実装状況と確認範囲](docs/implementation-status.md)**：現在の画面・機能・素材の接続、試作・未実装、検証履歴。常設指示へ実装一覧を複写しない。
+- **[キャラクター資料](docs/shiori/README.md)**：人物・外見・口調・正式画像の正本への入口。担当ごとに必要な資料を読む。
 
-- Cloudflare WorkersのSecret `APP_PASSWORD` に設定した1つの強いパスワードでログイン。
-- ログインすると14日間有効な署名付きCookie（`HttpOnly; Secure; SameSite=Strict`）を発行。
-- Cookieは認証状態のみで、筋トレ履歴をブラウザのLocalStorageやIndexedDBに保存しない。
-- 公開URLにアクセスすると画面自体は見えるが、記録の読み書きは認証なしでは401になる。
-- パスワードをGitHubのコードに書かない。ChatGPTに送信しない。
+## 開発環境・公開
 
-### 1. CloudflareにSecretを1つ登録
-
-Cloudflareダッシュボードで **Workers & Pages → kintoreapp → Settings → Variables and Secrets → Add** を開く。
-
-| 項目 | 値 |
+| 項目 | 内容 |
 |---|---|
-| Type | Secret |
-| Name | `APP_PASSWORD` |
-| Value | 自分で決める4文字以上・200文字以下のパスワード |
+| GitHub／本番ブランチ | [k4n7x2/kintoreapp](https://github.com/k4n7x2/kintoreapp) ／ `main` |
+| 公開URL | https://kintoreapp.q7m4vx9.workers.dev |
+| ホスティング・API | Cloudflare Workers（Pagesは使用しない） |
+| DB | Cloudflare D1 `kintore-db` ／ Binding `DB` |
+| Database ID | `08e556f8-8c88-47af-bac8-5c3ac4ed2903` |
+| Worker入口 | `src/index.js` |
+| 静的配信元 | `public/` ／ Binding `ASSETS` |
+| フロントエンド | HTML・CSS・JavaScript |
 
-**必ずSecretとして登録**し、通常の公開変数やリポジトリに入れない。
-最小4文字で認証可能。ただし4文字のパスワードは推測されやすいため、可能なら長いランダムなパスワードを推奨。200文字超では認証を有効化しない。
+環境設定は[wrangler.jsonc](wrangler.jsonc)、コマンドは[package.json](package.json)を正とする。`/api/*`はWorker処理優先。`docs/`は静的配信されないため、公開サイトの`/docs/...`を画像取得元として推測しない。
 
-保存後、必要に応じてデプロイの確認をする。Zero Trustの初期設定は途中で止めてよい。
+通常の公開経路はmain更新→Cloudflare Workers Builds→`npx wrangler deploy`。不要な手動デプロイを重ねない。GitHubへのコミット、Workers Builds成功、本番の応答・画面確認はそれぞれ別に確認する。GitHub Actionsの有無だけでデプロイ結果を判断しない。
 
-### 2. D1のテーブルを初期化
+## 現行の個人用認証
 
-Cloudflare → **Storage & databases → D1 → kintore-db → Console** を開き、[初期SQL](migrations/0001_initial.sql)の内容を貼り付けて実行する。
+Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`に設定した1つのパスワードでログインする。方式を独断で変更せず、Secretをコード・ログ・会話へ出さない。ユーザーにSecretの送信を求めない。
 
-このSQLはまだ自動適用していない。GitHubに置くだけではDBへ反映されない。
+| 項目 | 現行実装（正確な処理は`src/index.js`） |
+|---|---|
+| Secret長 | 最低4文字、最大200。下限はコードポイント数、上限はJavaScriptの`length`で判定 |
+| Cookie | `kintore_session`、署名付き、14日間 |
+| 属性 | `HttpOnly; Secure; SameSite=Strict; Path=/api` |
+| 署名鍵 | `APP_PASSWORD`から導出。パスワード変更は既存Cookieにも影響 |
+| 書き込み保護 | loginとworkoutsは同一Origin＋JSON。logoutは同一Origin |
+| 制約 | 専用レート制限は未実装。最短4文字は推測に弱いため、長いランダムなパスワードを推奨 |
 
-すでに `workout_sessions` を作成している場合は構造を確認すること（本実装は個人用で `owner_email` 列を使わない）。むやみに既存テーブルを削除しない。
+ログイン前は簡素なパスワード入力のみ。アプリ名・筋トレ説明・キャラクター演出を追加しない。UIの匿名性と公開リポジトリ・静的ファイルの公開範囲は別である。個人記録APIには認証が必要。
 
-### 3. 初回テスト
+初回のSecret設定はCloudflareの対象Workerの設定から、Variables and SecretsにType **Secret**、Name **APP_PASSWORD**で登録する。通常の公開変数へ入れない。
 
-公開URL: https://kintoreapp.q7m4vx9.workers.dev
+## 永続保存とD1
 
-1. ページの「ログイン」にSecretで設定したパスワードを入力。
-2. ホームの記録アイコンから記録画面へ進み、日付とメモを登録。
-3. 再読み込み後も履歴画面のカレンダーに記録が残れば、D1への保存確認成功。
-4. 「ログアウト」でCookieが無効化され、記録が見えなくなる。
-5. 未ログインの `/api/workouts?month=2026-10` が401で拒否されることも確認する。
+- コード・正式仕様・採用済み素材・固定セリフ：GitHub。
+- 個人の筋トレ記録、今後の設定・予定・会話履歴：原則Cloudflare D1。
+- `localStorage`、`IndexedDB`等へ個人データを永続保存しない。認証Cookieと操作中のメモリ状態は許容。
+- 固定コンテンツやブラウザの通常の静的キャッシュと、個人データの保存は区別する。個人の会話・記録を公開GitHubへ置かない。
+
+[初期SQL](migrations/0001_initial.sql)には`workout_sessions`と`workout_sets`がある。現行APIは前者のみを利用する。SQLファイルの存在は本番適用の証拠ではなく、`/api/health`の`SELECT 1`成功もテーブル・保存処理の証明ではない。
+
+既存DBを削除・再初期化しない。初回セットアップ時はD1 Consoleまたはマイグレーションで適用するが、過去のConsole適用とマイグレーション管理の差を先に確認する。既存の列構造とデータを確認し、必要な追加マイグレーションを用意する。
 
 ## API（個人用）
 
 | HTTP | エンドポイント | 内容 |
 |---|---|---|
-| GET | `/api/health` | D1接続とSecret設定有無 |
-| POST | `/api/login` | パスワード認証、署名付きCookie発行 |
-| GET | `/api/session` | ログイン状態確認 |
-| POST | `/api/logout` | 認証Cookie破棄 |
-| GET | `/api/workouts?month=YYYY-MM` | 月別記録一覧 |
-| POST | `/api/workouts` | `{"performed_on":"YYYY-MM-DD","note":"..."}` |
+| GET | `/api/health` | 公開診断。D1接続とSecret設定有無 |
+| POST | `/api/login` | パスワード認証、Cookie発行 |
+| GET | `/api/session` | Cookie検証。未認証は401 |
+| POST | `/api/logout` | Cookie破棄。認証前にも扱う |
+| GET | `/api/workouts?month=YYYY-MM` | 月別記録、最大200件 |
+| POST | `/api/workouts` | `{"performed_on":"YYYY-MM-DD","note":"..."}`を保存 |
 | DELETE | `/api/workouts/:id` | 記録削除 |
 
-書き込みはブラウザからの同一オリジン要求に限定。ログイン成功までは書き込みAPIへアクセスできない。
+日付は2000～2100年の実在日、メモは最大300（JavaScriptの`length`）。同日複数記録が可能。実施日数と件数は別で、月200件超は全件集計にならない。記録更新・セット操作・設定保存APIは未実装。Secret未設定・不正長では`/api/health`以外のAPIは503。
 
-**パスワードの安全性:** 最小4文字を許可しているが、短いパスワードは総当たり攻撃や認証Cookieの署名に対するオフライン推測に弱い。レート制限は未実装のため重要なデータの保存には推奨しない。可能なら長いランダムパスワードを使うこと。
-
-## 画面構成（2026-10-15）
-
-- ホーム左側はカレンダー・トレーニング記録・トーク・お知らせの4アイコン。大きな栞の立ち絵とセリフはそのまま維持。
-- 全9画面：ホーム、カレンダー（旧「履歴」）、記録、トーク、お知らせ、分析、イベント、ギャラリー、設定。
-- 全画面共通の固定ヘッダー左端からオフキャンバスメニューを開く。全9画面へ移動可能。下部ナビゲーションは撤廃。ヘッダー中央のアプリ名でホームへ戻る。
-- トーク・お知らせ・分析・イベント・ギャラリーは器だけ作り、「実装予定」と表示。通知・トーク履歴・イベント・来館管理などのDB/APIはまだ追加しない。
-- カレンダーは現時点では既存トレーニング記録の日付を表示しており、来館実績や予定とは連動しない。来館とトレーニング内容は将来別管理とする。
-
-## 画面とテーマ
-
-- 認証後の上部ヘッダーは固定表示。右上のアイコンでライト／ダークを切り替える。初期値は端末の配色設定に追従する。
-- テーマの切り替えは操作中のメモリ上だけで、再読み込み後は端末設定に戻る。個人設定の保存API・ブラウザの永続ストレージは使わない。
-- ホームは1画面に収めて縦スクロールを抑制。他の画面はスクロール可能。
-- キャラクターのラベンダー系色彩と調和するプラム系ダーク／ラベンダーグレー系ライトを採用。
-
-## 背景シーン（テスト）
-
-- ログイン後、ジム・街・大学・栞の部屋の4か所からランダムに1つ選び、共通背景として表示。ホーム／記録／履歴／設定の画面移動では場所を変えない。
-- 朝（05:00–11:59）・昼（12:00–17:59）・夜（18:00–04:59）は端末のローカル時刻で判定し、`public/assets/backgrounds/` のWebPを表示。1分ごとの確認と画面復帰時に時間帯を更新する。
-- 設定の「背景シーン（テスト）」で場所を切り替え／再抽選できる。設定は今回のログイン画面表示中のメモリだけに保持し、再読み込み・再ログインで新たに抽選する。D1やブラウザの永続ストレージには保存しない。
-- この場所は栞の演出上のシチュエーションであり、端末の現在地・ジムWi-Fi等による検知ではない。ログイン前の画面には表示しない。
-
-## 衣装切り替え（テスト）
-
-- 設定画面の「衣装（テスト）」でホームに表示する栞の衣装を変更する。初期値は既存のトレーニングウェア。
-- 「部屋着」は `public/assets/shiori/home/roomwear/` のアルファ付きWebP（品質85）7枚を利用。初回は標準表情、ホームで栞をタップすると他の表情へランダムに切り替わり、従来どおりセリフとぷにっと反応も変化する。表情とセリフの意味的な連動はまだない。
-- 「私服」はアプリ表示用の透過立ち絵が未登録のため、現時点では選択不可として明示。背景付きの基準絵を表示用立ち絵に流用しない。
-- 衣装の選択はブラウザの実行メモリだけで保持し、再読み込み・再ログインで既定へ戻る。D1やブラウザの永続ストレージへの保存はしない。
-- 将来的な「部屋背景なら部屋着」等の自動連動は今回実装しない。ログイン後の各画面のキャラクター表示範囲も既存のまま（ホームのみ）。
-
-## 今後の拡張
-
-- 種目・重量・回数を数秒で登録するUI（`workout_sets` スキーマのみ準備済み）
-- トレーニング予定・メニューのD1保存
-- 朝倉栞の演出・セリフ更新
-- ジムWi-Fi連動（Androidで対応可能な方法を別途検討）
-
-## 開発
+## 開発・必要時の確認
 
 ```bash
 npm install
 npm run dev
-```
-
-ローカルでは `APP_PASSWORD` 未設定の場合、記録APIは503を返す。開発用Secretはコミットしない。
-本番デプロイは `main` にマージ後、CloudflareのWorkers Builds経由で `npx wrangler deploy` を実行。
-
-```bash
 npm run db:migrate:local
-npm run db:migrate:remote
 ```
 
-`db:migrate:remote` は本番DBを変更するため事前確認を要する。Consoleで直接SQLを実行した場合はマイグレーション管理上の扱いに注意。
+開発用Secretはコミットしない。`npm run db:migrate:remote`は本番DBを変更するため、対象・既存データ・影響・実行の承認範囲を確認して扱う。
 
-## 朝倉栞のキャラクター仕様（必読）
+アプリ変更時は関連する構文・参照・API・画面を確認する。表示変更ではAndroid相当の狭い幅、キーボード、重なり・見切れを確認する。保存変更では認証→記録→再取得→再読み込み後の保持と未認証拒否まで必要に応じて確認する。不要な本番テスト記録は追加しない。
 
-キャラクター関連の作業を始める前に、**[docs/shiori/README.md](docs/shiori/README.md)** を開き、リンク先の人物設定・画風・セリフ仕様を最新 `main` からすべて確認すること。
-
-画像の正式基準は3枚：**[基準絵その1：顔・瞳・表情](docs/shiori/reference/shiori-master-v1.jpg)**、**[基準絵その2：塗り・光・透明感](docs/shiori/reference/shiori-style-fullbody-v1.jpg)**、**[基準絵その3：体型・三面図・標準私服](docs/shiori/reference/shiori-character-sheet-v1.jpg)**。要素別の優先順位と生成手順は **[キャラクター制作資料](docs/shiori/README.md)** を正本とする。画像生成時は基準絵3枚を原則実際の参照画像として渡す。アプリ用立ち絵は背景透過PNGを原則とする。
-
-詳細設定はプロジェクト指示へ重複記載せず、`docs/shiori/` を唯一の保守対象とする。個別の実装状態は `public/` と `src/` の最新コードを確認すること。
-
-## 開発引き継ぎ・現行状態
-
-- [開発引き継ぎプロンプト](docs/development-handoff.md)：新しいチャットに渡す運用指示。
-- [実装状況](docs/implementation-status.md)：画面・API・データの接続状況、確認範囲と制約。
-- [画像の照合記録](docs/shiori/reference-audit.md)：正式JPEGとプロジェクトPNGの内容差。
-
-静的配信元は `public/` のみ。`docs/shiori/reference/` はGitHub上の制作資料であり、Workersの `/docs/...` URLでは配信しない。ログイン前に見せるUIを簡素にしても、公開リポジトリや静的ファイルそのものが非公開になるわけではない。
+文書だけの変更は記載と相互参照を検証し、全体の動作テストや本番DB操作を追加しない。確認したSHA・工程・証拠・未確認範囲は[実装確認記録](docs/implementation-status.md)または作業報告に残す。

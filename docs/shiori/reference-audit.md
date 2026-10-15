@@ -1,6 +1,7 @@
 # 参照画像の照合記録
 
-確認日：2026-10-15 JST。GitHub確認元：`2f67db435dfacbf2a4bdf0c75dc5ae3af1f9d3e8`。
+確認日：2026-10-15 JST。最新の再照合元：main `d1021f64ce9aeaecffa3b939e60fabd79f1eed4a`。
+初回記録の確認元は`2f67db435dfacbf2a4bdf0c75dc5ae3af1f9d3e8`。今回、実ファイルを取得し、以下の内容差と一致を再確認した。
 
 ## 結果
 
@@ -29,3 +30,29 @@ PNGの修正版を正式採用する場合は、ユーザーの採用指示に�
 ## 取得経路
 
 プロジェクトの一時パスはセッションごとに実在確認する。読み取り失敗だけで、GitHub側にも画像がないと判断しない。GitHubから取得する際はコミットとファイルパスを確認する。Workersの配信元は `public/` なので `docs/` のURLを推測して取得しない。
+
+## 3プロジェクト整理時の確認と登録方針
+
+- 今回の添付5枚は実在し、画像として読み取り・目視確認できた。基準3枚はGitHubのJPEGと添付PNGをそれぞれ表示して比較。毛先・外周の整理などの描画差を確認した。対象外が完全に同一という保証ではない。
+- 衣装A・Bは画像として目視し、対応するGitHubファイルとバイト比較でも完全一致した。
+- 画像制作ツールへの入力は今回未試行。読み取り成功から入力可否を推測しない。整理のための再添付は不要。
+- 正式参照を入力できるよう、GitHubの正式JPEG5枚をダウンロードしてビジュアル制作プロジェクトへ登録する。PNG3枚を併置する場合は「差分参考・正式採用未確認」と明示し、個別使用と正式採用を区別する。
+- PNG3枚を正式な新版へ採用する判断は残る。今回の作業でGitHubの画像実体や正式版指定は変更していない。
+- 部屋着は`public/assets/shiori/home/roomwear/`に表示用7枚がある。制作原本・部屋着の設定画は今回の添付5枚とリポジトリには含まれず、全制作物の所在を網羅できたとはしない。
+
+### 今回のファイル識別情報（SHA-256）
+
+形式が違う画像同士のハッシュ比較は内容一致の判定には用いない。下表は次回、今回と同じ実ファイルかを識別するためのもの。プロジェクト添付の一時パスは管理対象にしない。
+
+| 所在・ファイル名 | 形式・寸法・モード | SHA-256 |
+|---|---|---|
+| GitHub `shiori-character-sheet-v1.jpg` | JPEG 1536×1024 RGB | `a5d67cab93dce666d40a0e31bda8e2b04a8b1c04892d57195a5246d7a293802f` |
+| GitHub `shiori-master-v1.jpg` | JPEG 1536×1024 RGB | `95a03e73f626a841f2aebf3a314d1ee06c6383bc35f0e4f6d81119c11596f72e` |
+| GitHub `shiori-style-fullbody-v1.jpg` | JPEG 1024×1536 RGB | `61318265bfac15e16482a47fcb691be529a647c5b88ede1ebff64f61cfeefb4f` |
+| GitHub `shiori-training-outfit-v1.jpg` | JPEG 1447×1087 RGB | `fcec2532f213836b10767eb6162f94188dd7390ac3d2a749e0a82594b50f879c` |
+| GitHub `shiori-training-outfit-v2.jpg` | JPEG 1448×1086 RGB | `ea7f47fdfd92d33ddc1bed38457bd91eebfc792ddd9949f4ad669461c082e918` |
+| 今回の添付 `shiori-training-outfit-v1.jpg` | JPEG 1447×1087 RGB | `fcec2532f213836b10767eb6162f94188dd7390ac3d2a749e0a82594b50f879c` |
+| 今回の添付 `shiori-training-outfit-v2.jpg` | JPEG 1448×1086 RGB | `ea7f47fdfd92d33ddc1bed38457bd91eebfc792ddd9949f4ad669461c082e918` |
+| 今回の添付 `shiori-character-sheet-v1.png` | PNG 1536×1024 RGB | `8e8a5413b9ec6914b988cb93400064e95cc49aece2b2fd2f9f3b3f6f312913a2` |
+| 今回の添付 `shiori-master-v1.png` | PNG 1536×1024 RGB | `c5d27f3374aef046ac064ece9546b6d83642d3c623811fa75a211f0ef0130535` |
+| 今回の添付 `shiori-style-fullbody-v1.png` | PNG 1024×1536 RGB | `85501e4b8b70126eaec5e668da59800437f192ca0ef0d2d22144b03920a032a6` |
