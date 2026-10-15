@@ -1,0 +1,32 @@
+{
+  "format": "WebP",
+  "lossy": true,
+  "quality": 85,
+  "width": 941,
+  "height": 1672,
+  "locations": [
+    "gym",
+    "city",
+    "campus",
+    "room"
+  ],
+  "times": [
+    "morning",
+    "day",
+    "night"
+  ],
+  "files": [
+    "campus-day.webp",
+    "campus-morning.webp",
+    "campus-night.webp",
+    "city-day.webp",
+    "city-morning.webp",
+    "city-night.webp",
+    "gym-day.webp",
+    "gym-morning.webp",
+    "gym-night.webp",
+    "room-day.webp",
+    "room-morning.webp",
+    "room-night.webp"
+  ]
+}
