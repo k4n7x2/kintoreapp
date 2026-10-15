@@ -71,7 +71,7 @@
 | 登録先 | 初期登録する文書 | 初期登録する画像 | 作業に応じて追加 |
 |---|---|---|---|
 | アプリ開発 | 本書、ルート`README.md`、`docs/implementation-status.md` | 必須なし | 変更対象のコード・設定、画面スクリーンショット、採用素材。キャラ演出変更時は`shiori/README.md`が指定する資料 |
-| ビジュアル制作 | 本書、`docs/shiori/README.md`、`character.md`、`visual.md`、`dialogue.md`、`character-sheet-spec.md`、`reference-audit.md`（後ろ5件も`docs/shiori/`配下） | 下表の正式画像5枚。添付PNG3枚は差分参考として分けて登録可 | 表示中の衣装・表情素材、対象シーンの背景と`backgrounds-manifest.json`、レイアウト確認用スクリーンショット |
+| ビジュアル制作 | 本書、`docs/shiori/README.md`、`character.md`、`visual.md`、`dialogue.md`、`character-sheet-spec.md`、`reference-audit.md`（後ろ5件も`docs/shiori/`配下） | 下表の正式画像6枚。添付PNG3枚は差分参考として分けて登録可 | 表示中の衣装・表情素材、対象シーンの背景と`backgrounds-manifest.json`、レイアウト確認用スクリーンショット |
 | セリフ・物語制作 | 本書、`docs/shiori/README.md`、`character.md`、`dialogue.md`、`docs/implementation-status.md`、`public/data/shiori-greetings.json` | 必須なし | 外見・表情を扱うときの`visual.md`と画像、`shiori-login-dialogues.json`等の未接続候補、採用エピソード |
 
 ### ビジュアル制作の画像一覧
@@ -85,6 +85,7 @@
 | 体型・三面図・私服 | `shiori-character-sheet-v1.jpg` | 添付`shiori-character-sheet-v1.png`は描画差のある参考版 |
 | 衣装A | `shiori-training-outfit-v1.jpg` | 今回の添付とバイト一致。その添付を利用可 |
 | 衣装B | `shiori-training-outfit-v2.jpg` | 今回の添付とバイト一致。その添付を利用可 |
+| 部屋着・眼鏡・室内履き | `shiori-roomwear-outfit-v1.png` | 追加添付 `shiori-room wear-outfit-v1.png` とバイト一致。GitHub名のみ空白を除いて統一 |
 
 PNG3枚を追加する場合は「差分参考・正式採用未確認」と明示する。正式JPEGと無断で置換しない。個別制作でPNGを使う指定と、正本を新版へ更新する採用判断は別。詳細とファイル識別用ハッシュは`reference-audit.md`に集約する。
 
@@ -115,6 +116,6 @@ PNG3枚を追加する場合は「差分参考・正式採用未確認」と明�
 - キャラクター入口の全資料一律読み込みを担当別に整理。外見の主参照と検査は`visual.md`、口調は`dialogue.md`、画像の対応は`reference-audit.md`へ集約した。人物設定と素材実体は変更しない。
 - 添付5枚は今回の環境で読み取り・目視確認できた。衣装2枚はGitHubと完全一致。PNG3枚には描画差がある。画像ツールへの入力は未試行。今回の整理のための再添付は不要。
 - **判断待ち**：PNG3枚を正式な新版として採用するか。採用判断まで現行JPEGを維持し、資料整理やプロジェクト作成は進められる。
-- **未確認**：他チャットに残る未反映の採用事項の網羅性。部屋着の制作原本・設定画は今回の添付にもリポジトリにもなく、表示用7素材のみ確認。必要な制作時に取得する。
+- **未確認**：他チャットに残る未反映の採用事項の網羅性。当初は部屋着の制作原本・設定画が未取得だったが、同日の追加依頼で設定画v1を取得・目視し、部屋着の参照として登録した。詳細は`shiori/visual.md`と`shiori/reference-audit.md`を参照。
 - **別作業**：ホームの顔位置は試作のまま。Android実機の最終配置確認、表情とセリフの意味的連動、背景と衣装の自動連動等は本整理で確定・実装しない。
 - 検証範囲：資料とコードの照合、文書参照先、画像の実形式・寸法・対応関係、文書以外の差分がないこと。本番DB操作・全体動作テスト・画像制作・ChatGPT側の作成／登録は行わない。GitHub反映結果と公開確認の到達段階は作業完了報告に記載する。

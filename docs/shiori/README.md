@@ -24,12 +24,13 @@
 | [shiori-character-sheet-v1.jpg](reference/shiori-character-sheet-v1.jpg) | 体型・三面図・標準私服 |
 | [shiori-training-outfit-v1.jpg](reference/shiori-training-outfit-v1.jpg) | トレーニング衣装A |
 | [shiori-training-outfit-v2.jpg](reference/shiori-training-outfit-v2.jpg) | トレーニング衣装B（Aとは別衣装） |
+| [shiori-roomwear-outfit-v1.png](reference/shiori-roomwear-outfit-v1.png) | 部屋着・眼鏡・室内履き |
 
 要素ごとの優先順位・毛先条件・検査・形式・制作手順は[visual.md](visual.md)が正本。画像内の文字だけで年齢等の人物設定を変えない。
 
 ### ChatGPTプロジェクト内の基準画像の利用
 
-GitHubは正式画像の管理先。プロジェクトのソースは、画像制作ツールへ入力するためにアップロードする実ファイルであり、自動同期されない。現在の正式画像5枚を取得して登録する。今回の添付との対応・描画差・識別用ハッシュは[reference-audit.md](reference-audit.md)を確認する。
+GitHubは正式画像の管理先。プロジェクトのソースは、画像制作ツールへ入力するためにアップロードする実ファイルであり、自動同期されない。現在の正式画像6枚を取得して登録する。今回の添付との対応・描画差・識別用ハッシュは[reference-audit.md](reference-audit.md)を確認する。
 
 存在確認、目視照合、ツールへの入力を分けて記録する。GitHub URL、ファイル名、ローカルパスの存在だけでは入力成功にならない。ツールが対応する入力方法を使用し、必要な入力を渡せない場合は該当ファイルと止まる工程を示す。過去の一時パスを再利用せず、`docs/`をWorkersで配信していると仮定しない。
 
