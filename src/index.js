@@ -118,6 +118,43 @@ function monthRange(value) {
   ];
 }
 
+
+function normalizeWorkout(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body) || !validDate(body.performed_on)) return null;
+  const note = body.note ?? "";
+  if (typeof note !== "string" || note.length > 300) return null;
+  const sets = body.sets ?? [];
+  if (!Array.isArray(sets) || sets.length > 48) return null;
+  const normalized = [];
+  for (const set of sets) {
+    if (!set || typeof set !== "object" || Array.isArray(set)) return null;
+    const name = typeof set.exercise_name === "string" ? set.exercise_name.trim() : "";
+    const weight = set.weight_kg;
+    if (!name || name.length > 60 || !Number.isInteger(set.set_number) ||
+      set.set_number < 1 || set.set_number > 48 ||
+      typeof weight !== "number" || !Number.isFinite(weight) || weight < 0 || weight > 2000 ||
+      !Number.isInteger(set.reps) || set.reps < 0 || set.reps > 1000) return null;
+    normalized.push({ exercise_name: name, set_number: set.set_number, weight_kg: weight, reps: set.reps });
+  }
+  return { performed_on: body.performed_on, note: note.trim(), sets: normalized };
+}
+
+async function readJSON(request, maxLength = 12000) {
+  const raw = await request.text();
+  if (raw.length > maxLength) return { error: "payload_too_large", status: 413 };
+  try {
+    return { value: JSON.parse(raw) };
+  } catch {
+    return { error: "invalid_json", status: 400 };
+  }
+}
+
+function insertSet(db, id, set) {
+  return db.prepare(
+    "INSERT INTO workout_sets (session_id, exercise_name, set_number, weight_kg, reps) VALUES (?, ?, ?, ?, ?)"
+  ).bind(id, set.exercise_name, set.set_number, set.weight_kg, set.reps);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -173,52 +210,120 @@ export default {
         return respond({ authenticated: true });
       }
 
-      if (url.pathname === "/api/workouts" || url.pathname.startsWith("/api/workouts/")) {
+      if (url.pathname === "/api/calendar" || url.pathname.startsWith("/api/calendar/") ||
+          url.pathname === "/api/workouts" || url.pathname.startsWith("/api/workouts/")) {
         if (!env.DB) return respond({ error: "database_not_configured" }, 503);
         if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && !sameOriginJSON(request, url)) {
           return respond({ error: "invalid_origin_or_type" }, 403);
         }
 
         try {
+          if (url.pathname === "/api/calendar" && method === "GET") {
+            const range = monthRange(url.searchParams.get("month"));
+            if (!range) return respond({ error: "invalid_month" }, 400);
+            const result = await env.DB.prepare(
+              "SELECT on_date, planned, attended FROM gym_calendar_days WHERE on_date >= ? AND on_date < ? ORDER BY on_date"
+            ).bind(...range).all();
+            return respond({ days: result.results ?? [] });
+          }
+
+          const dayMatch = /^\/api\/calendar\/(\d{4}-\d{2}-\d{2})$/.exec(url.pathname);
+          if (dayMatch && method === "PUT") {
+            if (!validDate(dayMatch[1])) return respond({ error: "invalid_date" }, 400);
+            const parsed = await readJSON(request, 256);
+            if (parsed.error) return respond({ error: parsed.error }, parsed.status);
+            const { planned, attended } = parsed.value ?? {};
+            if (typeof planned !== "boolean" || typeof attended !== "boolean") {
+              return respond({ error: "invalid_calendar_state" }, 400);
+            }
+            if (!planned && !attended) {
+              await env.DB.prepare("DELETE FROM gym_calendar_days WHERE on_date = ?").bind(dayMatch[1]).run();
+            } else {
+              await env.DB.prepare(
+                "INSERT INTO gym_calendar_days (on_date, planned, attended) VALUES (?, ?, ?) " +
+                "ON CONFLICT(on_date) DO UPDATE SET planned = excluded.planned, attended = excluded.attended, updated_at = CURRENT_TIMESTAMP"
+              ).bind(dayMatch[1], Number(planned), Number(attended)).run();
+            }
+            return respond({ on_date: dayMatch[1], planned, attended });
+          }
+
           if (url.pathname === "/api/workouts" && method === "GET") {
             const range = monthRange(url.searchParams.get("month"));
             if (!range) return respond({ error: "invalid_month" }, 400);
             const result = await env.DB.prepare(
               "SELECT id, performed_on, note, created_at FROM workout_sessions WHERE performed_on >= ? AND performed_on < ? ORDER BY performed_on DESC, created_at DESC LIMIT 200"
             ).bind(...range).all();
-            return respond({ workouts: result.results ?? [] });
+            const workouts = (result.results ?? []).map(record => ({ ...record, sets: [] }));
+            if (workouts.length) {
+              const placeholders = workouts.map(() => "?").join(", ");
+              const sets = await env.DB.prepare(
+                "SELECT session_id, exercise_name, set_number, weight_kg, reps FROM workout_sets " +
+                "WHERE session_id IN (" + placeholders + ") ORDER BY session_id, id"
+              ).bind(...workouts.map(record => record.id)).all();
+              const bySession = new Map(workouts.map(record => [record.id, record]));
+              for (const set of sets.results ?? []) bySession.get(set.session_id)?.sets.push(set);
+            }
+            return respond({ workouts, truncated: workouts.length === 200 });
+          }
+
+          if (url.pathname === "/api/workouts/recent" && method === "GET") {
+            const name = url.searchParams.get("name")?.trim() ?? "";
+            if (!name || name.length > 60) return respond({ error: "invalid_exercise" }, 400);
+            const recent = await env.DB.prepare(
+              "SELECT ws.weight_kg, ws.reps, ws.set_number, s.performed_on FROM workout_sets ws " +
+              "JOIN workout_sessions s ON s.id = ws.session_id WHERE ws.exercise_name = ? " +
+              "AND ws.session_id = (SELECT ws2.session_id FROM workout_sets ws2 " +
+              "JOIN workout_sessions s2 ON s2.id = ws2.session_id WHERE ws2.exercise_name = ? " +
+              "ORDER BY s2.performed_on DESC, s2.created_at DESC, ws2.id DESC LIMIT 1) " +
+              "ORDER BY ws.set_number, ws.id LIMIT 12"
+            ).bind(name, name).all();
+            return respond({ sets: recent.results ?? [] });
           }
 
           if (url.pathname === "/api/workouts" && method === "POST") {
-            const raw = await request.text();
-            if (raw.length > 2048) return respond({ error: "payload_too_large" }, 413);
-            let body;
-            try { body = JSON.parse(raw); } catch { return respond({ error: "invalid_json" }, 400); }
-            if (!body || typeof body !== "object" || Array.isArray(body) || !validDate(body.performed_on)) {
-              return respond({ error: "invalid_date" }, 400);
-            }
-            const note = body.note ?? "";
-            if (typeof note !== "string" || note.length > 300) return respond({ error: "invalid_note" }, 400);
+            const parsed = await readJSON(request);
+            if (parsed.error) return respond({ error: parsed.error }, parsed.status);
+            const body = normalizeWorkout(parsed.value);
+            if (!body) return respond({ error: "invalid_workout" }, 400);
             const id = crypto.randomUUID();
-            await env.DB.prepare(
-              "INSERT INTO workout_sessions (id, performed_on, note) VALUES (?, ?, ?)"
-            ).bind(id, body.performed_on, note.trim()).run();
-            return respond({ id, performed_on: body.performed_on, note: note.trim() }, 201);
+            await env.DB.batch([
+              env.DB.prepare("INSERT INTO workout_sessions (id, performed_on, note) VALUES (?, ?, ?)")
+                .bind(id, body.performed_on, body.note),
+              ...body.sets.map(set => insertSet(env.DB, id, set))
+            ]);
+            return respond({ id, performed_on: body.performed_on, note: body.note }, 201);
           }
 
-          const match = /^\/api\/workouts\/([0-9a-f-]{36})$/.exec(url.pathname);
-          if (match && method === "DELETE") {
-            const result = await env.DB.prepare(
-              "DELETE FROM workout_sessions WHERE id = ?"
-            ).bind(match[1]).run();
-            return result.meta?.changes
-              ? respond({ deleted: true })
-              : respond({ error: "not_found" }, 404);
+          const sessionMatch = /^\/api\/workouts\/([0-9a-f-]{36})$/.exec(url.pathname);
+          if (sessionMatch && (method === "PUT" || method === "DELETE")) {
+            const id = sessionMatch[1];
+            const existing = await env.DB.prepare("SELECT id FROM workout_sessions WHERE id = ?").bind(id).first();
+            if (!existing) return respond({ error: "not_found" }, 404);
+
+            if (method === "DELETE") {
+              await env.DB.batch([
+                env.DB.prepare("DELETE FROM workout_sets WHERE session_id = ?").bind(id),
+                env.DB.prepare("DELETE FROM workout_sessions WHERE id = ?").bind(id)
+              ]);
+              return respond({ deleted: true });
+            }
+            const parsed = await readJSON(request);
+            if (parsed.error) return respond({ error: parsed.error }, parsed.status);
+            const body = normalizeWorkout(parsed.value);
+            if (!body) return respond({ error: "invalid_workout" }, 400);
+            await env.DB.batch([
+              env.DB.prepare(
+                "UPDATE workout_sessions SET performed_on = ?, note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+              ).bind(body.performed_on, body.note, id),
+              env.DB.prepare("DELETE FROM workout_sets WHERE session_id = ?").bind(id),
+              ...body.sets.map(set => insertSet(env.DB, id, set))
+            ]);
+            return respond({ id, performed_on: body.performed_on, note: body.note });
           }
 
           return respond({ error: "method_not_allowed" }, 405);
-        } catch (e) {
-          console.error("Workout database failure", e?.name ?? "error");
+        } catch (error) {
+          console.error("Training database failure", error?.name ?? "error");
           return respond({ error: "database_unavailable_or_migration_required" }, 503);
         }
       }

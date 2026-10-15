@@ -50,7 +50,7 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 - `localStorage`、`IndexedDB`等へ個人データを永続保存しない。認証Cookieと操作中のメモリ状態は許容。
 - 固定コンテンツやブラウザの通常の静的キャッシュと、個人データの保存は区別する。個人の会話・記録を公開GitHubへ置かない。
 
-[初期SQL](migrations/0001_initial.sql)には`workout_sessions`と`workout_sets`がある。現行APIは前者のみを利用する。SQLファイルの存在は本番適用の証拠ではなく、`/api/health`の`SELECT 1`成功もテーブル・保存処理の証明ではない。
+[初期SQL](migrations/0001_initial.sql)の`workout_sessions`と`workout_sets`を筋トレ実績・種目別セット保存に使用する。追加SQL [`0002_calendar_days.sql`](migrations/0002_calendar_days.sql)は予定・来館フラグを独立保存する。既存のトレーニング記録は自動で来館扱いに変換しない。SQLファイルの存在は本番適用の証拠ではなく、`/api/health`の`SELECT 1`成功もテーブル・保存処理の証明ではない。
 
 既存DBを削除・再初期化しない。初回セットアップ時はD1 Consoleまたはマイグレーションで適用するが、過去のConsole適用とマイグレーション管理の差を先に確認する。既存の列構造とデータを確認し、必要な追加マイグレーションを用意する。
 
@@ -62,11 +62,15 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 | POST | `/api/login` | パスワード認証、Cookie発行 |
 | GET | `/api/session` | Cookie検証。未認証は401 |
 | POST | `/api/logout` | Cookie破棄。認証前にも扱う |
-| GET | `/api/workouts?month=YYYY-MM` | 月別記録、最大200件 |
-| POST | `/api/workouts` | `{"performed_on":"YYYY-MM-DD","note":"..."}`を保存 |
-| DELETE | `/api/workouts/:id` | 記録削除 |
+| GET | `/api/workouts?month=YYYY-MM` | 月別記録・セット明細、最大200件（上限時は`truncated`） |
+| POST | `/api/workouts` | 日付・メモと任意の`sets`を新規保存（旧形式も許容） |
+| PUT | `/api/workouts/:id` | 日付・メモ・全セットをトランザクションで更新 |
+| DELETE | `/api/workouts/:id` | 記録とセット明細を削除 |
+| GET | `/api/workouts/recent?name=種目名` | その種目の最新セッションのセット |
+| GET | `/api/calendar?month=YYYY-MM` | 月別の予定・来館フラグ（0002必要） |
+| PUT | `/api/calendar/YYYY-MM-DD` | 予定／来館の独立保存、両方falseなら該当日のフラグを削除 |
 
-日付は2000～2100年の実在日、メモは最大300（JavaScriptの`length`）。同日複数記録が可能。実施日数と件数は別で、月200件超は全件集計にならない。記録更新・セット操作・設定保存APIは未実装。Secret未設定・不正長では`/api/health`以外のAPIは503。
+日付は2000～2100年の実在日、メモは最大300（JavaScriptの`length`）。同日複数記録が可能。実施日数と件数は別で、月200件超は全件集計にならない。種目は60文字以内、1件最大48セット。セットごとに重量（0〜2000kg）・回数（0〜1000回）を保存する。お気に入りの永続保存・設定保存APIは未実装。Secret未設定・不正長では`/api/health`以外のAPIは503。
 
 ## 開発・必要時の確認
 
@@ -93,3 +97,11 @@ npm run db:migrate:local
 ## 栞の表示素材
 
 人物素材は`public/assets/shiori/{home|gim|town|College}/{v1|v2|…}/`で場所→衣装別に管理する。`v1`・`v2`は衣装IDであり、画像の改訂番号とは分ける。配置・命名・制作プロンプトは[visual.md第6節](docs/shiori/visual.md)を参照。現行ホームの衣装選択は`gim/v1`のトレーニング画像と`home/v1`の部屋着テスト画像を参照する。場所と衣装は開発パネルで独立して切り替え、背景との自動連動は未実装。
+
+### カレンダー・詳細記録の導入とDBの注意
+
+- 追加機能は、来館・予定と筋トレ内容を独立管理する。来館登録だけなら種目入力は不要で、過去のメモのみの記録も残る。月の記録上限200件は継続。前回記録の参照は種目名の完全一致で取得する。
+- `0002_calendar_days.sql` は**追加テーブルのみ**。既存の `workout_sessions` と `workout_sets` に対する破壊的変更はしない。
+- **GitHubへのコミットやWorkersへのデプロイだけでは本番D1にマイグレーションが適用されない**。D1 Consoleで現行テーブルとマイグレーション適用履歴を確認し、既存のConsole適用と食い違わないことを検査してから0002を本番へ適用する。
+- 0002未適用時は予定・来館欄に準備が必要と表示し、既存のトレーニング記録の読み出しと入力は継続する。本番DBの適用と実機検証は別途必要。
+- 編集中のフォームは画面間移動では維持されるが、再読み込み・ログアウトで破棄される。個人データをブラウザの永続ストレージへ保存しない。

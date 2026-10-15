@@ -42,74 +42,261 @@ const saveNote = byId("workout-note");
 const saveButton = byId("save-workout");
 const saveFeedback = byId("save-feedback");
 const list = byId("record-list");
+const exerciseList = byId("exercise-list");
+const addExerciseButton = byId("add-exercise");
+const cancelWorkoutEdit = byId("cancel-workout-edit");
+const dayPlanned = byId("day-planned");
+const dayAttended = byId("day-attended");
+const calendarError = byId("calendar-error");
+const saveCalendarDay = byId("save-calendar-day");
+const calendarDays = new Map();
+let calendarAvailable = false;
+let monthTruncated = false;
+let selectedDate = "";
+let editingWorkoutId = null;
 
 const localISO = (d) => [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
 const currentMonth = () => String(shownYear).padStart(4, "0") + "-" + String(shownMonth + 1).padStart(2, "0");
 const sameDay = (a, b) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+const todayISO = () => localISO(new Date());
 
 dateLabel.textContent = new Intl.DateTimeFormat("ja-JP", {
   year: "numeric", month: "long", day: "numeric", weekday: "short"
 }).format(now);
-saveDate.value = localISO(now);
+saveDate.value = todayISO();
+selectedDate = todayISO();
 
+function showDay(date) {
+  selectedDate = date;
+  renderCalendar();
+}
+function renderOverview() {
+  byId("stat-days").textContent = calendarAvailable ? String([...calendarDays.values()].filter(x => x.attended).length) : "—";
+  byId("stat-plans").textContent = calendarAvailable ? String([...calendarDays.values()].filter(x => x.planned).length) : "—";
+  byId("stat-sessions").textContent = recordsLoaded ? String(completeDates.size) : "—";
+  byId("month-count").textContent = recordsLoaded
+    ? completeDates.size + "日記録" + (monthTruncated ? "（最大200件）" : "") : "読み込み中";
+}
 function renderCalendar() {
-  monthTitle.textContent = String(shownYear) + "年 " + String(shownMonth + 1) + "月";
-  byId("month-count").textContent = recordsLoaded ? completeDates.size + "日記録" : "読み込み中";
+  monthTitle.textContent = shownYear + "年 " + (shownMonth + 1) + "月";
   renderOverview();
   calendarGrid.replaceChildren();
   const startWeekday = new Date(shownYear, shownMonth, 1).getDay();
   const daysInMonth = new Date(shownYear, shownMonth + 1, 0).getDate();
-
   for (let slot = 0; slot < startWeekday + daysInMonth; slot++) {
-    const empty = slot < startWeekday;
-    const cell = document.createElement(empty ? "span" : "button");
-    cell.className = "calendar-day";
-    if (empty) {
-      cell.classList.add("is-empty");
-      cell.setAttribute("aria-hidden", "true");
-    } else {
-      const day = slot - startWeekday + 1;
-      const date = new Date(shownYear, shownMonth, day);
-      const dateKey = localISO(date);
-      const completed = completeDates.has(dateKey);
-      cell.type = "button";
-      cell.textContent = String(day);
-      if (completed) cell.classList.add("is-completed");
-      if (sameDay(date, now)) {
-        cell.classList.add("is-today");
-        cell.setAttribute("aria-current", "date");
-      }
-      cell.setAttribute("aria-label", String(shownMonth + 1) + "月" + String(day) + "日" + (completed ? "、トレーニング記録あり" : "") + "。記録画面へ");
-      cell.addEventListener("click", () => {
-        saveDate.value = dateKey;
-        setScreen("record");
-      });
+    if (slot < startWeekday) {
+      const spacer = document.createElement("span");
+      spacer.className = "calendar-day is-empty";
+      spacer.setAttribute("aria-hidden", "true");
+      calendarGrid.appendChild(spacer);
+      continue;
     }
+    const day = slot - startWeekday + 1;
+    const date = new Date(shownYear, shownMonth, day);
+    const dateKey = localISO(date);
+    const state = calendarDays.get(dateKey);
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "calendar-day";
+    cell.textContent = String(day);
+    if (state?.planned) cell.classList.add("is-planned");
+    if (state?.attended) cell.classList.add("is-attended");
+    if (completeDates.has(dateKey)) cell.classList.add("has-workout");
+    if (dateKey === selectedDate) cell.classList.add("is-selected");
+    if (sameDay(date, new Date())) {
+      cell.classList.add("is-today");
+      cell.setAttribute("aria-current", "date");
+    }
+    cell.setAttribute("aria-pressed", String(dateKey === selectedDate));
+    cell.setAttribute("aria-label", dateKey + [
+      state?.planned ? "予定あり" : "",
+      state?.attended ? "来館済み" : "",
+      completeDates.has(dateKey) ? "筋トレ記録あり" : ""
+    ].filter(Boolean).join("、"));
+    cell.addEventListener("click", () => showDay(dateKey));
     calendarGrid.appendChild(cell);
   }
+  renderDayDetail();
 }
-function renderOverview() {
-  byId("stat-days").textContent = recordsLoaded ? String(completeDates.size) : "—";
-  byId("stat-sessions").textContent = recordsLoaded ? String(workouts.length) : "—";
-
+function renderDayDetail() {
+  byId("selected-day-title").textContent = selectedDate.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$1年$2月$3日");
+  const state = calendarDays.get(selectedDate);
+  dayPlanned.checked = !!state?.planned;
+  dayAttended.checked = !!state?.attended;
+  dayPlanned.disabled = !authorized || !calendarAvailable;
+  dayAttended.disabled = !authorized || !calendarAvailable;
+  saveCalendarDay.disabled = !authorized || !calendarAvailable;
+  calendarError.textContent = authorized && recordsLoaded && !calendarAvailable
+    ? "予定・来館の保存にはD1の追加マイグレーション（0002）が必要です。" : "";
+  const host = byId("selected-day-records");
+  host.replaceChildren();
+  const entries = workouts.filter(x => x.performed_on === selectedDate);
+  if (!entries.length) {
+    host.textContent = "この日の筋トレ記録はありません。";
+    return;
+  }
+  const label = document.createElement("p");
+  label.textContent = "この日の筋トレ記録：" + entries.length + "件";
+  host.appendChild(label);
+  for (const record of entries) {
+    const row = document.createElement("div");
+    row.className = "day-record-row";
+    const summary = document.createElement("span");
+    summary.textContent = workoutSummary(record);
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "secondary-action";
+    edit.textContent = "編集";
+    edit.addEventListener("click", () => editWorkout(record));
+    row.append(summary, edit);
+    host.appendChild(row);
+  }
 }
-
 function setReady(ready) {
   dbReady = ready;
   saveDate.disabled = !ready;
   saveNote.disabled = !ready;
   saveButton.disabled = !ready;
+  addExerciseButton.disabled = !ready;
+  exerciseList.querySelectorAll("input, button").forEach(el => { el.disabled = !ready; });
 }
 
+function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
+  const row = document.createElement("div");
+  row.className = "exercise-set";
+  const number = document.createElement("span");
+  number.className = "set-number";
+  const weightLabel = document.createElement("label");
+  weightLabel.textContent = "重量 kg";
+  const weight = document.createElement("input");
+  weight.type = "number"; weight.min = "0"; weight.max = "2000"; weight.step = "0.5";
+  weight.inputMode = "decimal"; weight.required = true;
+  weight.className = "set-weight";
+  weight.value = String(set.weight_kg ?? 0);
+  weightLabel.appendChild(weight);
+  const repsLabel = document.createElement("label");
+  repsLabel.textContent = "回数";
+  const reps = document.createElement("input");
+  reps.type = "number"; reps.min = "0"; reps.max = "1000"; reps.step = "1";
+  reps.inputMode = "numeric"; reps.required = true;
+  reps.className = "set-reps";
+  reps.value = String(set.reps ?? 10);
+  repsLabel.appendChild(reps);
+  const remove = document.createElement("button");
+  remove.type = "button"; remove.className = "secondary-action";
+  remove.textContent = "×"; remove.setAttribute("aria-label", "このセットを削除");
+  remove.addEventListener("click", () => { row.remove(); renumberSets(container); });
+  row.append(number, weightLabel, repsLabel, remove);
+  container.appendChild(row);
+  renumberSets(container);
+}
+function renumberSets(container) {
+  container.querySelectorAll(".set-number").forEach((el, index) => { el.textContent = (index + 1) + "セット目"; });
+}
+function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
+  const card = document.createElement("fieldset");
+  card.className = "exercise-card";
+  const legend = document.createElement("legend");
+  legend.textContent = "トレーニング種目";
+  const head = document.createElement("div");
+  head.className = "exercise-card-head";
+  const label = document.createElement("label");
+  label.textContent = "種目名";
+  const nameInput = document.createElement("input");
+  nameInput.className = "exercise-name";
+  nameInput.type = "text"; nameInput.maxLength = 60;
+  nameInput.setAttribute("list", "exercise-suggestions");
+  nameInput.placeholder = "例：ラットプルダウン";
+  nameInput.value = name;
+  label.appendChild(nameInput);
+  const remove = document.createElement("button");
+  remove.type = "button"; remove.className = "secondary-action";
+  remove.textContent = "削除";
+  remove.addEventListener("click", () => card.remove());
+  head.append(label, remove);
+  const rows = document.createElement("div");
+  rows.className = "exercise-sets";
+  for (const set of sets) newSetRow(rows, set);
+  const actions = document.createElement("div");
+  actions.className = "exercise-actions";
+  const addSet = document.createElement("button");
+  addSet.type = "button"; addSet.className = "secondary-action"; addSet.textContent = "＋ セット";
+  addSet.addEventListener("click", () => {
+    if (rows.children.length >= 12) return;
+    const last = rows.lastElementChild;
+    newSetRow(rows, {
+      weight_kg: last ? Number(last.querySelector(".set-weight").value) : 0,
+      reps: last ? Number(last.querySelector(".set-reps").value) : 10
+    });
+  });
+  const recent = document.createElement("button");
+  recent.type = "button"; recent.className = "secondary-action";
+  recent.textContent = "前回の内容を使う";
+  const feedback = document.createElement("p");
+  feedback.className = "field-hint"; feedback.setAttribute("role", "status");
+  recent.addEventListener("click", async () => {
+    const chosen = nameInput.value.trim();
+    if (!chosen) { feedback.textContent = "種目名を入力してください。"; return; }
+    recent.disabled = true;
+    feedback.textContent = "前回の内容を確認中…";
+    try {
+      const result = await fetchJSON("/api/workouts/recent?name=" + encodeURIComponent(chosen));
+      if (!card.isConnected) return;
+      if (!result.sets.length) { feedback.textContent = "この種目の前回記録はありません。"; return; }
+      rows.replaceChildren();
+      result.sets.forEach(set => newSetRow(rows, set));
+      feedback.textContent = "前回（" + result.sets[0].performed_on + "）のセットを反映しました。";
+    } catch {
+      feedback.textContent = "前回の記録を取得できませんでした。";
+    } finally {
+      if (card.isConnected) recent.disabled = !dbReady;
+    }
+  });
+  actions.append(addSet, recent);
+  card.append(legend, head, rows, actions, feedback);
+  exerciseList.appendChild(card);
+  card.querySelectorAll("input, button").forEach(el => { el.disabled = !dbReady; });
+  return card;
+}
+function resetWorkoutForm(date = todayISO()) {
+  editingWorkoutId = null;
+  byId("record-form-title").textContent = "トレーニングを記録";
+  cancelWorkoutEdit.hidden = true;
+  saveButton.textContent = "記録を保存";
+  saveDate.value = date;
+  saveNote.value = "";
+  exerciseList.replaceChildren();
+  addExercise();
+}
+function workoutSummary(record) {
+  const names = [...new Set((record.sets || []).map(x => x.exercise_name))];
+  if (names.length) return names.join("・") + "（" + record.sets.length + "セット）" + (record.note ? " / " + record.note : "");
+  return record.note || "日付のみの記録";
+}
+function editWorkout(record) {
+  editingWorkoutId = record.id;
+  byId("record-form-title").textContent = "記録を編集";
+  cancelWorkoutEdit.hidden = false;
+  saveButton.textContent = "変更を保存";
+  saveDate.value = record.performed_on;
+  saveNote.value = record.note || "";
+  exerciseList.replaceChildren();
+  const groups = new Map();
+  for (const set of record.sets || []) {
+    if (!groups.has(set.exercise_name)) groups.set(set.exercise_name, []);
+    groups.get(set.exercise_name).push(set);
+  }
+  if (!groups.size) addExercise();
+  else for (const [name, sets] of groups) addExercise(name, sets);
+  saveFeedback.textContent = "過去の記録を編集中です。";
+  setScreen("record");
+  window.scrollTo(0, 0);
+}
 function renderHistory() {
   list.replaceChildren();
-  if (!workouts.length) {
-    list.textContent = "この月はまだ記録がありません。";
-    return;
-  }
+  if (!recordsLoaded) { list.textContent = "読み込み中…"; return; }
+  if (!workouts.length) { list.textContent = "この月はまだ記録がありません。"; return; }
   for (const record of workouts) {
     const row = document.createElement("div");
     row.className = "record-item";
@@ -117,16 +304,19 @@ function renderHistory() {
     const date = document.createElement("strong");
     date.textContent = record.performed_on;
     const note = document.createElement("p");
-    note.textContent = record.note || "実施日を記録しました";
+    note.textContent = workoutSummary(record);
     detail.append(date, note);
-
+    const actions = document.createElement("div");
+    actions.className = "record-item-actions";
+    const edit = document.createElement("button");
+    edit.type = "button"; edit.className = "secondary-action"; edit.textContent = "編集";
+    edit.addEventListener("click", () => editWorkout(record));
     const del = document.createElement("button");
-    del.type = "button";
-    del.className = "delete-record";
-    del.textContent = "削除";
+    del.type = "button"; del.className = "delete-record"; del.textContent = "削除";
     del.setAttribute("aria-label", record.performed_on + "の記録を削除");
     del.addEventListener("click", () => removeWorkout(record.id));
-    row.append(detail, del);
+    actions.append(edit, del);
+    row.append(detail, actions);
     list.appendChild(row);
   }
 }
@@ -148,16 +338,30 @@ async function loadWorkouts() {
   const requestId = ++recordsRequestId;
   try {
     const result = await fetchJSON("/api/workouts?month=" + encodeURIComponent(month));
-    if (!authorized || currentMonth() !== month || requestId !== recordsRequestId) return;
+    if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
     workouts = result.workouts || [];
+    monthTruncated = !!result.truncated;
     recordsLoaded = true;
     completeDates.clear();
-    workouts.forEach((w) => completeDates.add(w.performed_on));
+    workouts.forEach(w => completeDates.add(w.performed_on));
+    calendarDays.clear();
+    calendarAvailable = false;
+    try {
+      const calendar = await fetchJSON("/api/calendar?month=" + encodeURIComponent(month));
+      if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
+      for (const day of calendar.days || []) {
+        calendarDays.set(day.on_date, { planned: !!day.planned, attended: !!day.attended });
+      }
+      calendarAvailable = true;
+    } catch (error) {
+      if (error.status === 401) throw error;
+      // 0002未適用でも既存の筋トレ記録は表示・編集できるようにする。
+    }
     renderCalendar();
     renderHistory();
     setReady(true);
   } catch (error) {
-    if (!authorized || currentMonth() !== month || requestId !== recordsRequestId) return;
+    if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
     if (error.status === 401) {
       setAuthenticated(false);
       loginFeedback.textContent = "ログインの有効期限が切れました。もう一度ログインしてください。";
@@ -165,61 +369,129 @@ async function loadWorkouts() {
     }
     workouts = [];
     recordsLoaded = false;
+    monthTruncated = false;
+    calendarAvailable = false;
+    calendarDays.clear();
     completeDates.clear();
     renderCalendar();
     byId("month-count").textContent = "取得できません";
     setReady(false);
-    list.textContent = error.status === 503
-      ? "D1のテーブル準備が必要です。"
-      : "記録を読み込めませんでした。";
+    list.textContent = error.status === 503 ? "D1のテーブル準備が必要です。" : "記録を読み込めませんでした。";
   }
 }
 async function removeWorkout(id) {
-  if (!dbReady || !confirm("この記録を削除しますか？")) return;
+  if (!dbReady || !confirm("このトレーニング記録を削除しますか？ 来館記録は削除されません。")) return;
   setReady(false);
   try {
     await fetchJSON("/api/workouts/" + encodeURIComponent(id), {
       method: "DELETE", headers: { "Content-Type": "application/json" }
     });
+    if (editingWorkoutId === id) resetWorkoutForm();
     await loadWorkouts();
-    saveFeedback.textContent = "削除しました。";
+    saveFeedback.textContent = "筋トレ記録を削除しました。";
   } catch {
     setReady(true);
     saveFeedback.textContent = "削除できませんでした。";
   }
 }
 
+addExerciseButton.addEventListener("click", () => { if (dbReady) addExercise(); });
+cancelWorkoutEdit.addEventListener("click", () => { resetWorkoutForm(saveDate.value); saveFeedback.textContent = ""; });
+resetWorkoutForm();
+
+function collectSets() {
+  const result = [];
+  for (const card of exerciseList.querySelectorAll(".exercise-card")) {
+    const name = card.querySelector(".exercise-name").value.trim();
+    const rows = [...card.querySelectorAll(".exercise-set")];
+    if (!name && rows.length) continue; // 名前未入力のひな形は送信しない。
+    if (!name) continue;
+    if (name.length > 60) throw new Error("種目名は60文字以内です。");
+    for (let i = 0; i < rows.length; i++) {
+      const weight = Number(rows[i].querySelector(".set-weight").value);
+      const reps = Number(rows[i].querySelector(".set-reps").value);
+      if (!Number.isFinite(weight) || weight < 0 || weight > 2000 ||
+          !Number.isInteger(reps) || reps < 0 || reps > 1000) throw new Error("重量・回数を確認してください。");
+      result.push({ exercise_name: name, set_number: i + 1, weight_kg: weight, reps });
+    }
+  }
+  if (result.length > 48) throw new Error("1件に保存できるのは48セットまでです。");
+  return result;
+}
 byId("workout-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!authorized || !dbReady) return;
+  let sets;
+  try {
+    sets = collectSets();
+    if (!sets.length && !saveNote.value.trim()) throw new Error("種目を追加するか、メモを入力してください。");
+  } catch (error) {
+    saveFeedback.textContent = error.message;
+    return;
+  }
   setReady(false);
   saveFeedback.textContent = "保存中…";
+  const wasEditing = !!editingWorkoutId;
+  const savedDate = saveDate.value;
   try {
-    const result = await fetchJSON("/api/workouts", {
-      method: "POST",
+    await fetchJSON(wasEditing ? "/api/workouts/" + encodeURIComponent(editingWorkoutId) : "/api/workouts", {
+      method: wasEditing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ performed_on: saveDate.value, note: saveNote.value })
+      body: JSON.stringify({ performed_on: savedDate, note: saveNote.value, sets })
     });
-    shownYear = Number(result.performed_on.slice(0, 4));
-    shownMonth = Number(result.performed_on.slice(5, 7)) - 1;
+    shownYear = Number(savedDate.slice(0, 4));
+    shownMonth = Number(savedDate.slice(5, 7)) - 1;
+    selectedDate = savedDate;
+    resetWorkoutForm(savedDate);
     await loadWorkouts();
-    saveNote.value = "";
-    saveFeedback.textContent = "クラウドに保存しました。";
+    saveFeedback.textContent = wasEditing ? "記録を更新しました。" : "クラウドに保存しました。";
   } catch {
     setReady(true);
-    saveFeedback.textContent = "保存に失敗しました。日付と接続状態を確認してください。";
+    saveFeedback.textContent = "保存できませんでした。日付・入力内容・接続状態を確認してください。";
   }
+});
+byId("save-calendar-day").addEventListener("click", async () => {
+  if (!authorized || !calendarAvailable) return;
+  const date = selectedDate;
+  saveCalendarDay.disabled = true;
+  calendarError.textContent = "保存中…";
+  try {
+    const result = await fetchJSON("/api/calendar/" + encodeURIComponent(date), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planned: dayPlanned.checked, attended: dayAttended.checked })
+    });
+    if (result.planned || result.attended) calendarDays.set(date, result);
+    else calendarDays.delete(date);
+    if (selectedDate === date) {
+      renderCalendar();
+      calendarError.textContent = "予定・来館を保存しました。";
+    }
+  } catch {
+    calendarError.textContent = "保存できませんでした。接続状態を確認してください。";
+  } finally {
+    saveCalendarDay.disabled = !calendarAvailable;
+  }
+});
+byId("record-selected-day").addEventListener("click", () => {
+  resetWorkoutForm(selectedDate);
+  saveFeedback.textContent = "";
+  setScreen("record");
 });
 
 function changeMonth(offset) {
   const result = new Date(shownYear, shownMonth + offset, 1);
   shownYear = result.getFullYear();
   shownMonth = result.getMonth();
+  selectedDate = currentMonth() === todayISO().slice(0, 7) ? todayISO() : currentMonth() + "-01";
   ++recordsRequestId;
   recordsLoaded = false;
-  setReady(false);
+  calendarAvailable = false;
+  monthTruncated = false;
+  calendarDays.clear();
   completeDates.clear();
   workouts = [];
+  setReady(false);
   renderCalendar();
   list.textContent = "読み込み中…";
   if (authorized) loadWorkouts();
@@ -583,7 +855,13 @@ function setAuthenticated(next) {
     setReady(false);
     workouts = [];
     recordsLoaded = false;
+    calendarAvailable = false;
+    monthTruncated = false;
+    calendarDays.clear();
     completeDates.clear();
+    selectedDate = todayISO();
+    resetWorkoutForm();
+    saveFeedback.textContent = "";
     renderCalendar();
     list.textContent = "ログインすると記録が表示されます。";
     history.replaceState(null, "", location.pathname + location.search);

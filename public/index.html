@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261016-home-outfit-size-v2">
-  <script type="module" src="/app.js?v=20261016-home-roomwear-position-v1"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261016-training-features-v1">
+  <script type="module" src="/app.js?v=20261016-training-features-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -101,14 +101,32 @@
           <div class="panel record-panel">
             <p class="security-note" id="auth-status" role="status">ログイン状態を確認中…</p>
             <form id="workout-form">
-            <label for="workout-date">実施日</label>
-            <input id="workout-date" name="performed_on" type="date" required disabled>
-            <label for="workout-note">今日のメモ（任意）</label>
-            <textarea id="workout-note" name="note" maxlength="300" rows="3" placeholder="例：ジムに行けた。胸と背中を中心に。" disabled></textarea>
-            <button id="save-workout" type="submit" disabled>記録を保存</button>
-            <p id="save-feedback" class="feedback" role="status"></p>
-          </form>
-            <p class="security-note">種目・重量・回数は今後の機能追加で対応します。記録はCloudflare D1に保存されます。</p>
+              <div class="record-header">
+                <h2 id="record-form-title">トレーニングを記録</h2>
+                <button type="button" id="cancel-workout-edit" class="secondary-action" hidden>編集をやめる</button>
+              </div>
+              <label for="workout-date">実施日</label>
+              <input id="workout-date" name="performed_on" type="date" min="2000-01-01" max="2100-12-31" required disabled>
+              <div class="record-exercises-heading">
+                <h3>種目とセット</h3>
+                <button type="button" class="secondary-action" id="add-exercise" disabled>＋ 種目を追加</button>
+              </div>
+              <datalist id="exercise-suggestions">
+                <option value="ベンチプレス"></option><option value="チェストプレス"></option>
+                <option value="ダンベルプレス"></option><option value="ラットプルダウン"></option>
+                <option value="シーテッドロー"></option><option value="ショルダープレス"></option>
+                <option value="アームカール"></option><option value="レッグプレス"></option>
+                <option value="スクワット"></option><option value="レッグカール"></option>
+                <option value="クランチ"></option>
+              </datalist>
+              <div id="exercise-list" class="exercise-list" aria-label="種目一覧"></div>
+              <p class="field-hint">セットを追加すると重量・回数を個別に設定できます。前回の数値も呼び出せます。</p>
+              <label for="workout-note">メモ（任意）</label>
+              <textarea id="workout-note" name="note" maxlength="300" rows="3" placeholder="例：胸と背中。今日はフォームを意識。" disabled></textarea>
+              <button id="save-workout" type="submit" disabled>記録を保存</button>
+              <p id="save-feedback" class="feedback" role="status" aria-live="polite"></p>
+            </form>
+            <p class="security-note">記録はCloudflare D1に保存されます。来館・予定はカレンダーで別に管理します。</p>
           </div>
 
         </section>
@@ -117,7 +135,7 @@
           <div class="page-heading">
             <p class="section-caption">CALENDAR</p>
             <h1 id="calendar-page-heading">カレンダー</h1>
-            <p class="page-description">日付ごとのトレーニング記録を確認する。</p>
+            <p class="page-description">予定と来館、トレーニング内容を別々に管理する。</p>
           </div>
           <!-- UI操作面とは独立した、立ち絵用の自然な余白。画像・セリフは未表示。 -->
           <div class="character-scene character-scene--calendar" data-character-scene="history">
@@ -127,37 +145,53 @@
           </div>
           </div>
           <div class="history-overview">
-          <div class="overview-grid" aria-label="表示月のトレーニング概要">
-            <article class="stat-card"><p class="stat-label">表示月の記録日数</p><p class="stat-number"><strong id="stat-days">—</strong><span>日</span></p><p class="stat-description">記録のある日</p></article>
-            <article class="stat-card"><p class="stat-label">表示月の記録件数</p><p class="stat-number"><strong id="stat-sessions">—</strong><span>件</span></p><p class="stat-description">保存した記録</p></article>
-          </div>
-          </div>
-          <section class="section" aria-labelledby="calendar-heading">
-        <div class="section-heading">
-          <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">トレーニングカレンダー</h2></div>
-          <span class="note-chip" id="month-count">読み込み中</span>
-        </div>
-        <div class="panel">
-          <div class="calendar-topbar">
-            <h3 id="month-title" aria-live="polite"></h3>
-            <div class="month-controls">
-              <button type="button" id="prev-month" aria-label="前の月">‹</button>
-              <button type="button" id="next-month" aria-label="次の月">›</button>
+            <div class="overview-grid calendar-overview" aria-label="表示月の概要">
+              <article class="stat-card"><p class="stat-label">来館した日</p><p class="stat-number"><strong id="stat-days">—</strong><span>日</span></p></article>
+              <article class="stat-card"><p class="stat-label">予定のある日</p><p class="stat-number"><strong id="stat-plans">—</strong><span>日</span></p></article>
+              <article class="stat-card"><p class="stat-label">筋トレ記録</p><p class="stat-number"><strong id="stat-sessions">—</strong><span>日</span></p></article>
             </div>
           </div>
-          <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
-          <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
-          <div class="legend">
-            <span><i class="legend-dot completed"></i> 記録あり</span>
-            
-            <span><i class="legend-dot today"></i> 今日</span>
-          </div>
-          <p class="calendar-hint">日付をタップして記録を追加できます。</p>
-        </div>
-      </section>
+          <section class="section" aria-labelledby="calendar-heading">
+            <div class="section-heading">
+              <div><p class="section-caption">TRAINING CALENDAR</p><h2 id="calendar-heading">ジムの予定と来館</h2></div>
+              <span class="note-chip" id="month-count">読み込み中</span>
+            </div>
+            <div class="panel">
+              <div class="calendar-topbar">
+                <h3 id="month-title" aria-live="polite"></h3>
+                <div class="month-controls">
+                  <button type="button" id="prev-month" aria-label="前の月">‹</button>
+                  <button type="button" id="next-month" aria-label="次の月">›</button>
+                </div>
+              </div>
+              <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+              <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
+              <div class="legend">
+                <span><i class="legend-dot planned"></i>予定</span>
+                <span><i class="legend-dot visited"></i>来館</span>
+                <span><i class="legend-dot has-workout"></i>筋トレ記録</span>
+                <span><i class="legend-dot today"></i>今日</span>
+              </div>
+              <p class="calendar-hint">日付を選択すると、予定・来館の登録と筋トレ記録の確認ができます。</p>
+            </div>
+          </section>
+          <section class="section day-detail-section" aria-labelledby="calendar-day-heading">
+            <div class="section-heading"><h2 id="calendar-day-heading">選択した日</h2></div>
+            <div class="panel calendar-day-panel">
+              <h3 id="selected-day-title"></h3>
+              <p id="calendar-error" class="feedback" role="status" aria-live="polite"></p>
+              <div class="day-flags">
+                <label><input type="checkbox" id="day-planned" disabled><span>ジムに行く予定</span></label>
+                <label><input type="checkbox" id="day-attended" disabled><span>ジムに行った</span></label>
+              </div>
+              <button type="button" id="save-calendar-day" class="primary-action" disabled>予定・来館を保存</button>
+              <div class="day-records" id="selected-day-records" aria-live="polite"></div>
+              <button type="button" id="record-selected-day" class="secondary-action">この日のトレーニングを記録</button>
+            </div>
+          </section>
           <section class="section history-records-section" aria-labelledby="history-record-list-heading">
             <div class="section-heading">
-              <div><p class="section-caption">LOGS</p><h2 id="history-record-list-heading">表示月の記録</h2></div>
+              <div><p class="section-caption">LOGS</p><h2 id="history-record-list-heading">表示月のトレーニング記録</h2></div>
             </div>
             <div class="panel history-records-panel">
               <div class="record-history">
