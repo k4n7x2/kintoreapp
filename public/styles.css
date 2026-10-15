@@ -478,6 +478,11 @@ body.is-authenticated .app-page { padding-top: 10px; }
   transform: scale(1.14);
   transform-origin: right bottom;
 }
+/* 部屋着テスト画像は縦長。頭部サイズは変えずに表示開始位置のみ下げ、
+   トレーニング衣装の顔位置と揃える（幅393pxの端末で約149px移動）。 */
+#page-home .character-layer__touch[data-outfit="roomwear"] {
+  bottom: calc(-1 * min(38vw, 160px));
+}
 #page-home .character-layer__touch img {
   pointer-events: none;
   -webkit-user-drag: none;
