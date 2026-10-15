@@ -617,7 +617,7 @@ const shioriHomeArt = shioriHomeTouch.querySelector(".character-layer__art");
 const outfitSelect = byId("shiori-outfit");
 const outfitStatus = byId("shiori-outfit-status");
 const trainingArt = "/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp";
-const roomwearArt = "/assets/shiori/home/v1/shiori-home-roomwear-test-v1.webp";
+const roomwearArt = "/assets/shiori/home/v1/shiori-home-roomwear-normal-r1.webp";
 let currentOutfit = "training";
 
 function refreshOutfit() {

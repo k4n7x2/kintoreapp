@@ -17,7 +17,7 @@
 | カレンダー | 月間表示を上部へ、日付タップで指定日の記録画面へ直行。下部のSD枠に採用済みセリフの吹き出しと再抽選ボタンを追加。SD画像は未登録のため表示しない。旧`#history`はcalendarに読み替え |
 | 来館・予定 | 記録画面の指定日パネルに予定・来館の手動登録と日別の実績参照を移動。D1の`gym_calendar_days`に分離保存、既存データの自動変換なし。0002未適用時は案内表示 |
 | 栞の表示 | ホームは従来の立ち絵・吹き出しを維持。カレンダーと記録画面にはSD用の透明枠と、既存の採用済みセリフを読み込む吹き出しを実装。SD画像そのものは未登録・未接続、音声読み上げ機能も未実装。設定ほかは空のレイヤー |
-| タップ | 立ち絵の`role="button"`操作面からセリフ再抽選、画像の420ms反応（現存する部屋着テスト画像は1枚のため表情変更なし）。Enter/Space対応。動きを減らす設定ではアニメーション停止 |
+| タップ | 立ち絵の`role="button"`操作面からセリフ再抽選、画像の420ms反応（部屋着の通常画像を表示。ほか6表情は素材登録済みで、表情の自動切替は未実装）。Enter/Space対応。動きを減らす設定ではアニメーション停止 |
 | テーマ・ホーム | 固定ヘッダーのライト／ダーク切り替え。初期値は端末配色。メモリのみ、再読込で再判定。ホームはスクロール抑制、他画面はスクロール可能 |
 | 背景 | 4場所×朝昼夜の12画像を全9画面で共有。認証時に場所を抽選し、開発設定から手動変更・再抽選。時間帯は自動／朝／昼／夜。メモリのみ。自動時の時刻区分は下表 |
 | 衣装 | 開発設定でトレーニング／部屋着を選択。私服は表示用立ち絵未登録で無効。初期衣装はトレーニング、再読込・再認証で戻る |
@@ -30,7 +30,7 @@
 |---|---|
 | `docs/shiori/reference/`のJPEG5枚 | 正式な制作資料。`public/`外のためWorkersの静的配信対象外。添付との照合は[reference-audit.md](shiori/reference-audit.md) |
 | `public/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp` | ホームへ接続済み。800×1067、RGBA。採用済みの表示用WebP例外 |
-| `public/assets/shiori/home/v1/shiori-home-roomwear-test-v1.webp` | ホームの部屋着切り替えに接続。941×1672、RGBA。テスト画像1枚。読込失敗時はtrainingへ戻す。旧7表情は削除済み |
+| `public/assets/shiori/home/v1/shiori-home-roomwear-{normal,joy,anger,sad,fun,shy,mischievous}-r1.webp` | 部屋着7表情、各941×1672、透過WebP（品質85）。通常表情はホームの部屋着切り替えに接続、残る6枚は登録のみ。読込失敗時はtrainingへ戻す。旧テスト画像は削除済み |
 | `public/assets/shiori/{home,gim,town,College}/{v1,v2}/` | 場所→別衣装IDの保存先。未登録フォルダは`.gitkeep`のみ。旧試作SVGは現行ツリーに存在しない |
 | `public/assets/backgrounds/`の12枚 | gym／city／campus／room × morning／day／night。941×1672、RGBのWebP。`refreshScene`がファイル名を組み立てて参照 |
 | `public/assets/backgrounds/backgrounds-manifest.json` | 素材構成一覧。実行時にJSが読み込む仕組みはない。場所・時間帯の追加にはJSとの整合も必要 |
@@ -233,3 +233,10 @@
 - 削除済みの部屋着7表情を参照していたコードを、現存するテスト画像1枚へ修正。実寸941×1672で表示枠の縦横比を設定する。タップによるセリフ再抽選・反応と読込失敗時のトレーニングへの復帰は維持。
 - `visual.md`の保存先・ホーム用共通プロンプト・WebP登録プロンプト、ビジュアル制作指示、資料入口・共通案内・READMEを更新。背景のID・パス、認証・API・D1は変更なし。
 - 構文、素材参照、移動前後のGit Blob SHA、衣装切り替え・読込失敗・タップ処理を検証。本番公開・Android実機での見え方は作業報告で区別する。
+
+
+## 部屋着ホーム立ち絵7表情の登録・テスト画像置換（2026-10-16）
+
+- `public/assets/shiori/home/v1/` に `shiori-home-roomwear-{normal,joy,anger,sad,fun,shy,mischievous}-r1.webp` を登録。全7枚941×1672、実アルファあり、ロッシーWebP品質85。制作原本と人物設定基準画像は変更しない。
+- 旧 `shiori-home-roomwear-test-v1.webp` は削除。`public/app.js` の部屋着画像パスを `shiori-home-roomwear-normal-r1.webp` に置換。トレーニング画像、背景、画面表示倍率・位置、タップ時の既存セリフ再抽選は変更しない。
+- 新画像では不透明な輪郭が左右の画面端に接する箇所があり、指定の左右10〜15%透明余白は未達。正式な画角検査の残課題。ほか6表情の動的切替と本番表示確認は未実施。

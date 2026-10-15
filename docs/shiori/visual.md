@@ -164,7 +164,7 @@ GitHubは正式画像の管理先、プロジェクト添付は画像制作ツ�
 
 ## 6. アプリ用画像の仕様（確定）
 
-- **立ち絵・表情差分の制作原本：原則実アルファ付き透過PNG**。GitHubへ新規画像を登録する際の転送用コピーは第9節に従い、Base64化より前にロッシーWebP（品質85）へ変換する。現在の表示用WebPは `public/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp` と `public/assets/shiori/home/v1/shiori-home-roomwear-test-v1.webp`。旧部屋着7表情は削除済みで再利用しない。既存の正式基準画像・参照資料の形式を遡って変更しない。
+- **立ち絵・表情差分の制作原本：原則実アルファ付き透過PNG**。GitHubへ新規画像を登録する際の転送用コピーは第9節に従い、Base64化より前にロッシーWebP（品質85）へ変換する。現在の表示用WebPは `public/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp` と `public/assets/shiori/home/v1/shiori-home-roomwear-normal-r1.webp`。新しい部屋着7表情（normal/joy/anger/sad/fun/shy/mischievous）は `home/v1/` に登録済み。通常表情のみアプリへ接続し、他6表情の自動切替は未実装。旧版の部屋着7表情は削除済みで再利用しない。既存の正式基準画像・参照資料の形式を遡って変更しない。
 - 実際にアルファチャンネルを持つこと。白背景や市松模様を描いただけでは不可。
 - **ホーム用の通常立ち絵**はソシャゲのホーム画面風のバストアップ～腰上。ポーズは自然体。現在のホームでの人物の大きさを維持するため、第8節の表示基準と共通プロンプトを用いる。
 - 画面端に収めやすく、頭頂部や髪先を不自然に切らない。
@@ -179,7 +179,7 @@ GitHubは正式画像の管理先、プロジェクト添付は画像制作ツ�
 
 | 場所フォルダ（大文字・小文字を含め固定） | 意味 | 現在の衣装対応 |
 |---|---|---|
-| `home` | 栞の部屋 | `v1`＝部屋着設定画v1、テスト画像あり。`v2`は未登録 |
+| `home` | 栞の部屋 | `v1`＝部屋着設定画v1、表情7枚登録済み。`v2`は未登録 |
 | `gim` | ジム | `v1`＝トレーニング衣装A、画像あり。`v2`は未登録（衣装Bの登録候補） |
 | `town` | 街 | `v1`・`v2`とも衣装未割当・画像未登録 |
 | `College` | 大学 | `v1`・`v2`とも衣装未割当・画像未登録 |
@@ -187,7 +187,7 @@ GitHubは正式画像の管理先、プロジェクト添付は画像制作ツ�
 ```text
 public/assets/shiori/
 ├── home/
-│   ├── v1/shiori-home-roomwear-test-v1.webp
+│   ├── v1/shiori-home-roomwear-{normal,joy,anger,sad,fun,shy,mischievous}-r1.webp
 │   └── v2/
 ├── gim/
 │   ├── v1/shiori-home-training-bust-v1.webp
