@@ -46,6 +46,7 @@ GitHubは正式画像の管理先。プロジェクトのソースは、画像�
 ## 正本の更新と採用物の所在
 
 - 人物像・設定の確定は`character.md`、外見・主参照・画像仕様は`visual.md`、口調・会話規則は`dialogue.md`、三面図・体型・標準私服の制作仕様は`character-sheet-spec.md`を更新する。
+- 表示用人物画像は`public/assets/shiori/{home|gim|town|College}/{v1|v2|…}/`で場所→衣装ごとに管理する。衣装ID・命名・登録先の正本は[visual.md第6節](visual.md)。
 - 表示用画像は[public/assets/shiori/](../../public/assets/shiori/)、背景は[public/assets/backgrounds/](../../public/assets/backgrounds/)、固定セリフは[public/data/](../../public/data/)に置く。制作資料画像をそのまま透過立ち絵として流用しない。
 - 現在接続されている素材・本文と、候補のままのデータは[実装状況](../implementation-status.md)で区別する。ファイルの存在だけで採用・実装・本番確認を断定しない。
 - 本文や絵を制作しただけでは、新しい人物設定・過去の出来事・関係性は確定しない。ユーザーが採用した範囲だけを正本へ反映する。現時点で独立した正史・年表は未整備。継続エピソードの採用資料を設ける場合はここから案内する。
