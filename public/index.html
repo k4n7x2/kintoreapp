@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261015-theme-layout1">
-  <script type="module" src="/app.js?v=20261015-theme-layout1"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261015-scene-test1">
+  <script type="module" src="/app.js?v=20261015-scene-test1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -38,6 +38,8 @@
       </div>
 
       <div id="app-screen" hidden>
+        <!-- 認証後のみ表示する、全画面共通の風景レイヤー -->
+        <div id="scene-background" class="scene-background" aria-hidden="true"></div>
         <section class="app-page" id="page-home" data-page="home" aria-labelledby="home-heading">
           <h1 id="home-heading" class="visually-hidden">ホーム</h1>
           <p class="home-date" id="today-label"></p>
@@ -164,6 +166,21 @@
             <div class="character-layer__dialogue" hidden></div>
           </div>
           </div>
+          <section class="section scene-settings-section" aria-labelledby="scene-settings-heading">
+            <div class="section-heading"><h2 id="scene-settings-heading">背景シーン（テスト）</h2></div>
+            <div class="panel scene-settings-panel">
+              <label for="scene-location">栞がいる場所</label>
+              <select id="scene-location" name="scene-location">
+                <option value="gym">ジム</option>
+                <option value="city">街</option>
+                <option value="campus">大学</option>
+                <option value="room">栞の部屋</option>
+              </select>
+              <button type="button" id="scene-reroll" class="scene-reroll">別の場所をランダムに選ぶ</button>
+              <p id="scene-status" class="scene-status" role="status" aria-live="polite"></p>
+              <p class="scene-hint">ログイン時に場所をランダム選択します。時間帯は端末の時刻で自動更新します。変更は今回の表示だけに有効です。</p>
+            </div>
+          </section>
           <section class="section settings-section" aria-labelledby="account-heading">
             <div class="section-heading"><h2 id="account-heading">アカウント</h2></div>
             <div class="panel">

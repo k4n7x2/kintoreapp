@@ -236,6 +236,59 @@ const loginSuccess = byId("login-success");
 
 const pages = new Set(["home", "record", "history", "settings"]);
 
+// 背景はGitHubの固定素材。場所はログインのたびにランダム選択し、端末には保存しない。
+const sceneLocations = ["gym", "city", "campus", "room"];
+const sceneLocationNames = { gym: "ジム", city: "街", campus: "大学", room: "栞の部屋" };
+const sceneTimeNames = { morning: "朝", day: "昼", night: "夜" };
+const sceneBackground = byId("scene-background");
+const sceneLocationSelect = byId("scene-location");
+const sceneStatus = byId("scene-status");
+let sceneLocation = null;
+let sceneTime = null;
+
+function sceneTimeSlot(hour) {
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 18) return "day";
+  return "night";
+}
+function randomSceneLocation(excludeCurrent = false) {
+  const candidates = excludeCurrent
+    ? sceneLocations.filter((location) => location !== sceneLocation)
+    : sceneLocations;
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+function refreshScene() {
+  if (!authorized || !sceneLocation) return;
+  const time = sceneTimeSlot(new Date().getHours());
+  if (time !== sceneTime || sceneBackground.dataset.location !== sceneLocation) {
+    const url = "/assets/backgrounds/" + sceneLocation + "-" + time + ".webp";
+    sceneBackground.style.backgroundImage = 'url("' + url + '")';
+    sceneBackground.dataset.location = sceneLocation;
+    sceneBackground.dataset.time = time;
+    sceneTime = time;
+  }
+  sceneLocationSelect.value = sceneLocation;
+  sceneStatus.textContent = "現在： " + sceneLocationNames[sceneLocation] + "・" + sceneTimeNames[time] + "（端末時刻）";
+}
+function setSceneLocation(nextLocation) {
+  if (!authorized || !sceneLocations.includes(nextLocation)) return;
+  sceneLocation = nextLocation;
+  refreshScene();
+}
+sceneLocationSelect.addEventListener("change", () => setSceneLocation(sceneLocationSelect.value));
+byId("scene-reroll").addEventListener("click", () => {
+  if (!authorized) return;
+  setSceneLocation(randomSceneLocation(true));
+});
+// 画面を開いたまま時間帯が変わった場合や、Androidで復帰した場合にも追従。
+setInterval(refreshScene, 60 * 1000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshScene();
+});
+window.addEventListener("focus", refreshScene);
+window.addEventListener("pageshow", refreshScene);
+
+
 // ホームの既存セリフ候補を必要時だけ取得する。端末には永続保存しない。
 const homeDialogue = byId("shiori-home-dialogue");
 const shioriHomeTouch = byId("shiori-home-touch");
@@ -315,6 +368,7 @@ function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
   const previousPage = activePage;
   activePage = screen;
+  refreshScene();
   document.body.classList.toggle("is-home", screen === "home");
   if (screen === "home") {
     if (previousPage !== "home" || homeDialogue.hidden) showHomeGreeting();
@@ -347,6 +401,7 @@ window.addEventListener("popstate", () => {
 });
 
 function setAuthenticated(next) {
+  const wasAuthorized = authorized;
   authorized = next;
   ++recordsRequestId;
   byId("boot-screen").hidden = true;
@@ -360,9 +415,20 @@ function setAuthenticated(next) {
   document.title = next ? "kintoreapp | 筋トレ記録" : "ログイン";
   loginSuccess.hidden = !next;
   if (next) {
+    if (!wasAuthorized) {
+      sceneLocation = randomSceneLocation();
+      sceneTime = null;
+    }
+    refreshScene();
     authStatus.textContent = "ログイン済み（自分専用）";
     setScreen("home", false);
   } else {
+    sceneLocation = null;
+    sceneTime = null;
+    sceneBackground.style.backgroundImage = "";
+    delete sceneBackground.dataset.location;
+    delete sceneBackground.dataset.time;
+    sceneStatus.textContent = "";
     ++greetingRequestId;
     shioriHomeTouch.classList.remove("is-poked");
     homeDialogue.hidden = true;

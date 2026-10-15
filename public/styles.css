@@ -717,3 +717,66 @@ body { background: var(--bg); color: var(--ink); }
 #page-home .character-layer__touch:focus-visible { outline-color: var(--accent); }
 .settings-project-link { background: var(--surface); border-color: var(--line); color: var(--ink); }
 @media (hover: hover) { .settings-project-link:hover { background: var(--raised); } }
+
+/* 背景シーン（試験導入）：ログイン後に限り、全ページ共通の固定背景として表示。
+   時間帯は風景だけが変わり、上部ヘッダー／下部ナビ／操作UIの前後関係は固定。 */
+#app-screen { position: relative; }
+#app-screen > .app-page { position: relative; z-index: 1; }
+.scene-background {
+  position: fixed;
+  top: calc(var(--topbar-h) + env(safe-area-inset-top));
+  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+  left: 50%;
+  width: min(100%, 640px);
+  transform: translateX(-50%);
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  pointer-events: none;
+  z-index: 0;
+}
+.scene-background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(25, 21, 35, .22);
+  pointer-events: none;
+}
+:root[data-theme="light"] .scene-background::after {
+  background: rgba(255, 248, 255, .16);
+}
+#page-home .home-date {
+  display: inline-block;
+  padding: 4px 9px;
+  border-radius: 9px;
+  background: var(--bubble-bg);
+}
+.scene-settings-section { margin-top: 25px; }
+.scene-settings-panel { display: grid; gap: 11px; }
+.scene-settings-panel label { font-size: 13px; font-weight: 700; color: var(--ink); }
+.scene-settings-panel select {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--deep);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+.scene-reroll {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.scene-settings-panel select:focus-visible,
+.scene-reroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.scene-status { margin: 0; color: var(--ink); font-size: 12px; font-weight: 700; }
+.scene-hint { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
