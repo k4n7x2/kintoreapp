@@ -102,3 +102,10 @@
 - 選択はページ再読み込み・再ログイン・ログアウトで既定へ戻す。D1、localStorage、IndexedDBに保存しない。背景の4シーンから衣装を自動判定する機能は、今後の拡張として未実装。
 - 変更は `public/index.html`、`public/app.js`、`public/styles.css`、説明文書のみ。API、DB、筋トレ記録、認証、ログイン前表示は変更しない。
 - JSの構文・HTMLとJSのID照合・素材ファイル参照・GitHub登録後の差分を検証する。本番のWorkers Builds完了、Android実機での表示／タップ、D1の実データは別途確認する。
+
+## 2026-10-15 立ち絵下端フェード廃止
+
+- 背景風景の上で立ち絵の下部が半透明になってしまうため、共通の `.character-layer__art` にあった下端16%のCSSフェードマスクを撤廃。
+- ホームは既存の `object-position: right bottom` と画面の `overflow: hidden` を維持し、固定された下部ナビの手前で自然に見切る。画像ファイルそのものの透過ピクセルは変更しない。
+- Androidブラウザで旧CSSが残らないよう、`public/index.html` のCSS参照だけキャッシュキーを更新。JavaScriptとキャラクター画像は変更しない。
+- 静的検証：CSSマスクの除去、ホーム下端の位置合わせ・クリップ条件、CSS参照更新を確認。画像側の元々のアルファや本番Android表示、Workers Builds結果は別途確認する。

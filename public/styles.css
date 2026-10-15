@@ -305,8 +305,8 @@ body.is-authenticated .app-page { padding-top: 10px; }
   height: 100%;
   object-fit: contain;
   object-position: right bottom;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
+  /* 背景の上で下端が半透明にならないようフェードマスクを適用しない。
+     ホームでは画面側の overflow: hidden と下部ナビで自然に見切る。 */
 }
 .character-layer__dialogue {
   position: absolute;
