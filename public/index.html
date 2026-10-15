@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261016-calendar-top-sd-v1">
-  <script type="module" src="/app.js?v=20261016-calendar-top-sd-v1"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261016-record-sd-dock-v1">
+  <script type="module" src="/app.js?v=20261016-record-sd-dock-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -85,34 +85,11 @@
           </div>
         </section>
 
-        <section class="app-page" id="page-record" data-page="record" aria-labelledby="record-heading" hidden>
-          <div class="page-heading">
-            <p class="section-caption">WORKOUT LOG</p>
-            <h1 id="record-heading">トレーニング記録</h1>
-            <p class="page-description">今日の一歩を、記録に残そう。</p>
-          </div>
-          <!-- UI操作面とは独立した、立ち絵用の自然な余白。画像・セリフは未表示。 -->
-          <div class="character-scene character-scene--record" data-character-scene="record">
-            <div id="character-layer-record" class="character-layer character-layer--record" data-character-layer="record" aria-hidden="true">
-            <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
-            <div class="character-layer__dialogue" hidden></div>
-          </div>
-          </div>
-          <section class="section day-detail-section" aria-labelledby="calendar-day-heading">
-            <div class="section-heading"><h2 id="calendar-day-heading">選択日の予定・来館</h2></div>
-            <div class="panel calendar-day-panel">
-              <h3 id="selected-day-title"></h3>
-              <p id="calendar-error" class="feedback" role="status" aria-live="polite"></p>
-              <div class="day-flags">
-                <label><input type="checkbox" id="day-planned" disabled><span>ジムに行く予定</span></label>
-                <label><input type="checkbox" id="day-attended" disabled><span>ジムに行った</span></label>
-              </div>
-              <button type="button" id="save-calendar-day" class="primary-action" disabled>予定・来館を保存</button>
-              <div class="day-records" id="selected-day-records" aria-live="polite"></div>
-            </div>
-          </section>
+        <section class="app-page record-compact" id="page-record" data-page="record" aria-labelledby="record-heading" hidden>
+          <h1 id="record-heading" class="visually-hidden">トレーニング記録</h1>
+          <div id="record-scroll" class="record-scroll" role="region" aria-label="トレーニング入力と履歴" tabindex="0">
           <div class="panel record-panel">
-            <p class="security-note" id="auth-status" role="status">ログイン状態を確認中…</p>
+            <p class="security-note visually-hidden" id="auth-status" role="status">ログイン状態を確認中…</p>
             <form id="workout-form">
               <div class="record-header">
                 <h2 id="record-form-title">トレーニングを記録</h2>
@@ -133,25 +110,40 @@
                 <option value="クランチ"></option>
               </datalist>
               <div id="exercise-list" class="exercise-list" aria-label="種目一覧"></div>
-              <p class="field-hint">セットを追加すると重量・回数を個別に設定できます。前回の数値も呼び出せます。</p>
               <label for="workout-note">メモ（任意）</label>
-              <textarea id="workout-note" name="note" maxlength="300" rows="3" placeholder="例：胸と背中。今日はフォームを意識。" disabled></textarea>
+              <textarea id="workout-note" name="note" maxlength="300" rows="2" placeholder="例：胸と背中。今日はフォームを意識。" disabled></textarea>
               <button id="save-workout" type="submit" disabled>記録を保存</button>
               <p id="save-feedback" class="feedback" role="status" aria-live="polite"></p>
             </form>
-            <p class="security-note">記録はCloudflare D1に保存されます。来館・予定は実施日ごとに上の欄から保存できます。</p>
           </div>
-
-          <section class="section history-records-section" aria-labelledby="history-record-list-heading">
-            <div class="section-heading">
-              <div><p class="section-caption">LOGS</p><h2 id="history-record-list-heading">表示月のトレーニング記録</h2></div>
+          <details class="record-fold record-day-fold">
+            <summary>予定・来館 <span id="selected-day-title" class="fold-date"></span></summary>
+            <div class="panel calendar-day-panel">
+              <p id="calendar-error" class="feedback" role="status" aria-live="polite"></p>
+              <div class="day-flags">
+                <label><input type="checkbox" id="day-planned" disabled><span>ジムに行く予定</span></label>
+                <label><input type="checkbox" id="day-attended" disabled><span>ジムに行った</span></label>
+              </div>
+              <button type="button" id="save-calendar-day" class="primary-action" disabled>予定・来館を保存</button>
+              <div class="day-records" id="selected-day-records" aria-live="polite"></div>
             </div>
+          </details>
+          <details class="record-fold record-history-fold">
+            <summary>過去のトレーニング記録</summary>
             <div class="panel history-records-panel">
               <div class="record-history">
                 <div id="record-list" aria-live="polite">認証後に表示します。</div>
               </div>
             </div>
-          </section>
+          </details>
+          </div>
+          <!-- SD用の固定領域。実画像は採用・登録後にここへ接続する。 -->
+          <div class="character-scene record-companion" data-character-scene="record">
+            <div id="character-layer-record" class="record-sd-art-slot" data-character-layer="record" aria-hidden="true"></div>
+            <button type="button" id="record-sd-talk" class="sd-dialogue" aria-label="栞のセリフを変える">
+              <span id="record-sd-line" role="status" aria-live="polite" aria-atomic="true">今日は記録だけでもいいんじゃないかな。</span>
+            </button>
+          </div>
         </section>
 
         <section class="app-page calendar-minimal" id="page-calendar" data-page="calendar" aria-labelledby="calendar-page-heading" hidden>
@@ -178,10 +170,12 @@
               <p class="calendar-hint">日付をタップすると、その日の記録画面が開きます。</p>
             </div>
           </section>
-          <!-- 将来のSD栞専用スペース。画像やプレースホルダーはまだ置かない。 -->
-          <div class="character-scene character-scene--calendar calendar-sd-space"
-               data-character-scene="history" aria-hidden="true">
-            <div id="character-layer-history" class="character-layer character-layer--calendar" data-character-layer="history"></div>
+          <!-- 記録画面と共通のSD表示・会話領域。画像は正式素材の採用後に接続。 -->
+          <div class="character-scene character-scene--calendar calendar-sd-space" data-character-scene="history">
+            <div id="character-layer-history" class="record-sd-art-slot" data-character-layer="history" aria-hidden="true"></div>
+            <button type="button" id="calendar-sd-talk" class="sd-dialogue" aria-label="栞のセリフを変える">
+              <span id="calendar-sd-line" role="status" aria-live="polite" aria-atomic="true">あ、来た。今日はどうする？</span>
+            </button>
           </div>
         </section>
 

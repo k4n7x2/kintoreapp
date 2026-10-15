@@ -236,6 +236,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
       weight_kg: last ? Number(last.querySelector(".set-weight").value) : 0,
       reps: last ? Number(last.querySelector(".set-reps").value) : 10
     });
+    rows.lastElementChild.querySelector(".set-weight").focus();
   });
   const recent = document.createElement("button");
   recent.type = "button"; recent.className = "secondary-action";
@@ -308,7 +309,7 @@ function editWorkout(record) {
   else for (const [name, sets] of groups) addExercise(name, sets);
   saveFeedback.textContent = "過去の記録を編集中です。";
   setScreen("record");
-  window.scrollTo(0, 0);
+  byId("record-scroll").scrollTop = 0;
 }
 function renderHistory() {
   list.replaceChildren();
@@ -412,7 +413,11 @@ async function removeWorkout(id) {
   }
 }
 
-addExerciseButton.addEventListener("click", () => { if (dbReady) addExercise(); });
+addExerciseButton.addEventListener("click", () => {
+  if (!dbReady) return;
+  const card = addExercise();
+  card.querySelector(".exercise-name").focus();
+});
 cancelWorkoutEdit.addEventListener("click", () => { resetWorkoutForm(saveDate.value); saveFeedback.textContent = ""; });
 resetWorkoutForm();
 
@@ -462,6 +467,7 @@ byId("workout-form").addEventListener("submit", async (event) => {
     resetWorkoutForm(savedDate);
     await loadWorkouts();
     saveFeedback.textContent = wasEditing ? "記録を更新しました。" : "クラウドに保存しました。";
+    if (activePage === "record") showSideDialogue("record", "saved");
   } catch {
     setReady(true);
     saveFeedback.textContent = "保存できませんでした。日付・入力内容・接続状態を確認してください。";
@@ -679,6 +685,62 @@ byId("dev-settings-reset").addEventListener("click", () => {
 byId("scene-reroll").addEventListener("click", () => { byId("dev-settings-feedback").textContent = ""; });
 let greetingData = null;
 let greetingLoading = null;
+let sideDialogueRequestId = 0;
+let lastSideDialogue = "";
+
+const sideDialogueNodes = {
+  record: byId("record-sd-line"),
+  calendar: byId("calendar-sd-line")
+};
+
+// ホーム用の採用済み文言を共有。セリフ内容とSD画像の有無は独立して扱う。
+async function ensureGreetingData() {
+  if (greetingData) return greetingData;
+  if (!greetingLoading) {
+    greetingLoading = fetch("/data/shiori-greetings.json", { cache: "force-cache" })
+      .then(response => {
+        if (!response.ok) throw new Error("greetings_unavailable");
+        return response.json();
+      })
+      .then(data => { greetingData = data; return data; })
+      .finally(() => { greetingLoading = null; });
+  }
+  return greetingLoading;
+}
+
+// 記録画面・カレンダー下のSD領域に吹き出しを表示する。
+// 正式SD素材が登録されたら、画像だけ独立して配置できる。
+async function showSideDialogue(page, reason = "normal") {
+  const requestId = ++sideDialogueRequestId;
+  if (!authorized || activePage !== page || !sideDialogueNodes[page]) return;
+  const node = sideDialogueNodes[page];
+  if (reason === "saved") {
+    // dialogue.mdにある確定口調の文言。保存成功時だけ表示。
+    node.textContent = "そっか。頑張ったね。";
+    lastSideDialogue = node.textContent;
+    return;
+  }
+  const fallback = page === "record"
+    ? "今日は記録だけでもいいんじゃないかな。"
+    : "あ、来た。今日はどうする？";
+  try {
+    const data = await ensureGreetingData();
+    if (!authorized || activePage !== page || requestId !== sideDialogueRequestId) return;
+    const candidates = (Array.isArray(data?.anytime) ? data.anytime : [])
+      .filter(line => typeof line === "string" && line.trim());
+    const alternatives = candidates.filter(line => line !== lastSideDialogue);
+    const pool = alternatives.length ? alternatives : candidates;
+    node.textContent = pool.length ? pool[Math.floor(Math.random() * pool.length)] : fallback;
+    lastSideDialogue = node.textContent;
+  } catch {
+    if (!authorized || activePage !== page || requestId !== sideDialogueRequestId) return;
+    node.textContent = fallback;
+    lastSideDialogue = fallback;
+  }
+}
+
+byId("record-sd-talk").addEventListener("click", () => showSideDialogue("record"));
+byId("calendar-sd-talk").addEventListener("click", () => showSideDialogue("calendar"));
 let lastHomeGreeting = "";
 let greetingRequestId = 0;
 
@@ -712,21 +774,7 @@ function greetingTimeSlot(hour) {
 async function showHomeGreeting() {
   const requestId = ++greetingRequestId;
   try {
-    if (!greetingData) {
-      if (!greetingLoading) {
-        greetingLoading = fetch("/data/shiori-greetings.json", { cache: "force-cache" })
-          .then((response) => {
-            if (!response.ok) throw new Error("greetings_unavailable");
-            return response.json();
-          })
-          .then((data) => {
-            greetingData = data;
-            return data;
-          })
-          .finally(() => { greetingLoading = null; });
-      }
-      await greetingLoading;
-    }
+    await ensureGreetingData();
     if (!authorized || activePage !== "home" || requestId !== greetingRequestId) return;
 
     const slot = greetingTimeSlot(new Date().getHours());
@@ -802,10 +850,19 @@ function setScreen(screen, pushHistory = true) {
   byId("dev-settings-open").hidden = screen !== "home";
   refreshScene();
   document.body.classList.toggle("is-home", screen === "home");
+  document.body.classList.toggle("is-record", screen === "record");
   if (screen === "home") {
     if (previousPage !== "home" || homeDialogue.hidden) showHomeGreeting();
   } else {
     ++greetingRequestId;
+  }
+  // 画面間の非同期応答が別画面の吹き出しへ入り込まないよう破棄する。
+  if (screen !== previousPage) ++sideDialogueRequestId;
+  if (screen === "record" || screen === "calendar") {
+    if (screen !== previousPage) {
+      byId("record-scroll").scrollTop = 0;
+      showSideDialogue(screen);
+    }
   }
   document.querySelectorAll("[data-page]").forEach((page) => {
     page.hidden = page.dataset.page !== screen;
@@ -868,7 +925,7 @@ function setAuthenticated(next) {
   byId("app-header").hidden = !next;
   byId("app-footer").hidden = !next;
   document.body.classList.toggle("is-authenticated", next);
-  if (!next) document.body.classList.remove("is-home");
+  if (!next) document.body.classList.remove("is-home", "is-record");
   document.title = next ? "kintoreapp | 筋トレ記録" : "ログイン";
   loginSuccess.hidden = !next;
   if (next) {
@@ -896,6 +953,10 @@ function setAuthenticated(next) {
     homeDialogue.hidden = true;
     homeDialogue.textContent = "";
     lastHomeGreeting = "";
+    ++sideDialogueRequestId;
+    lastSideDialogue = "";
+    sideDialogueNodes.record.textContent = "今日は記録だけでもいいんじゃないかな。";
+    sideDialogueNodes.calendar.textContent = "あ、来た。今日はどうする？";
     authStatus.textContent = "未ログイン：パスワードを入力してください。";
     setReady(false);
     workouts = [];
