@@ -68,15 +68,22 @@ saveDate.value = todayISO();
 selectedDate = todayISO();
 
 function showDay(date) {
+  // カレンダーから選択した日付で記録画面へ直行。編集中のフォームは上書きしない。
+  if (editingWorkoutId || saveNote.value.trim() ||
+      [...exerciseList.querySelectorAll(".exercise-name")].some(input => input.value.trim())) {
+    if (!confirm("入力中の内容を破棄して、この日の記録画面へ移動しますか？")) return;
+  }
+  resetWorkoutForm(date);
   selectedDate = date;
+  saveFeedback.textContent = "";
   renderCalendar();
+  setScreen("record");
 }
 function renderOverview() {
-  byId("stat-days").textContent = calendarAvailable ? String([...calendarDays.values()].filter(x => x.attended).length) : "—";
-  byId("stat-plans").textContent = calendarAvailable ? String([...calendarDays.values()].filter(x => x.planned).length) : "—";
-  byId("stat-sessions").textContent = recordsLoaded ? String(completeDates.size) : "—";
+  // 集計カードは撤去。取得状態のみスクリーンリーダーへ伝える。
   byId("month-count").textContent = recordsLoaded
-    ? completeDates.size + "日記録" + (monthTruncated ? "（最大200件）" : "") : "読み込み中";
+    ? "記録を取得しました。" + (monthTruncated ? " 月200件の表示上限です。" : "")
+    : "読み込み中";
 }
 function renderCalendar() {
   monthTitle.textContent = shownYear + "年 " + (shownMonth + 1) + "月";
@@ -103,12 +110,12 @@ function renderCalendar() {
     if (state?.planned) cell.classList.add("is-planned");
     if (state?.attended) cell.classList.add("is-attended");
     if (completeDates.has(dateKey)) cell.classList.add("has-workout");
-    if (dateKey === selectedDate) cell.classList.add("is-selected");
+    
     if (sameDay(date, new Date())) {
       cell.classList.add("is-today");
       cell.setAttribute("aria-current", "date");
     }
-    cell.setAttribute("aria-pressed", String(dateKey === selectedDate));
+    
     cell.setAttribute("aria-label", dateKey + [
       state?.planned ? "予定あり" : "",
       state?.attended ? "来館済み" : "",
@@ -265,9 +272,11 @@ function resetWorkoutForm(date = todayISO()) {
   cancelWorkoutEdit.hidden = true;
   saveButton.textContent = "記録を保存";
   saveDate.value = date;
+  selectedDate = date;
   saveNote.value = "";
   exerciseList.replaceChildren();
   addExercise();
+  renderDayDetail();
 }
 function workoutSummary(record) {
   const names = [...new Set((record.sets || []).map(x => x.exercise_name))];
@@ -280,6 +289,14 @@ function editWorkout(record) {
   cancelWorkoutEdit.hidden = false;
   saveButton.textContent = "変更を保存";
   saveDate.value = record.performed_on;
+  selectedDate = record.performed_on;
+  if (currentMonth() !== selectedDate.slice(0, 7)) {
+    shownYear = Number(selectedDate.slice(0, 4));
+    shownMonth = Number(selectedDate.slice(5, 7)) - 1;
+    loadWorkouts();
+  } else {
+    renderDayDetail();
+  }
   saveNote.value = record.note || "";
   exerciseList.replaceChildren();
   const groups = new Map();
@@ -473,10 +490,24 @@ byId("save-calendar-day").addEventListener("click", async () => {
     saveCalendarDay.disabled = !calendarAvailable;
   }
 });
-byId("record-selected-day").addEventListener("click", () => {
-  resetWorkoutForm(selectedDate);
-  saveFeedback.textContent = "";
-  setScreen("record");
+// 記録の日付を直接変更した場合も予定・来館の表示先を追従させる。
+saveDate.addEventListener("change", () => {
+  if (!saveDate.value) return;
+  selectedDate = saveDate.value;
+  if (currentMonth() !== selectedDate.slice(0, 7)) {
+    shownYear = Number(selectedDate.slice(0, 4));
+    shownMonth = Number(selectedDate.slice(5, 7)) - 1;
+    ++recordsRequestId;
+    recordsLoaded = false;
+    calendarAvailable = false;
+    calendarDays.clear();
+    completeDates.clear();
+    workouts = [];
+    renderCalendar();
+    if (authorized) loadWorkouts();
+  } else {
+    renderDayDetail();
+  }
 });
 
 function changeMonth(offset) {
@@ -793,7 +824,21 @@ function setScreen(screen, pushHistory = true) {
 
 document.querySelectorAll("[data-screen]").forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.closest("#page-home") && button.dataset.screen === "record") saveDate.value = localISO(new Date());
+    if (button.closest("#page-home") && button.dataset.screen === "record" && !editingWorkoutId) {
+      resetWorkoutForm(todayISO());
+      if (currentMonth() !== todayISO().slice(0, 7)) {
+        shownYear = Number(todayISO().slice(0, 4));
+        shownMonth = Number(todayISO().slice(5, 7)) - 1;
+        ++recordsRequestId;
+        recordsLoaded = false;
+        calendarAvailable = false;
+        calendarDays.clear();
+        completeDates.clear();
+        workouts = [];
+        renderCalendar();
+        if (authorized) loadWorkouts();
+      }
+    }
     setScreen(button.dataset.screen);
   });
 });

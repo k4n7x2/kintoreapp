@@ -1041,3 +1041,39 @@ body.is-authenticated #app-header { grid-template-columns: 42px minmax(0, 1fr) a
   .record-panel .exercise-card { padding: 11px 8px; }
   #page-calendar .record-item { flex-wrap: wrap; }
 }
+
+/* 2026-10-16: Calendar-first view. Header/stats/list removed from this screen.
+   Keep the lower transparent area for a future SD character; no placeholder artwork. */
+#page-calendar.calendar-minimal {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - var(--topbar-h) - env(safe-area-inset-top) - 28px);
+}
+#page-calendar.calendar-minimal > .calendar-main {
+  margin-top: 6px;
+  position: relative;
+  z-index: 3;
+}
+#page-calendar .calendar-panel {
+  padding: 17px 14px 16px;
+  background: var(--surface);
+}
+#page-calendar .calendar-topbar { margin-bottom: 14px; }
+#page-calendar .calendar-sd-space {
+  flex: 1 0 auto;
+  height: auto;
+  min-height: clamp(250px, 41svh, 440px);
+  position: relative;
+  z-index: 1;
+}
+#page-calendar .calendar-sd-space .character-layer { pointer-events: none; }
+#page-record .day-detail-section { margin-top: 15px; margin-bottom: 16px; position: relative; z-index: 3; }
+#page-record .day-detail-section .section-heading h2 { font-size: 15px; }
+#page-record .history-records-section { position: relative; z-index: 3; margin-top: 24px; }
+#page-record .record-item-actions { display: flex; flex-shrink: 0; gap: 6px; }
+#page-record .record-item { flex-wrap: wrap; }
+#page-record .record-item > div:first-child { flex: 1 1 170px; min-width: 0; }
+@media (max-width: 360px) {
+  #page-calendar .calendar-panel { padding-inline: 11px; }
+  #page-calendar .calendar-sd-space { min-height: 34svh; }
+}
