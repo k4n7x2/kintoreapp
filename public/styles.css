@@ -679,7 +679,8 @@ body.is-authenticated.is-home #app-screen { height: 100%; min-height: 0; }
 body.is-authenticated.is-home #page-home {
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  /* 立ち絵を内側の余白で切らず、画面の端まで描画する。 */
+  overflow: visible;
 }
 body.is-authenticated.is-home #page-home .home-date {
   margin-top: clamp(6px, 1.7svh, 13px);
