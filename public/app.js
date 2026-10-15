@@ -57,7 +57,7 @@ saveDate.value = localISO(now);
 
 function renderCalendar() {
   monthTitle.textContent = String(shownYear) + "年 " + String(shownMonth + 1) + "月";
-  byId("month-count").textContent = recordsLoaded ? completeDates.size + "日実施" : "読み込み中";
+  byId("month-count").textContent = recordsLoaded ? completeDates.size + "日記録" : "読み込み中";
   renderOverview();
   calendarGrid.replaceChildren();
   const startWeekday = new Date(shownYear, shownMonth, 1).getDay();
@@ -82,7 +82,7 @@ function renderCalendar() {
         cell.classList.add("is-today");
         cell.setAttribute("aria-current", "date");
       }
-      cell.setAttribute("aria-label", String(shownMonth + 1) + "月" + String(day) + "日" + (completed ? "、記録済み" : "") + "。記録画面へ");
+      cell.setAttribute("aria-label", String(shownMonth + 1) + "月" + String(day) + "日" + (completed ? "、トレーニング記録あり" : "") + "。記録画面へ");
       cell.addEventListener("click", () => {
         saveDate.value = dateKey;
         setScreen("record");
@@ -234,7 +234,7 @@ const loginButton = byId("login-button");
 const loginFeedback = byId("login-feedback");
 const loginSuccess = byId("login-success");
 
-const pages = new Set(["home", "record", "history", "settings"]);
+const pages = new Set(["home", "calendar", "record", "talk", "notices", "analysis", "events", "gallery", "settings"]);
 
 // 背景はGitHubの固定素材。場所はログインのたびにランダム選択し、端末には保存しない。
 const sceneLocations = ["gym", "city", "campus", "room"];
@@ -416,9 +416,54 @@ async function showHomeGreeting() {
 }
 
 
+
+// オフキャンバスは全ページで利用可能。閉じている間はフォーカス・読み上げ対象から除外する。
+const drawerToggle = byId("drawer-toggle");
+const drawerClose = byId("drawer-close");
+const drawer = byId("app-drawer");
+const drawerScrim = byId("drawer-scrim");
+let drawerOpen = false;
+
+function setDrawerOpen(open, restoreFocus = true) {
+  if (open && !authorized) return;
+  if (drawerOpen === open) return;
+  drawerOpen = open;
+  drawer.classList.toggle("is-open", open);
+  drawer.inert = !open;
+  drawer.setAttribute("aria-hidden", String(!open));
+  drawerToggle.setAttribute("aria-expanded", String(open));
+  drawerToggle.setAttribute("aria-label", open ? "メニューを閉じる" : "メニューを開く");
+  drawerScrim.hidden = !open;
+  document.body.classList.toggle("is-drawer-open", open);
+  if (open) drawerClose.focus();
+  else if (restoreFocus && authorized) drawerToggle.focus();
+}
+drawerToggle.addEventListener("click", () => setDrawerOpen(!drawerOpen));
+drawerClose.addEventListener("click", () => setDrawerOpen(false));
+drawerScrim.addEventListener("click", () => setDrawerOpen(false));
+document.addEventListener("keydown", (event) => {
+  if (!drawerOpen) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    setDrawerOpen(false);
+  } else if (event.key === "Tab") {
+    const focusable = [...drawer.querySelectorAll("button:not(:disabled)")];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+});
+
 function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
   const previousPage = activePage;
+  if (drawerOpen) setDrawerOpen(false);
   activePage = screen;
   refreshScene();
   document.body.classList.toggle("is-home", screen === "home");
@@ -430,7 +475,7 @@ function setScreen(screen, pushHistory = true) {
   document.querySelectorAll("[data-page]").forEach((page) => {
     page.hidden = page.dataset.page !== screen;
   });
-  document.querySelectorAll(".nav-item").forEach((item) => {
+  document.querySelectorAll(".drawer-item").forEach((item) => {
     const isCurrent = item.dataset.screen === screen;
     item.classList.toggle("is-active", isCurrent);
     if (isCurrent) item.setAttribute("aria-current", "page");
@@ -443,13 +488,16 @@ function setScreen(screen, pushHistory = true) {
 }
 
 document.querySelectorAll("[data-screen]").forEach((button) => {
-  button.addEventListener("click", () => setScreen(button.dataset.screen));
+  button.addEventListener("click", () => {
+    if (button.closest("#page-home") && button.dataset.screen === "record") saveDate.value = localISO(new Date());
+    setScreen(button.dataset.screen);
+  });
 });
 
 window.addEventListener("popstate", () => {
   if (!authorized) return;
   const screen = location.hash.slice(1);
-  setScreen(pages.has(screen) ? screen : "home", false);
+  setScreen(pages.has(screen) ? screen : screen === "history" ? "calendar" : "home", false);
 });
 
 function setAuthenticated(next) {
@@ -459,7 +507,7 @@ function setAuthenticated(next) {
   byId("boot-screen").hidden = true;
   byId("auth-screen").hidden = next;
   byId("app-screen").hidden = !next;
-  byId("bottom-nav").hidden = !next;
+  if (!next) setDrawerOpen(false, false);
   byId("app-header").hidden = !next;
   byId("app-footer").hidden = !next;
   document.body.classList.toggle("is-authenticated", next);

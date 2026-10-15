@@ -21,7 +21,6 @@
   --glow: rgba(189,149,215,.19);
   --header-bg: rgba(29,26,42,.96);
   --topbar-h: 68px;
-  --bottom-nav-h: 69px;
   color-scheme: dark;
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
   line-height: 1.6;
@@ -158,7 +157,7 @@ footer { padding-top: 38px; text-align: center; font-size: 10px; color: var(--su
 
 
 /* 画面分割: ログイン・ダッシュボード・記録・履歴・設定 */
-.app-shell { padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
+.app-shell { padding-bottom: calc(44px + env(safe-area-inset-bottom)); }
 .boot-screen { margin-top: 45px; padding: 48px 15px; text-align: center; color: var(--muted); font-size: 13px; }
 .login-hero { margin-top: 5px; }
 .auth-section { margin-top: 24px; }
@@ -179,17 +178,12 @@ footer { padding-top: 38px; text-align: center; font-size: 10px; color: var(--su
 .shortcut-card small { display: block; font-size: 10px; color: var(--muted); padding-top: 4px; }
 .shortcut-chevron { position: absolute; right: 13px; top: 12px; color: var(--muted); font-size: 20px; }
 .shortcut-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-#page-history .record-history { margin-top: 0; padding-top: 0; border-top: 0; }
-#page-history .calendar-topbar { margin-bottom: 12px; }
+#page-calendar .record-history { margin-top: 0; padding-top: 0; border-top: 0; }
+#page-calendar .calendar-topbar { margin-bottom: 12px; }
 .settings-section { margin-top: 26px; }
 .logout-action { min-height: 40px; padding: 9px 14px; font-size: 13px; }
-.bottom-nav { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; padding-bottom: env(safe-area-inset-bottom); background: var(--nav-bg); border-top: 1px solid var(--line); box-shadow: 0 -8px 28px rgba(0,0,0,.28); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-.bottom-nav-inner { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 640px; margin: 0 auto; padding: 7px 14px 5px; gap: 5px; }
-.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: transparent; border-radius: 12px; color: var(--subtle); cursor: pointer; min-height: 55px; font-size: 10px; font-weight: 700; }
-.nav-item svg { height: 22px; width: 22px; }
-.nav-item.is-active { color: var(--accent); background: var(--raised); }
 .nav-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-@media (max-width: 360px) { .shortcuts { gap: 8px; } .shortcut-card { padding: 12px 9px; } .shortcut-card strong { font-size: 11px; } .bottom-nav-inner { padding-inline: 8px; } }
+@media (max-width: 360px) { .shortcuts { gap: 8px; } .shortcut-card { padding: 12px 9px; } .shortcut-card strong { font-size: 11px; } }
 
 /* Anonymous, centered sign-in; app chrome is only visible after authentication. */
 body:not(.is-authenticated) .app-shell { min-height: 100dvh; max-width: none; padding: 0 20px; }
@@ -242,12 +236,10 @@ body.is-authenticated .app-page { padding-top: 10px; }
 .recent-panel { min-height:70px; font-size:12px; color:var(--muted); }
 .recent-date { display:block; font-size:13px; color:var(--ink); margin-bottom:5px; font-variant-numeric:tabular-nums; }
 .recent-note { margin:0; color:var(--muted); white-space:pre-wrap; overflow-wrap:anywhere; }
-#page-record .record-panel, #page-history > .panel { background:var(--surface); }
+#page-record .record-panel, #page-calendar > .panel { background:var(--surface); }
 #page-record .record-panel button[type="submit"] { min-height:47px; }
-#page-history .record-item { padding-top:17px; padding-bottom:17px; }
-#page-history .record-item:last-child { padding-bottom:0; }
-.bottom-nav { background:var(--nav-bg); }
-.nav-item.is-active { background:var(--raised); }
+#page-calendar .record-item { padding-top:17px; padding-bottom:17px; }
+#page-calendar .record-item:last-child { padding-bottom:0; }
 @media(max-width:360px) { .stat-card{padding:13px 10px;} .stat-label{font-size:10px;} #page-home .calendar-day{min-height:40px;} .heading-action{padding:0 12px;} }
 
 
@@ -277,7 +269,7 @@ body.is-authenticated .app-page { padding-top: 10px; }
   height: clamp(255px, 42svh, 390px);
 }
 .character-scene--record,
-.character-scene--history,
+.character-scene--calendar,
 .character-scene--settings {
   height: clamp(168px, 29svh, 245px);
 }
@@ -291,7 +283,7 @@ body.is-authenticated .app-page { padding-top: 10px; }
   right: -17px;
 }
 .character-scene--record .character-layer,
-.character-scene--history .character-layer,
+.character-scene--calendar .character-layer,
 .character-scene--settings .character-layer {
   width: min(68%, 320px);
   height: calc(100% + 20px);
@@ -330,7 +322,7 @@ body.is-authenticated .app-page { padding-top: 10px; }
 #page-home > .overview-grid,
 #page-home > .section,
 #page-record > .record-panel,
-#page-history > .panel,
+#page-calendar > .panel,
 #page-settings > .section {
   position: relative;
   z-index: 3;
@@ -338,11 +330,11 @@ body.is-authenticated .app-page { padding-top: 10px; }
 @media (max-width: 380px) {
   .character-scene--home { height: clamp(235px, 40svh, 330px); }
   .character-scene--record,
-  .character-scene--history,
+  .character-scene--calendar,
   .character-scene--settings { height: clamp(155px, 26svh, 205px); }
   .character-layer { width: min(92%, 330px); right: -14px; }
   .character-scene--record .character-layer,
-  .character-scene--history .character-layer,
+  .character-scene--calendar .character-layer,
   .character-scene--settings .character-layer { width: 68%; right: -10px; }
 }
 
@@ -350,7 +342,7 @@ body.is-authenticated .app-page { padding-top: 10px; }
 @media (max-width: 380px) {
   .character-layer--home { right: -14px; width: min(79%, 295px); height: 278px; }
   .character-layer--record,
-  .character-layer--history,
+  .character-layer--calendar,
   .character-layer--settings { right: -10px; width: 48%; height: 185px; }
 }
 
@@ -570,12 +562,12 @@ body.is-authenticated .app-page { padding-top: 10px; }
 }
 
 /* History is where the saved calendar and workout summary now live. */
-#page-history .history-overview { margin-top: 14px; }
-#page-history .overview-grid { margin-bottom: 8px; }
-#page-history > .section { margin-top: 24px; }
-#page-history .calendar-day { min-height: 43px; }
-#page-history .calendar-day.is-completed { background: var(--completed); }
-#page-history .calendar-day.is-completed::after {
+#page-calendar .history-overview { margin-top: 14px; }
+#page-calendar .overview-grid { margin-bottom: 8px; }
+#page-calendar > .section { margin-top: 24px; }
+#page-calendar .calendar-day { min-height: 43px; }
+#page-calendar .calendar-day.is-completed { background: var(--completed); }
+#page-calendar .calendar-day.is-completed::after {
   content: "";
   left: calc(50% - 2.5px);
   right: auto;
@@ -586,7 +578,7 @@ body.is-authenticated .app-page { padding-top: 10px; }
   background: var(--accent);
   border-radius: 50%;
 }
-#page-history .history-records-section .record-history { margin: 0; padding: 0; border: 0; }
+#page-calendar .history-records-section .record-history { margin: 0; padding: 0; border: 0; }
 
 /* 外部の開発・管理画面へ進む設定リンク */
 #page-settings .settings-project-links { margin-top: 25px; }
@@ -681,7 +673,7 @@ body.is-authenticated.is-home .app-shell {
 body.is-authenticated.is-home .app-shell > main,
 body.is-authenticated.is-home #app-screen { height: 100%; min-height: 0; }
 body.is-authenticated.is-home #page-home {
-  height: calc(100% - var(--bottom-nav-h) - env(safe-area-inset-bottom));
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -707,7 +699,6 @@ body { background: var(--bg); color: var(--ink); }
 #page-home .character-layer__dialogue::after { background: var(--bubble-bg); }
 #page-home .hub-link { background: var(--icon-bg); color: var(--accent-soft); border-color: var(--bubble-line); }
 #page-home .hub-link:active { background: var(--raised); }
-.nav-item.is-active { color: var(--accent); background: var(--raised); }
 .calendar-day.is-completed { color: var(--ink); background: var(--completed); }
 .calendar-day.is-completed::after { background: var(--accent); }
 .legend-dot.completed { background: var(--success); }
@@ -719,13 +710,13 @@ body { background: var(--bg); color: var(--ink); }
 @media (hover: hover) { .settings-project-link:hover { background: var(--raised); } }
 
 /* 背景シーン（試験導入）：ログイン後に限り、全ページ共通の固定背景として表示。
-   時間帯は風景だけが変わり、上部ヘッダー／下部ナビ／操作UIの前後関係は固定。 */
+   時間帯は風景だけが変わり、上部ヘッダー／操作UIの前後関係は固定。 */
 #app-screen { position: relative; }
 #app-screen > .app-page { position: relative; z-index: 1; }
 .scene-background {
   position: fixed;
   top: calc(var(--topbar-h) + env(safe-area-inset-top));
-  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+  bottom: 0;
   left: 50%;
   width: min(100%, 640px);
   transform: translateX(-50%);
@@ -781,3 +772,134 @@ body { background: var(--bg); color: var(--ink); }
 .scene-reroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .scene-status { margin: 0; color: var(--ink); font-size: 12px; font-weight: 700; }
 .scene-hint { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+
+
+/* ナビゲーション v2: 上部メニュー／ホームの4ボタン。下部ナビは持たない。 */
+body.is-authenticated #app-header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  gap: 8px;
+}
+#app-header .header-actions { justify-self: end; }
+.header-icon-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--raised);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.header-icon-button svg { width: 22px; height: 22px; }
+.brand-home {
+  justify-self: center;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.header-icon-button:focus-visible,
+.brand-home:focus-visible,
+.drawer-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.drawer-scrim[hidden] { display: none; }
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 58;
+  background: rgba(10, 8, 17, .66);
+}
+.app-drawer {
+  position: fixed;
+  z-index: 59;
+  top: 0;
+  bottom: 0;
+  left: max(0px, calc((100vw - 640px) / 2));
+  width: min(85vw, 328px);
+  padding: calc(16px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  box-shadow: 12px 0 28px rgba(0, 0, 0, .25);
+  transform: translateX(-110%);
+  visibility: hidden;
+  transition: transform 230ms ease, visibility 230ms;
+}
+.app-drawer.is-open {
+  transform: translateX(0);
+  visibility: visible;
+}
+.drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px 12px 12px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--line);
+}
+.drawer-group { padding: 14px 0 4px; }
+.drawer-group + .drawer-group { border-top: 1px solid var(--line); }
+.drawer-group h2 {
+  margin: 0 0 8px 12px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+.drawer-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 46px;
+  padding: 9px 12px;
+  gap: 14px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.drawer-item svg { width: 20px; height: 20px; flex: none; color: var(--accent); }
+.drawer-item.is-active { background: var(--raised); color: var(--accent-soft); font-weight: 700; }
+body.is-drawer-open { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .app-drawer { transition: none; }
+}
+@media (max-width: 380px) {
+  .brand-home { gap: 6px; font-size: 15px; }
+  .brand-home .brand-mark { width: 30px; height: 30px; }
+}
+/* 未実装画面の表示用コンテナ。将来の立ち絵余白を保ち、機能は仮実装しない。 */
+.planned-stage { position: relative; min-height: clamp(300px, 58svh, 570px); }
+.planned-character-slot {
+  position: absolute;
+  top: 4%;
+  right: 0;
+  width: 56%;
+  height: 83%;
+  pointer-events: none;
+}
+.planned-panel {
+  position: relative;
+  z-index: 1;
+  width: min(230px, 55%);
+  margin-top: clamp(132px, 24svh, 235px);
+  padding: 20px 12px;
+  text-align: center;
+  background: var(--surface);
+}
+.planned-panel p { margin: 0; color: var(--muted); font-size: 13px; }

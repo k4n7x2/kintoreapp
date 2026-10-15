@@ -6,21 +6,40 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261015-shiori-no-fade1">
-  <script type="module" src="/app.js?v=20261015-outfit-test1"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261015-navigation-v2">
+  <script type="module" src="/app.js?v=20261015-navigation-v2"></script>
 </head>
 <body>
   <div class="app-shell">
     <header class="site-header" id="app-header" hidden>
-      <div class="brand"><span class="brand-mark" aria-hidden="true">K</span><span>kintore<span class="brand-sub">app</span></span></div>
+      <button type="button" id="drawer-toggle" class="header-icon-button" aria-label="メニューを開く" aria-controls="app-drawer" aria-expanded="false" title="メニュー"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <button type="button" class="brand brand-home" data-screen="home" aria-label="ホームに戻る" title="ホームに戻る"><span class="brand-mark" aria-hidden="true">K</span><span>kintore<span class="brand-sub">app</span></span></button>
       <div class="header-actions">
-        <span class="status-pill">PERSONAL LOG</span>
         <button type="button" id="theme-toggle" class="theme-toggle" aria-label="ライトモードに切り替える" aria-pressed="false" title="ライトモードに切り替える">
           <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
           <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.2A8.5 8.5 0 0 1 9.8 3.6a8.5 8.5 0 1 0 10.6 10.6Z"/></svg>
         </button>
       </div>
     </header>
+    <div id="drawer-scrim" class="drawer-scrim" hidden></div>
+    <nav id="app-drawer" class="app-drawer" aria-label="画面メニュー" aria-hidden="true" inert>
+      <div class="drawer-head"><span>メニュー</span><button type="button" id="drawer-close" class="header-icon-button" aria-label="メニューを閉じる"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
+      <div class="drawer-group"><h2>日常</h2>
+        <button type="button" class="drawer-item" data-screen="home"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>ホーム</span></button>
+        <button type="button" class="drawer-item" data-screen="calendar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h3v3H8z"/></svg><span>カレンダー</span></button>
+        <button type="button" class="drawer-item" data-screen="record"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11M4 10 10 4m-8 4 6-6m6 18 6-6m-2 8 4-4"/></svg><span>トレーニング記録</span></button>
+        <button type="button" class="drawer-item" data-screen="talk"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-8 8 8.6 8.6 0 0 1-3.5-.7L4 20l1.2-4A8 8 0 1 1 20 11.5Z"/><path d="M8 11h8M8 14h5"/></svg><span>トーク</span></button>
+        <button type="button" class="drawer-item" data-screen="notices"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span>お知らせ</span></button>
+      </div>
+      <div class="drawer-group"><h2>記録とコンテンツ</h2>
+        <button type="button" class="drawer-item" data-screen="analysis"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V12m6 8V5m6 15v-8m4 8V3"/><path d="M2 21h20"/></svg><span>分析</span></button>
+        <button type="button" class="drawer-item" data-screen="events"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-4.9-8-11a4.5 4.5 0 0 1 8-2.8 4.5 4.5 0 0 1 8 2.8c0 6.1-8 11-8 11Z"/></svg><span>イベント</span></button>
+        <button type="button" class="drawer-item" data-screen="gallery"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/></svg><span>ギャラリー</span></button>
+      </div>
+      <div class="drawer-group"><h2>その他</h2>
+        <button type="button" class="drawer-item" data-screen="settings"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2m0 15v2m9.5-9.5h-2m-15 0h-2m16.22-6.72-1.41 1.41M6.69 17.31l-1.41 1.41m13.44 0-1.41-1.41M6.69 6.69 5.28 5.28"/></svg><span>設定</span></button>
+      </div>
+    </nav>
 
     <main>
       <div id="boot-screen" class="boot-screen" role="status">確認中…</div>
@@ -48,15 +67,10 @@
           <div class="home-stage">
             <nav class="dashboard-hub" aria-label="ホームメニュー">
               <div class="hub-grid">
-                <button class="hub-link" type="button" data-screen="record" aria-label="トレーニングを記録" title="記録">
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 6.5 11 11M4 10 10 4m-8 4 6-6m6 18 6-6m-2 8 4-4"/></svg>
-                </button>
-                <button class="hub-link" type="button" data-screen="history" aria-label="履歴とカレンダーを見る" title="履歴">
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h3v3H8z"/></svg>
-                </button>
-                <button class="hub-link" type="button" data-screen="settings" aria-label="設定を開く" title="設定">
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2m0 15v2m9.5-9.5h-2m-15 0h-2m16.22-6.72-1.41 1.41M6.69 17.31l-1.41 1.41m13.44 0-1.41-1.41M6.69 6.69 5.28 5.28"/></svg>
-                </button>
+                <button class="hub-link" type="button" data-screen="calendar" aria-label="カレンダー" title="カレンダー"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h3v3H8z"/></svg></button>
+                <button class="hub-link" type="button" data-screen="record" aria-label="トレーニング記録" title="トレーニング記録"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11M4 10 10 4m-8 4 6-6m6 18 6-6m-2 8 4-4"/></svg></button>
+                <button class="hub-link" type="button" data-screen="talk" aria-label="トーク" title="トーク"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-8 8 8.6 8.6 0 0 1-3.5-.7L4 20l1.2-4A8 8 0 1 1 20 11.5Z"/><path d="M8 11h8M8 14h5"/></svg></button>
+                <button class="hub-link" type="button" data-screen="notices" aria-label="お知らせ" title="お知らせ"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg></button>
               </div>
             </nav>
             <div class="character-scene character-scene--home" data-character-scene="home">
@@ -98,22 +112,22 @@
 
         </section>
 
-        <section class="app-page" id="page-history" data-page="history" aria-labelledby="history-heading" hidden>
+        <section class="app-page" id="page-calendar" data-page="calendar" aria-labelledby="calendar-page-heading" hidden>
           <div class="page-heading">
-            <p class="section-caption">HISTORY</p>
-            <h1 id="history-heading">トレーニング履歴</h1>
-            <p class="page-description">積み重ねてきた記録を振り返る。</p>
+            <p class="section-caption">CALENDAR</p>
+            <h1 id="calendar-page-heading">カレンダー</h1>
+            <p class="page-description">日付ごとのトレーニング記録を確認する。</p>
           </div>
           <!-- UI操作面とは独立した、立ち絵用の自然な余白。画像・セリフは未表示。 -->
-          <div class="character-scene character-scene--history" data-character-scene="history">
-            <div id="character-layer-history" class="character-layer character-layer--history" data-character-layer="history" aria-hidden="true">
+          <div class="character-scene character-scene--calendar" data-character-scene="history">
+            <div id="character-layer-history" class="character-layer character-layer--calendar" data-character-layer="history" aria-hidden="true">
             <!-- 将来、正式採用した背景透過PNGの <img class="character-layer__art" alt=""> をここに配置する。 -->
             <div class="character-layer__dialogue" hidden></div>
           </div>
           </div>
           <div class="history-overview">
           <div class="overview-grid" aria-label="表示月のトレーニング概要">
-            <article class="stat-card"><p class="stat-label">表示月の実施日数</p><p class="stat-number"><strong id="stat-days">—</strong><span>日</span></p><p class="stat-description">トレーニングした日</p></article>
+            <article class="stat-card"><p class="stat-label">表示月の記録日数</p><p class="stat-number"><strong id="stat-days">—</strong><span>日</span></p><p class="stat-description">記録のある日</p></article>
             <article class="stat-card"><p class="stat-label">表示月の記録件数</p><p class="stat-number"><strong id="stat-sessions">—</strong><span>件</span></p><p class="stat-description">保存した記録</p></article>
           </div>
           </div>
@@ -133,7 +147,7 @@
           <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
           <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
           <div class="legend">
-            <span><i class="legend-dot completed"></i> 実施日</span>
+            <span><i class="legend-dot completed"></i> 記録あり</span>
             
             <span><i class="legend-dot today"></i> 今日</span>
           </div>
@@ -151,6 +165,46 @@
             </div>
           </section>
 
+        </section>
+
+        <section class="app-page" id="page-talk" data-page="talk" aria-labelledby="talk-heading" hidden>
+          <div class="page-heading"><h1 id="talk-heading">トーク</h1></div>
+          <div class="planned-stage">
+            <div class="planned-character-slot" aria-hidden="true"></div>
+            <div class="panel planned-panel"><p>実装予定</p></div>
+          </div>
+        </section>
+
+        <section class="app-page" id="page-notices" data-page="notices" aria-labelledby="notices-heading" hidden>
+          <div class="page-heading"><h1 id="notices-heading">お知らせ</h1></div>
+          <div class="planned-stage">
+            <div class="planned-character-slot" aria-hidden="true"></div>
+            <div class="panel planned-panel"><p>実装予定</p></div>
+          </div>
+        </section>
+
+        <section class="app-page" id="page-analysis" data-page="analysis" aria-labelledby="analysis-heading" hidden>
+          <div class="page-heading"><h1 id="analysis-heading">分析</h1></div>
+          <div class="planned-stage">
+            <div class="planned-character-slot" aria-hidden="true"></div>
+            <div class="panel planned-panel"><p>実装予定</p></div>
+          </div>
+        </section>
+
+        <section class="app-page" id="page-events" data-page="events" aria-labelledby="events-heading" hidden>
+          <div class="page-heading"><h1 id="events-heading">イベント</h1></div>
+          <div class="planned-stage">
+            <div class="planned-character-slot" aria-hidden="true"></div>
+            <div class="panel planned-panel"><p>実装予定</p></div>
+          </div>
+        </section>
+
+        <section class="app-page" id="page-gallery" data-page="gallery" aria-labelledby="gallery-heading" hidden>
+          <div class="page-heading"><h1 id="gallery-heading">ギャラリー</h1></div>
+          <div class="planned-stage">
+            <div class="planned-character-slot" aria-hidden="true"></div>
+            <div class="panel planned-panel"><p>実装予定</p></div>
+          </div>
         </section>
 
         <section class="app-page" id="page-settings" data-page="settings" aria-labelledby="settings-heading" hidden>
@@ -227,14 +281,6 @@
         </section>
       </div>
     </main>
-    <nav id="bottom-nav" class="bottom-nav" aria-label="アプリの画面切り替え" hidden>
-      <div class="bottom-nav-inner">
-        <button type="button" class="nav-item" data-screen="home" aria-label="ホーム"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>ホーム</span></button>
-        <button type="button" class="nav-item" data-screen="record" aria-label="記録"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5 4 7l3 3-3 3 2 2 3-3 6 6 3-3-6-6 3-3-2-2-3 3-3-3z"/><path d="M4 16v4m-2-2h4m12-14v4m-2-2h4"/></svg><span>記録</span></button>
-        <button type="button" class="nav-item" data-screen="history" aria-label="履歴"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/><path d="M2 21h20"/></svg><span>履歴</span></button>
-        <button type="button" class="nav-item" data-screen="settings" aria-label="設定"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.9 2.9-.06-.06a1.7 1.7 0 0 0-1.88-.34l-.1.04V22H9.14v-2.52l-.1-.04a1.7 1.7 0 0 0-1.88.34l-.06.06-2.9-2.9.06-.06A1.7 1.7 0 0 0 4.6 15l-.04-.1H2v-5.8h2.56l.04-.1a1.7 1.7 0 0 0-.34-1.88L4.2 7.06l2.9-2.9.06.06a1.7 1.7 0 0 0 1.88.34l.1-.04V2h5.72v2.52l.1.04a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.9 2.9-.06.06A1.7 1.7 0 0 0 19.4 9l.04.1H22v5.8h-2.56z"/></svg><span>設定</span></button>
-      </div>
-    </nav>
     <footer id="app-footer" hidden>kintoreapp · Build your own rhythm.</footer>
   </div>
 </body>
