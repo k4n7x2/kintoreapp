@@ -324,6 +324,7 @@ function refreshOutfit() {
   shioriHomeArt.width = width;
   shioriHomeArt.height = height;
   shioriHomeTouch.style.aspectRatio = width + " / " + height;
+  shioriHomeTouch.dataset.outfit = currentOutfit;
   outfitSelect.value = currentOutfit;
   outfitStatus.textContent = isRoomwear
     ? "部屋着のテスト画像を表示中。"
