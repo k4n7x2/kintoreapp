@@ -234,7 +234,7 @@ const loginButton = byId("login-button");
 const loginFeedback = byId("login-feedback");
 const loginSuccess = byId("login-success");
 
-const pages = new Set(["home", "calendar", "record", "talk", "notices", "analysis", "events", "gallery", "settings"]);
+const pages = new Set(["home", "calendar", "record", "talk", "notices", "analysis", "events", "gallery", "settings", "development"]);
 
 // 背景はGitHubの固定素材。場所はログインのたびにランダム選択し、端末には保存しない。
 const sceneLocations = ["gym", "city", "campus", "room"];
@@ -243,6 +243,8 @@ const sceneTimeNames = { morning: "朝", day: "昼", night: "夜" };
 const sceneBackground = byId("scene-background");
 const sceneLocationSelect = byId("scene-location");
 const sceneStatus = byId("scene-status");
+const sceneTimeSelect = byId("scene-time");
+let sceneTimeOverride = "auto";
 let sceneLocation = null;
 let sceneTime = null;
 
@@ -259,7 +261,7 @@ function randomSceneLocation(excludeCurrent = false) {
 }
 function refreshScene() {
   if (!authorized || !sceneLocation) return;
-  const time = sceneTimeSlot(new Date().getHours());
+  const time = sceneTimeOverride === "auto" ? sceneTimeSlot(new Date().getHours()) : sceneTimeOverride;
   if (time !== sceneTime || sceneBackground.dataset.location !== sceneLocation) {
     const url = "/assets/backgrounds/" + sceneLocation + "-" + time + ".webp";
     sceneBackground.style.backgroundImage = 'url("' + url + '")';
@@ -268,7 +270,8 @@ function refreshScene() {
     sceneTime = time;
   }
   sceneLocationSelect.value = sceneLocation;
-  sceneStatus.textContent = "現在： " + sceneLocationNames[sceneLocation] + "・" + sceneTimeNames[time] + "（端末時刻）";
+  sceneTimeSelect.value = sceneTimeOverride;
+  sceneStatus.textContent = "現在： " + sceneLocationNames[sceneLocation] + "・" + sceneTimeNames[time] + (sceneTimeOverride === "auto" ? "（端末時刻）" : "（テスト固定）");
 }
 function setSceneLocation(nextLocation) {
   if (!authorized || !sceneLocations.includes(nextLocation)) return;
@@ -280,7 +283,14 @@ byId("scene-reroll").addEventListener("click", () => {
   if (!authorized) return;
   setSceneLocation(randomSceneLocation(true));
 });
-// 画面を開いたまま時間帯が変わった場合や、Androidで復帰した場合にも追従。
+sceneTimeSelect.addEventListener("change", () => {
+  if (!authorized) return;
+  const next = sceneTimeSelect.value;
+  if (!["auto", "morning", "day", "night"].includes(next)) return;
+  sceneTimeOverride = next;
+  refreshScene();
+});
+// 自動の場合だけ端末時刻に追従。テスト固定は復帰・画面遷移後も維持する。
 setInterval(refreshScene, 60 * 1000);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) refreshScene();
@@ -344,6 +354,17 @@ shioriHomeArt.addEventListener("error", () => {
   refreshOutfit();
   outfitStatus.textContent = "部屋着画像を読み込めなかったため、トレーニングウェアに戻しました。";
 });
+byId("dev-settings-reset").addEventListener("click", () => {
+  if (!authorized) return;
+  sceneTimeOverride = "auto";
+  setSceneLocation(randomSceneLocation());
+  selectOutfit("training");
+  byId("dev-settings-feedback").textContent = "衣装をトレーニングウェア、時間帯を自動に戻し、場所を再抽選しました。";
+});
+[sceneLocationSelect, sceneTimeSelect, outfitSelect].forEach((control) => {
+  control.addEventListener("change", () => { byId("dev-settings-feedback").textContent = ""; });
+});
+byId("scene-reroll").addEventListener("click", () => { byId("dev-settings-feedback").textContent = ""; });
 let greetingData = null;
 let greetingLoading = null;
 let lastHomeGreeting = "";
@@ -465,6 +486,7 @@ function setScreen(screen, pushHistory = true) {
   const previousPage = activePage;
   if (drawerOpen) setDrawerOpen(false);
   activePage = screen;
+  byId("dev-settings-open").hidden = screen !== "home";
   refreshScene();
   document.body.classList.toggle("is-home", screen === "home");
   if (screen === "home") {
@@ -485,6 +507,8 @@ function setScreen(screen, pushHistory = true) {
     history.pushState({ screen }, "", "#" + screen);
   }
   window.scrollTo(0, 0);
+  if (screen === "development") byId("development-heading").focus({ preventScroll: true });
+  else if (previousPage === "development" && screen === "home") byId("dev-settings-open").focus({ preventScroll: true });
 }
 
 document.querySelectorAll("[data-screen]").forEach((button) => {
@@ -502,6 +526,11 @@ window.addEventListener("popstate", () => {
 
 function setAuthenticated(next) {
   const wasAuthorized = authorized;
+  if (!next || !wasAuthorized) {
+    sceneTimeOverride = "auto";
+    sceneTimeSelect.value = "auto";
+    byId("dev-settings-feedback").textContent = "";
+  }
   authorized = next;
   ++recordsRequestId;
   byId("boot-screen").hidden = true;
@@ -612,3 +641,4 @@ async function initialize() {
   }
 }
 initialize();
+

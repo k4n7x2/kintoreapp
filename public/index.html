@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261015-shiori-focus-v1">
-  <script type="module" src="/app.js?v=20261015-navigation-v2"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261015-dev-settings-v1">
+  <script type="module" src="/app.js?v=20261015-dev-settings-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -15,6 +15,7 @@
       <button type="button" id="drawer-toggle" class="header-icon-button" aria-label="メニューを開く" aria-controls="app-drawer" aria-expanded="false" title="メニュー"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <button type="button" class="brand brand-home" data-screen="home" aria-label="ホームに戻る" title="ホームに戻る"><span class="brand-mark" aria-hidden="true">K</span><span>kintore<span class="brand-sub">app</span></span></button>
       <div class="header-actions">
+        <button type="button" id="dev-settings-open" class="header-icon-button dev-settings-open" data-screen="development" aria-label="開発設定を開く" title="開発設定" hidden>開発</button>
         <button type="button" id="theme-toggle" class="theme-toggle" aria-label="ライトモードに切り替える" aria-pressed="false" title="ライトモードに切り替える">
           <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
           <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.2A8.5 8.5 0 0 1 9.8 3.6a8.5 8.5 0 1 0 10.6 10.6Z"/></svg>
@@ -207,6 +208,60 @@
           </div>
         </section>
 
+        <section class="app-page" id="page-development" data-page="development" aria-labelledby="development-heading" hidden>
+          <div class="page-heading">
+            <p class="section-caption">DEVELOPMENT</p>
+            <h1 id="development-heading" tabindex="-1">開発設定</h1>
+            <p class="page-description">衣装・場所・時間帯を自由に組み合わせて確認できます。変更はすぐに反映され、再読み込み・再ログインでリセットされます。</p>
+          </div>
+          <section class="section outfit-settings-section" aria-labelledby="outfit-settings-heading">
+            <div class="section-heading"><h2 id="outfit-settings-heading">衣装</h2></div>
+            <div class="panel scene-settings-panel outfit-settings-panel">
+              <label for="shiori-outfit">栞の衣装</label>
+              <select id="shiori-outfit" name="shiori-outfit" aria-describedby="shiori-outfit-hint">
+                <option value="casual" disabled>私服（立ち絵準備中）</option>
+                <option value="training" selected>トレーニングウェア</option>
+                <option value="roomwear">部屋着</option>
+              </select>
+              <p id="shiori-outfit-status" class="scene-status" role="status" aria-live="polite"></p>
+              <p id="shiori-outfit-hint" class="scene-hint">ホームの栞に反映します。部屋着はタップで表情差分も試せます。背景との自動連動は未実装です。衣装の変更は再読み込みで初期状態に戻ります。</p>
+            </div>
+          </section>
+          <section class="section scene-settings-section" aria-labelledby="scene-settings-heading">
+            <div class="section-heading"><h2 id="scene-settings-heading">場所</h2></div>
+            <div class="panel scene-settings-panel">
+              <label for="scene-location">栞がいる場所</label>
+              <select id="scene-location" name="scene-location">
+                <option value="gym">ジム</option>
+                <option value="city">街</option>
+                <option value="campus">大学</option>
+                <option value="room">栞の部屋</option>
+              </select>
+              <button type="button" id="scene-reroll" class="scene-reroll">別の場所をランダムに選ぶ</button>
+              <p id="scene-status" class="scene-status" role="status" aria-live="polite"></p>
+              <p class="scene-hint">場所はログイン時にランダムで選ばれます。選択した背景は全画面に反映します。</p>
+            </div>
+          </section>
+          <section class="section scene-settings-section" aria-labelledby="time-settings-heading">
+            <div class="section-heading"><h2 id="time-settings-heading">時間帯</h2></div>
+            <div class="panel scene-settings-panel">
+              <label for="scene-time">背景の時間帯</label>
+              <select id="scene-time" aria-describedby="scene-time-hint">
+                <option value="auto">自動（端末時刻）</option>
+                <option value="morning">朝</option>
+                <option value="day">昼</option>
+                <option value="night">夜</option>
+              </select>
+              <p id="scene-time-hint" class="scene-hint">朝・昼・夜を選ぶと背景の時間帯を固定します。セリフ・カレンダー・記録日時は実際の端末時刻のままです。</p>
+            </div>
+          </section>
+          <div class="development-actions">
+            <button type="button" id="dev-settings-reset" class="scene-reroll">初期状態に戻す</button>
+            <button type="button" id="dev-settings-home" class="scene-reroll" data-screen="home">ホームで確認</button>
+          </div>
+          <p id="dev-settings-feedback" class="scene-status" role="status" aria-live="polite"></p>
+        </section>
+
         <section class="app-page" id="page-settings" data-page="settings" aria-labelledby="settings-heading" hidden>
           <div class="page-heading">
             <p class="section-caption">SETTINGS</p>
@@ -220,34 +275,7 @@
             <div class="character-layer__dialogue" hidden></div>
           </div>
           </div>
-          <section class="section scene-settings-section" aria-labelledby="scene-settings-heading">
-            <div class="section-heading"><h2 id="scene-settings-heading">背景シーン（テスト）</h2></div>
-            <div class="panel scene-settings-panel">
-              <label for="scene-location">栞がいる場所</label>
-              <select id="scene-location" name="scene-location">
-                <option value="gym">ジム</option>
-                <option value="city">街</option>
-                <option value="campus">大学</option>
-                <option value="room">栞の部屋</option>
-              </select>
-              <button type="button" id="scene-reroll" class="scene-reroll">別の場所をランダムに選ぶ</button>
-              <p id="scene-status" class="scene-status" role="status" aria-live="polite"></p>
-              <p class="scene-hint">ログイン時に場所をランダム選択します。時間帯は端末の時刻で自動更新します。変更は今回の表示だけに有効です。</p>
-            </div>
-          </section>
-          <section class="section outfit-settings-section" aria-labelledby="outfit-settings-heading">
-            <div class="section-heading"><h2 id="outfit-settings-heading">衣装（テスト）</h2></div>
-            <div class="panel scene-settings-panel outfit-settings-panel">
-              <label for="shiori-outfit">栞の衣装</label>
-              <select id="shiori-outfit" name="shiori-outfit" aria-describedby="shiori-outfit-hint">
-                <option value="casual" disabled>私服（立ち絵準備中）</option>
-                <option value="training" selected>トレーニングウェア</option>
-                <option value="roomwear">部屋着</option>
-              </select>
-              <p id="shiori-outfit-status" class="scene-status" role="status" aria-live="polite"></p>
-              <p id="shiori-outfit-hint" class="scene-hint">ホームの栞に反映します。部屋着はタップで表情差分も試せます。背景との自動連動は未実装です。衣装の変更は再読み込みで初期状態に戻ります。</p>
-            </div>
-          </section>
+          <button type="button" class="scene-reroll" data-screen="development">開発設定を開く</button>
           <section class="section settings-section" aria-labelledby="account-heading">
             <div class="section-heading"><h2 id="account-heading">アカウント</h2></div>
             <div class="panel">
@@ -285,3 +313,4 @@
   </div>
 </body>
 </html>
+

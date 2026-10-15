@@ -908,3 +908,13 @@ body.is-drawer-open { overflow: hidden; }
   background: var(--surface);
 }
 .planned-panel p { margin: 0; color: var(--muted); font-size: 13px; }
+
+
+/* 開発設定への入口はホーム右上。通常のテーマ切り替えと共存する。 */
+body.is-authenticated #app-header { grid-template-columns: 42px minmax(0, 1fr) auto; }
+#app-header .header-actions { gap: 6px; }
+.dev-settings-open { width: 44px; height: 44px; font-size: 11px; font-weight: 700; }
+#page-development .section { position: relative; z-index: 3; }
+.development-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 24px 0 14px; }
+#dev-settings-home { background: var(--accent); color: var(--on-accent); }
+#page-development { padding-bottom: 24px; }
