@@ -474,8 +474,8 @@ body.is-authenticated .app-page { padding-top: 10px; }
   user-select: none;
   filter: none;
   box-shadow: none;
-  /* 衣装を問わず同じ表示枠で、従来の90%の大きさに統一する。 */
-  transform: scale(1.08);
+  /* 衣装を問わず同じ表示枠で、従来の95%の大きさに統一する。 */
+  transform: scale(1.14);
   transform-origin: right bottom;
 }
 #page-home .character-layer__touch img {
@@ -556,7 +556,7 @@ body.is-authenticated .app-page { padding-top: 10px; }
   #page-home .hub-link svg { width: 25px; height: 25px; }
   #page-home .character-scene--home { right: -13px; width: calc(100% + 13px); }
   #page-home .character-layer--home { width: 95%; }
-  #page-home .character-layer__touch { transform: scale(1.098); }
+  #page-home .character-layer__touch { transform: scale(1.159); }
   #page-home .character-layer__dialogue {
     top: clamp(10px, 1.8%, 18px);
     left: 2%;
@@ -692,7 +692,7 @@ body.is-authenticated.is-home #app-footer { display: none; }
 @media (max-height: 640px) {
   body.is-authenticated.is-home #page-home .hub-grid { gap: 9px; }
   body.is-authenticated.is-home #page-home .dashboard-hub { top: 54%; }
-  body.is-authenticated.is-home #page-home .character-layer__touch { transform: scale(1.008); }
+  body.is-authenticated.is-home #page-home .character-layer__touch { transform: scale(1.064); }
   body.is-authenticated.is-home #page-home .character-layer__dialogue { top: 2.5%; }
 }
 
