@@ -752,6 +752,7 @@ body { background: var(--bg); color: var(--ink); }
   background: var(--bubble-bg);
 }
 .scene-settings-section { margin-top: 25px; }
+.outfit-settings-section { margin-top: 25px; }
 .scene-settings-panel { display: grid; gap: 11px; }
 .scene-settings-panel label { font-size: 13px; font-weight: 700; color: var(--ink); }
 .scene-settings-panel select {

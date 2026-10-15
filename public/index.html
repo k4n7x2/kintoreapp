@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261015-scene-test1">
-  <script type="module" src="/app.js?v=20261015-scene-test1"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261015-outfit-test1">
+  <script type="module" src="/app.js?v=20261015-outfit-test1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -179,6 +179,19 @@
               <button type="button" id="scene-reroll" class="scene-reroll">別の場所をランダムに選ぶ</button>
               <p id="scene-status" class="scene-status" role="status" aria-live="polite"></p>
               <p class="scene-hint">ログイン時に場所をランダム選択します。時間帯は端末の時刻で自動更新します。変更は今回の表示だけに有効です。</p>
+            </div>
+          </section>
+          <section class="section outfit-settings-section" aria-labelledby="outfit-settings-heading">
+            <div class="section-heading"><h2 id="outfit-settings-heading">衣装（テスト）</h2></div>
+            <div class="panel scene-settings-panel outfit-settings-panel">
+              <label for="shiori-outfit">栞の衣装</label>
+              <select id="shiori-outfit" name="shiori-outfit" aria-describedby="shiori-outfit-hint">
+                <option value="casual" disabled>私服（立ち絵準備中）</option>
+                <option value="training" selected>トレーニングウェア</option>
+                <option value="roomwear">部屋着</option>
+              </select>
+              <p id="shiori-outfit-status" class="scene-status" role="status" aria-live="polite"></p>
+              <p id="shiori-outfit-hint" class="scene-hint">ホームの栞に反映します。部屋着はタップで表情差分も試せます。背景との自動連動は未実装です。衣装の変更は再読み込みで初期状態に戻ります。</p>
             </div>
           </section>
           <section class="section settings-section" aria-labelledby="account-heading">

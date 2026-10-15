@@ -151,7 +151,7 @@ GitHub実体：`docs/shiori/reference/shiori-style-fullbody-v1.jpg`
 
 ## 6. アプリ用画像の仕様（確定）
 
-- **立ち絵・表情差分：原則背景透過PNG**。ユーザー指定により、ホーム用 `shiori-home-training-bust-v1.webp` だけはアルファ付きロッシーWebP（品質85）の例外として扱う。
+- **立ち絵・表情差分：原則背景透過PNG**。ユーザー指定により、ホーム用 `shiori-home-training-bust-v1.webp` と `public/assets/shiori/home/roomwear/` の部屋着表情差分7点を、アルファ付きロッシーWebP（品質85）の例外として扱う。これは正式基準画像の形式変更を意味しない。
 - 実際にアルファチャンネルを持つこと。白背景や市松模様を描いただけでは不可。
 - 基本は**ソシャゲのホーム画面風のバストアップ～腰上**。ポーズは自然体。
 - 画面端に収めやすく、頭頂部や髪先を不自然に切らない。

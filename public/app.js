@@ -293,6 +293,57 @@ window.addEventListener("pageshow", refreshScene);
 const homeDialogue = byId("shiori-home-dialogue");
 const shioriHomeTouch = byId("shiori-home-touch");
 const shioriHomeArt = shioriHomeTouch.querySelector(".character-layer__art");
+
+// 衣装切り替えの試験用状態。端末やD1へ保存せず、ログイン時は既存衣装に戻す。
+const outfitSelect = byId("shiori-outfit");
+const outfitStatus = byId("shiori-outfit-status");
+const trainingArt = "/assets/shiori/shiori-home-training-bust-v1.webp";
+const roomwearBase = "/assets/shiori/home/roomwear/shiori-home-roomwear-";
+const roomwearExpressions = ["default", "joy", "anger", "sad", "fun", "shy", "mischievous"];
+let currentOutfit = "training";
+let currentRoomwearExpression = "default";
+
+function refreshOutfit() {
+  const isRoomwear = currentOutfit === "roomwear";
+  const url = isRoomwear
+    ? roomwearBase + currentRoomwearExpression + "-v1.webp"
+    : trainingArt;
+  if (shioriHomeArt.getAttribute("src") !== url) {
+    shioriHomeArt.src = url;
+  }
+  const width = isRoomwear ? 1122 : 800;
+  const height = isRoomwear ? 1402 : 1067;
+  shioriHomeArt.width = width;
+  shioriHomeArt.height = height;
+  shioriHomeTouch.style.aspectRatio = width + " / " + height;
+  outfitSelect.value = currentOutfit;
+  outfitStatus.textContent = isRoomwear
+    ? "部屋着を表示中。ホームで栞をタップすると7種類の表情が切り替わります。"
+    : "トレーニングウェアを表示中。";
+}
+
+function selectOutfit(next) {
+  if (!authorized || (next !== "training" && next !== "roomwear")) return;
+  currentOutfit = next;
+  currentRoomwearExpression = "default";
+  refreshOutfit();
+}
+
+function changeRoomwearExpression() {
+  if (currentOutfit !== "roomwear") return;
+  const candidates = roomwearExpressions.filter((name) => name !== currentRoomwearExpression);
+  currentRoomwearExpression = candidates[Math.floor(Math.random() * candidates.length)];
+  refreshOutfit();
+}
+
+outfitSelect.addEventListener("change", () => selectOutfit(outfitSelect.value));
+shioriHomeArt.addEventListener("error", () => {
+  if (currentOutfit !== "roomwear") return;
+  currentOutfit = "training";
+  currentRoomwearExpression = "default";
+  refreshOutfit();
+  outfitStatus.textContent = "部屋着画像を読み込めなかったため、トレーニングウェアに戻しました。";
+});
 let greetingData = null;
 let greetingLoading = null;
 let lastHomeGreeting = "";
@@ -305,6 +356,7 @@ shioriHomeTouch.addEventListener("click", () => {
   // 同じアニメーションを連続タップでも先頭から再生する。
   void shioriHomeArt.offsetWidth;
   shioriHomeTouch.classList.add("is-poked");
+  changeRoomwearExpression();
   showHomeGreeting();
 });
 // ネイティブのボタン押下ハイライトを避けつつ、キーボードでの操作性は維持する。
@@ -418,8 +470,11 @@ function setAuthenticated(next) {
     if (!wasAuthorized) {
       sceneLocation = randomSceneLocation();
       sceneTime = null;
+      currentOutfit = "training";
+      currentRoomwearExpression = "default";
     }
     refreshScene();
+    refreshOutfit();
     authStatus.textContent = "ログイン済み（自分専用）";
     setScreen("home", false);
   } else {
@@ -429,6 +484,10 @@ function setAuthenticated(next) {
     delete sceneBackground.dataset.location;
     delete sceneBackground.dataset.time;
     sceneStatus.textContent = "";
+    currentOutfit = "training";
+    currentRoomwearExpression = "default";
+    refreshOutfit();
+    outfitStatus.textContent = "";
     ++greetingRequestId;
     shioriHomeTouch.classList.remove("is-poked");
     homeDialogue.hidden = true;
