@@ -234,7 +234,7 @@ const loginButton = byId("login-button");
 const loginFeedback = byId("login-feedback");
 const loginSuccess = byId("login-success");
 
-const pages = new Set(["home", "calendar", "record", "talk", "notices", "analysis", "events", "gallery", "settings", "development"]);
+const pages = new Set(["home", "calendar", "record", "talk", "notices", "analysis", "events", "gallery", "settings"]);
 
 // 背景はGitHubの固定素材。場所はログインのたびにランダム選択し、端末には保存しない。
 const sceneLocations = ["gym", "city", "campus", "room"];
@@ -354,6 +354,25 @@ shioriHomeArt.addEventListener("error", () => {
   refreshOutfit();
   outfitStatus.textContent = "部屋着画像を読み込めなかったため、トレーニングウェアに戻しました。";
 });
+const devPanel = byId("dev-settings-panel");
+const devPanelToggle = byId("dev-settings-open");
+function setDevPanelOpen(open, restoreFocus = true) {
+  if (open && (!authorized || activePage !== "home")) return;
+  devPanel.hidden = !open;
+  devPanelToggle.setAttribute("aria-expanded", String(open));
+  devPanelToggle.setAttribute("aria-label", open ? "開発設定を閉じる" : "開発設定を開く");
+  if (open) outfitSelect.focus({ preventScroll: true });
+  else if (restoreFocus && authorized && activePage === "home") devPanelToggle.focus({ preventScroll: true });
+}
+devPanelToggle.addEventListener("click", () => setDevPanelOpen(devPanel.hidden));
+byId("dev-settings-close").addEventListener("click", () => setDevPanelOpen(false));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !devPanel.hidden) {
+    event.preventDefault();
+    setDevPanelOpen(false);
+  }
+});
+
 byId("dev-settings-reset").addEventListener("click", () => {
   if (!authorized) return;
   sceneTimeOverride = "auto";
@@ -449,6 +468,7 @@ function setDrawerOpen(open, restoreFocus = true) {
   if (open && !authorized) return;
   if (drawerOpen === open) return;
   drawerOpen = open;
+  if (open) setDevPanelOpen(false, false);
   drawer.classList.toggle("is-open", open);
   drawer.inert = !open;
   drawer.setAttribute("aria-hidden", String(!open));
@@ -485,6 +505,7 @@ function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
   const previousPage = activePage;
   if (drawerOpen) setDrawerOpen(false);
+  if (screen !== "home") setDevPanelOpen(false, false);
   activePage = screen;
   byId("dev-settings-open").hidden = screen !== "home";
   refreshScene();
@@ -507,8 +528,6 @@ function setScreen(screen, pushHistory = true) {
     history.pushState({ screen }, "", "#" + screen);
   }
   window.scrollTo(0, 0);
-  if (screen === "development") byId("development-heading").focus({ preventScroll: true });
-  else if (previousPage === "development" && screen === "home") byId("dev-settings-open").focus({ preventScroll: true });
 }
 
 document.querySelectorAll("[data-screen]").forEach((button) => {
@@ -536,7 +555,10 @@ function setAuthenticated(next) {
   byId("boot-screen").hidden = true;
   byId("auth-screen").hidden = next;
   byId("app-screen").hidden = !next;
-  if (!next) setDrawerOpen(false, false);
+  if (!next) {
+    setDrawerOpen(false, false);
+    setDevPanelOpen(false, false);
+  }
   byId("app-header").hidden = !next;
   byId("app-footer").hidden = !next;
   document.body.classList.toggle("is-authenticated", next);

@@ -914,7 +914,33 @@ body.is-drawer-open { overflow: hidden; }
 body.is-authenticated #app-header { grid-template-columns: 42px minmax(0, 1fr) auto; }
 #app-header .header-actions { gap: 6px; }
 .dev-settings-open { width: 44px; height: 44px; font-size: 11px; font-weight: 700; }
-#page-development .section { position: relative; z-index: 3; }
-.development-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 24px 0 14px; }
-#dev-settings-home { background: var(--accent); color: var(--on-accent); }
-#page-development { padding-bottom: 24px; }
+/* 非モーダルの小さな操作パネル。ホームを暗転させず、栞も操作できる。 */
+.dev-settings-panel {
+  position: fixed;
+  z-index: 45;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100% - 24px), 600px);
+  max-height: 45dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--bubble-line);
+  border-radius: 16px;
+  background: var(--bubble-bg);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, .24);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+.dev-panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; }
+.dev-panel-heading h2 { margin: 0; font-size: 14px; }
+.dev-panel-heading button { width: 44px; height: 44px; font-size: 22px; }
+.dev-panel-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.dev-panel-fields > div { min-width: 0; }
+.dev-panel-fields label { display: block; margin-bottom: 5px; font-size: 11px; }
+.dev-panel-fields select { min-height: 44px; padding: 8px 4px; font-size: 12px; }
+.dev-settings-panel .scene-status { margin-top: 8px; font-size: 11px; }
+.dev-panel-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.dev-panel-actions button { font-size: 12px; }
+.dev-settings-panel .scene-hint { font-size: 10px; }
