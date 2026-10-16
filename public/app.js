@@ -869,42 +869,115 @@ const shioriHomeArt = shioriHomeTouch.querySelector(".character-layer__art");
 // 衣装切り替えの試験用状態。端末やD1へ保存せず、ログイン時は既存衣装に戻す。
 const outfitSelect = byId("shiori-outfit");
 const outfitStatus = byId("shiori-outfit-status");
-const trainingArt = "/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp";
-const roomwearArt = "/assets/shiori/home/v1/shiori-home-roomwear-normal-r1.webp";
+// 衣装／表情は固定素材。セリフとの条件付けは将来行うため、今は均等ランダムに表示する。
+// 画像ごとの補正値は CSS 変数へ流し、ホームの承認済み距離感を保つ。
+const trainingLayout = {
+  base: { scale: 1.14, origin: "right bottom", bottom: "0px" },
+  narrow: { scale: 1.159, origin: "right bottom", bottom: "0px" },
+  short: { scale: 1.064, origin: "right bottom", bottom: "0px" }
+};
+// 新しい部屋着差分の共通初期値。旧テスト画像より頭部が上に見えるため、
+// スクリーンショット比較に基づき約24pxだけ下へ補正する。最終実機確認は別途。
+const roomwearLayout = {
+  base: { scale: 1.276, origin: "72% 55%", bottom: "calc(-1 * min(38vw, 160px) - 24px)" },
+  narrow: { scale: 1.297, origin: "72% 55%", bottom: "calc(-1 * min(38vw, 160px) - 24px)" },
+  short: { scale: 1.191, origin: "62% 39%", bottom: "calc(-1 * min(38vw, 160px) - 24px)" }
+};
+const roomwearVariantDefinitions = [
+  { id: "normal", label: "通常" },
+  { id: "joy", label: "喜" },
+  { id: "anger", label: "怒" },
+  { id: "sad", label: "哀" },
+  { id: "fun", label: "楽" },
+  { id: "shy", label: "照れ" },
+  { id: "mischievous", label: "小悪魔" }
+];
+// layout を各差分に独立して用意。必要になれば該当する差分だけ調整する。
+// 例: { id: "shy", label: "照れ", overrides: { base: { bottom: "-175px" } } }
+const homePortraits = {
+  training: [{
+    id: "training-default",
+    label: "トレーニングウェア",
+    outfit: "training",
+    src: "/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp",
+    width: 800,
+    height: 1067,
+    layout: trainingLayout
+  }],
+  roomwear: roomwearVariantDefinitions.map(({ id, label, overrides = {} }) => ({
+    id,
+    label,
+    outfit: "roomwear",
+    src: `/assets/shiori/home/v1/shiori-home-roomwear-${id}-r1.webp`,
+    width: 941,
+    height: 1672,
+    layout: Object.fromEntries(
+      ["base", "narrow", "short"].map((size) => [
+        size, { ...roomwearLayout[size], ...(overrides[size] || {}) }
+      ])
+    )
+  }))
+};
 let currentOutfit = "training";
+let currentPortrait = null;
+const failedHomePortraits = new Set();
 
-function refreshOutfit() {
-  const isRoomwear = currentOutfit === "roomwear";
-  const url = isRoomwear
-    ? roomwearArt
-    : trainingArt;
-  if (shioriHomeArt.getAttribute("src") !== url) {
-    shioriHomeArt.src = url;
+function applyHomePortrait(variant) {
+  // CSS の個別補正を更新してから画像を切り替え、切り替え時のサイズ跳びを抑える。
+  shioriHomeTouch.style.aspectRatio = variant.width + " / " + variant.height;
+  shioriHomeTouch.dataset.outfit = variant.outfit;
+  shioriHomeTouch.dataset.variant = variant.id;
+  for (const size of ["base", "narrow", "short"]) {
+    const layout = variant.layout[size];
+    shioriHomeTouch.style.setProperty(`--home-character-scale-${size}`, String(layout.scale));
+    shioriHomeTouch.style.setProperty(`--home-character-origin-${size}`, layout.origin);
+    shioriHomeTouch.style.setProperty(`--home-character-bottom-${size}`, layout.bottom);
   }
-  const width = isRoomwear ? 941 : 800;
-  const height = isRoomwear ? 1672 : 1067;
-  shioriHomeArt.width = width;
-  shioriHomeArt.height = height;
-  shioriHomeTouch.style.aspectRatio = width + " / " + height;
-  shioriHomeTouch.dataset.outfit = currentOutfit;
+  shioriHomeArt.width = variant.width;
+  shioriHomeArt.height = variant.height;
+  if (shioriHomeArt.getAttribute("src") !== variant.src) shioriHomeArt.src = variant.src;
   outfitSelect.value = currentOutfit;
-  outfitStatus.textContent = isRoomwear
-    ? "部屋着のテスト画像を表示中。"
+  outfitStatus.textContent = variant.outfit === "roomwear"
+    ? `部屋着・${variant.label}を表示中（表情はランダム）。`
     : "トレーニングウェアを表示中。";
 }
 
+// 直前と同じ差分を避ける。表情をセリフから選ぶ機能は現時点では持たせない。
+function refreshOutfit({ reroll = false } = {}) {
+  let candidates = homePortraits[currentOutfit]
+    .filter((variant) => !failedHomePortraits.has(variant.src));
+  if (!candidates.length) {
+    currentOutfit = "training";
+    candidates = homePortraits.training;
+    currentPortrait = null;
+  }
+  const canReuse = !reroll && currentPortrait?.outfit === currentOutfit
+    && candidates.some((variant) => variant.id === currentPortrait.id);
+  if (!canReuse) {
+    const alternatives = candidates.filter((variant) => variant.id !== currentPortrait?.id
+      || variant.outfit !== currentPortrait?.outfit);
+    const pool = alternatives.length ? alternatives : candidates;
+    currentPortrait = pool[Math.floor(Math.random() * pool.length)];
+  }
+  applyHomePortrait(currentPortrait);
+}
+
 function selectOutfit(next) {
-  if (!authorized || (next !== "training" && next !== "roomwear")) return;
+  if (!authorized || !(next in homePortraits)) return;
   currentOutfit = next;
-  refreshOutfit();
+  refreshOutfit({ reroll: true });
 }
 
 outfitSelect.addEventListener("change", () => selectOutfit(outfitSelect.value));
 shioriHomeArt.addEventListener("error", () => {
-  if (currentOutfit !== "roomwear") return;
-  currentOutfit = "training";
-  refreshOutfit();
-  outfitStatus.textContent = "部屋着画像を読み込めなかったため、トレーニングウェアに戻しました。";
+  if (currentOutfit !== "roomwear" || !currentPortrait
+    || currentPortrait.src !== shioriHomeArt.getAttribute("src")) return;
+  failedHomePortraits.add(currentPortrait.src);
+  const remaining = homePortraits.roomwear.some(({ src }) => !failedHomePortraits.has(src));
+  refreshOutfit({ reroll: true });
+  if (!remaining) {
+    outfitStatus.textContent = "部屋着の画像を読み込めなかったため、トレーニングウェアに戻しました。";
+  }
 });
 const devPanel = byId("dev-settings-panel");
 const devPanelToggle = byId("dev-settings-open");
@@ -1004,6 +1077,7 @@ shioriHomeTouch.addEventListener("click", () => {
   // 同じアニメーションを連続タップでも先頭から再生する。
   void shioriHomeArt.offsetWidth;
   shioriHomeTouch.classList.add("is-poked");
+  if (currentOutfit === "roomwear") refreshOutfit({ reroll: true });
   showHomeGreeting();
 });
 // ネイティブのボタン押下ハイライトを避けつつ、キーボードでの操作性は維持する。
@@ -1105,6 +1179,7 @@ function setScreen(screen, pushHistory = true) {
   document.body.classList.toggle("is-home", screen === "home");
   document.body.classList.toggle("is-record", screen === "record");
   if (screen === "home") {
+    if (previousPage !== "home" && currentOutfit === "roomwear") refreshOutfit({ reroll: true });
     if (previousPage !== "home" || homeDialogue.hidden) showHomeGreeting();
   } else {
     ++greetingRequestId;
@@ -1174,6 +1249,8 @@ function setAuthenticated(next) {
       sceneLocation = randomSceneLocation();
       sceneTime = null;
       currentOutfit = "training";
+      currentPortrait = null;
+      failedHomePortraits.clear();
     }
     refreshScene();
     refreshOutfit();
@@ -1187,6 +1264,8 @@ function setAuthenticated(next) {
     delete sceneBackground.dataset.time;
     sceneStatus.textContent = "";
     currentOutfit = "training";
+    currentPortrait = null;
+    failedHomePortraits.clear();
     refreshOutfit();
     outfitStatus.textContent = "";
     ++greetingRequestId;
