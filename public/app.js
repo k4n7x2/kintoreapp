@@ -1468,7 +1468,8 @@ let lastSideDialogue = "";
 
 const sideDialogueNodes = {
   record: byId("record-sd-line"),
-  calendar: byId("calendar-sd-line")
+  calendar: byId("calendar-sd-line"),
+  analysis: byId("analysis-sd-line")
 };
 
 // ホーム用の採用済み文言を共有。セリフ内容とSD画像の有無は独立して扱う。
@@ -1486,7 +1487,7 @@ async function ensureGreetingData() {
   return greetingLoading;
 }
 
-// 記録画面・カレンダー下のSD領域に吹き出しを表示する。
+// カレンダー・記録・分析の共通下部SD領域に吹き出しを表示する。
 // 正式SD素材が登録されたら、画像だけ独立して配置できる。
 async function showSideDialogue(page, reason = "normal") {
   const requestId = ++sideDialogueRequestId;
@@ -1500,7 +1501,7 @@ async function showSideDialogue(page, reason = "normal") {
   }
   const fallback = page === "record"
     ? "今日は記録だけでもいいんじゃないかな。"
-    : "あ、来た。今日はどうする？";
+    : page === "analysis" ? "あ、来た。今日はどうする？" : "あ、来た。今日はどうする？";
   try {
     const data = await ensureGreetingData();
     if (!authorized || activePage !== page || requestId !== sideDialogueRequestId) return;
@@ -1519,6 +1520,7 @@ async function showSideDialogue(page, reason = "normal") {
 
 byId("record-sd-talk").addEventListener("click", () => showSideDialogue("record"));
 byId("calendar-sd-talk").addEventListener("click", () => showSideDialogue("calendar"));
+byId("analysis-sd-talk").addEventListener("click", () => showSideDialogue("analysis"));
 let lastHomeGreeting = "";
 let greetingRequestId = 0;
 
@@ -1630,6 +1632,7 @@ function setScreen(screen, pushHistory = true) {
   refreshScene();
   document.body.classList.toggle("is-home", screen === "home");
   document.body.classList.toggle("is-record", screen === "record");
+  document.body.classList.toggle("is-sd-page", ["record", "calendar", "analysis"].includes(screen));
   if (screen === "home") {
     if (previousPage !== "home" && currentOutfit === "roomwear") refreshOutfit({ reroll: true });
     if (previousPage !== "home" || homeDialogue.hidden) showHomeGreeting();
@@ -1639,9 +1642,9 @@ function setScreen(screen, pushHistory = true) {
   // 画面間の非同期応答が別画面の吹き出しへ入り込まないよう破棄する。
   if (screen !== previousPage) ++sideDialogueRequestId;
   if (screen === "analysis" && previousPage !== "analysis") showAnalysisExerciseList();
-  if (screen === "record" || screen === "calendar") {
+  if (screen === "record" || screen === "calendar" || screen === "analysis") {
     if (screen !== previousPage) {
-      byId("record-scroll").scrollTop = 0;
+      if (screen === "record") byId("record-scroll").scrollTop = 0;
       showSideDialogue(screen);
       if (screen === "record" && !recordsLoaded && !pendingRecordDate) {
         pendingRecordDate = selectedDate;
@@ -1708,7 +1711,7 @@ function setAuthenticated(next) {
   byId("app-header").hidden = !next;
   byId("app-footer").hidden = !next;
   document.body.classList.toggle("is-authenticated", next);
-  if (!next) document.body.classList.remove("is-home", "is-record");
+  if (!next) document.body.classList.remove("is-home", "is-record", "is-sd-page");
   document.title = next ? "kintoreapp | 筋トレ記録" : "ログイン";
   loginSuccess.hidden = !next;
   if (next) {
@@ -1745,6 +1748,7 @@ function setAuthenticated(next) {
     lastSideDialogue = "";
     sideDialogueNodes.record.textContent = "今日は記録だけでもいいんじゃないかな。";
     sideDialogueNodes.calendar.textContent = "あ、来た。今日はどうする？";
+    sideDialogueNodes.analysis.textContent = "あ、来た。今日はどうする？";
     authStatus.textContent = "未ログイン：パスワードを入力してください。";
     setReady(false);
     workouts = [];

@@ -1199,7 +1199,8 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   border-top: 1px solid var(--bubble-line);
 }
 #page-record .record-sd-art-slot,
-#page-calendar .record-sd-art-slot {
+#page-calendar .record-sd-art-slot,
+#page-analysis .record-sd-art-slot {
   position: absolute;
   z-index: 1;
   right: 0;
@@ -1217,7 +1218,8 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   user-select: none;
 }
 #page-record .sd-dialogue,
-#page-calendar .sd-dialogue {
+#page-calendar .sd-dialogue,
+#page-analysis .sd-dialogue {
   display: block;
   position: absolute;
   z-index: 3;
@@ -1244,7 +1246,8 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   backdrop-filter: blur(10px);
 }
 #page-record .sd-dialogue::after,
-#page-calendar .sd-dialogue::after {
+#page-calendar .sd-dialogue::after,
+#page-analysis .sd-dialogue::after {
   content: "";
   position: absolute;
   right: -5px;
@@ -2317,5 +2320,99 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   #page-record #record-editor-view .set-value-unit {
     right: 3px;
     font-size: 9px;
+  }
+}
+
+
+/* Calendar / Record / Analysis: one screen-sized layout with the same reserved
+   SD companion stage. Only the upper content region scrolls. */
+body.is-authenticated.is-sd-page {
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior-y: none;
+}
+body.is-authenticated.is-sd-page .app-shell {
+  height: 100dvh;
+  min-height: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+body.is-authenticated.is-sd-page #app-footer { display: none; }
+body.is-authenticated.is-sd-page .app-shell > main,
+body.is-authenticated.is-sd-page #app-screen {
+  height: 100%;
+  min-height: 0;
+}
+#app-screen > .sd-fixed-page[hidden] { display: none !important; }
+#app-screen > .sd-fixed-page:not([hidden]) {
+  --sd-fixed-height: clamp(132px, 19dvh, 182px);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+#page-calendar.calendar-minimal.sd-fixed-page { min-height: 0; }
+#app-screen > .sd-fixed-page > .sd-page-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--subtle) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+#page-record > .record-scroll.sd-page-scroll {
+  padding-bottom: 18px;
+}
+#page-calendar > .calendar-main.sd-page-scroll {
+  margin: 0;
+  padding: 7px 2px 18px;
+}
+#page-analysis > .analysis-scroll.sd-page-scroll {
+  padding: 8px 2px 18px;
+}
+#page-analysis .analysis-scroll > .page-heading {
+  margin-top: 0;
+}
+#page-record > .record-companion.sd-page-companion,
+#page-calendar > .calendar-sd-space.sd-page-companion,
+#page-analysis > .analysis-sd-space.sd-page-companion {
+  position: relative;
+  flex: 0 0 var(--sd-fixed-height);
+  height: var(--sd-fixed-height);
+  min-height: var(--sd-fixed-height);
+  max-height: var(--sd-fixed-height);
+  width: 100%;
+  margin: 0;
+  border-top: 1px solid var(--bubble-line);
+  overflow: hidden;
+  z-index: 1;
+}
+/* The editor previously shrank only the Record SD area. Retain identical stage
+   geometry while switching between overview / editor / history and other pages. */
+#page-record:has(#record-editor-view:not([hidden])) > .record-companion.sd-page-companion {
+  height: var(--sd-fixed-height);
+  min-height: var(--sd-fixed-height);
+  max-height: var(--sd-fixed-height);
+}
+#page-analysis .sd-dialogue:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+#page-calendar .sd-dialogue,
+#page-record .sd-dialogue,
+#page-analysis .sd-dialogue { top: 16px; }
+@media (max-width: 360px) {
+  #app-screen > .sd-fixed-page:not([hidden]) {
+    --sd-fixed-height: clamp(116px, 18dvh, 164px);
+  }
+}
+@media (max-height: 580px) {
+  #app-screen > .sd-fixed-page:not([hidden]) {
+    --sd-fixed-height: clamp(102px, 18dvh, 128px);
   }
 }

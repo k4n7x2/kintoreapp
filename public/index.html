@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261016-compact-header-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261016-fixed-sd-threepages-v1">
   <link rel="stylesheet" href="/story-test.css?v=1">
   <script type="module" src="/app.js?v=20261016-set-unit-infield-v1"></script>
 </head>
@@ -86,9 +86,9 @@
           </div>
         </section>
 
-        <section class="app-page record-compact record-card-layout" id="page-record" data-page="record" aria-labelledby="record-heading" hidden>
+        <section class="app-page record-compact record-card-layout sd-fixed-page" id="page-record" data-page="record" aria-labelledby="record-heading" hidden>
           <h1 id="record-heading" class="visually-hidden">トレーニング記録</h1>
-          <div id="record-scroll" class="record-scroll" role="region" aria-label="トレーニングの確認と編集" tabindex="0">
+          <div id="record-scroll" class="record-scroll sd-page-scroll" role="region" aria-label="トレーニングの確認と編集" tabindex="0">
             <div id="record-workout-panel" class="panel record-panel">
               <p class="security-note visually-hidden" id="auth-status" role="status">ログイン状態を確認中…</p>
               <form id="workout-form" novalidate>
@@ -175,7 +175,7 @@
             </section>
           </div>
           <!-- 記録入力と独立したSD表示領域。既存のセリフ操作を維持する。 -->
-          <div class="character-scene record-companion" data-character-scene="record">
+          <div class="character-scene record-companion sd-page-companion" data-character-scene="record">
             <div id="character-layer-record" class="record-sd-art-slot" data-character-layer="record" aria-hidden="true">
               <img src="/assets/shiori/gim/v1/shiori-gim-sd-training-test-r1.webp" alt="" decoding="async" draggable="false">
             </div>
@@ -185,9 +185,9 @@
           </div>
         </section>
 
-        <section class="app-page calendar-minimal" id="page-calendar" data-page="calendar" aria-labelledby="calendar-page-heading" hidden>
+        <section class="app-page calendar-minimal sd-fixed-page" id="page-calendar" data-page="calendar" aria-labelledby="calendar-page-heading" hidden>
           <h1 id="calendar-page-heading" class="visually-hidden">カレンダー</h1>
-          <section class="section calendar-main" aria-labelledby="calendar-heading">
+          <section class="section calendar-main sd-page-scroll" aria-labelledby="calendar-heading">
             <h2 id="calendar-heading" class="visually-hidden">月間カレンダー</h2>
             <span id="month-count" class="visually-hidden" role="status" aria-live="polite">読み込み中</span>
             <div class="panel calendar-panel">
@@ -210,7 +210,7 @@
             </div>
           </section>
           <!-- 記録画面と共通のSD表示・会話領域。登録済みのSDテスト素材を表示する。 -->
-          <div class="character-scene character-scene--calendar calendar-sd-space" data-character-scene="history">
+          <div class="character-scene character-scene--calendar calendar-sd-space sd-page-companion" data-character-scene="history">
             <div id="character-layer-history" class="record-sd-art-slot" data-character-layer="history" aria-hidden="true">
               <img src="/assets/shiori/gim/v1/shiori-gim-sd-training-test-r1.webp" alt="" decoding="async" draggable="false">
             </div>
@@ -236,9 +236,10 @@
           </div>
         </section>
 
-        <section class="app-page analysis-exercises-page" id="page-analysis" data-page="analysis" aria-labelledby="analysis-heading" hidden>
-          <div class="page-heading"><h1 id="analysis-heading">分析</h1></div>
-          <div class="panel analysis-exercises-panel">
+        <section class="app-page analysis-exercises-page sd-fixed-page" id="page-analysis" data-page="analysis" aria-labelledby="analysis-heading" hidden>
+          <div class="analysis-scroll sd-page-scroll" role="region" aria-label="分析の種目と実施日" tabindex="0">
+            <div class="page-heading"><h1 id="analysis-heading">分析</h1></div>
+            <div class="panel analysis-exercises-panel">
             <div id="analysis-exercise-view">
               <h2>実施している種目</h2>
               <p class="analysis-guide">種目を選ぶと、記録した日付を確認できます。</p>
@@ -254,6 +255,15 @@
               <p id="analysis-date-feedback" class="feedback" role="status" aria-live="polite"></p>
               <button type="button" id="analysis-date-retry" class="secondary-action" hidden>もう一度読み込む</button>
             </div>
+            </div>
+          </div>
+          <div class="character-scene analysis-sd-space sd-page-companion" data-character-scene="analysis">
+            <div id="character-layer-analysis" class="record-sd-art-slot" data-character-layer="analysis" aria-hidden="true">
+              <img src="/assets/shiori/gim/v1/shiori-gim-sd-training-test-r1.webp" alt="" decoding="async" draggable="false">
+            </div>
+            <button type="button" id="analysis-sd-talk" class="sd-dialogue" aria-label="栞のセリフを変える">
+              <span id="analysis-sd-line" role="status" aria-live="polite" aria-atomic="true">あ、来た。今日はどうする？</span>
+            </button>
           </div>
         </section>
 
