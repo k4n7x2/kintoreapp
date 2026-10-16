@@ -22,12 +22,18 @@ python -m unittest discover -s tests -v
 
 1. 通常ホーム用画像を**941×1672px**の透過PNGで制作する。顔・塗り・体型・衣装は通常の正式参照に従う。
 2. 完成した画像上で、eyeCenter（左右の目の外形中心の中点）、headTopY、chinY を計測し、必要なら肩の座標も測る。これらは**画像内の座標**であり、スクリーンショット上の座標を転記しない。
-3. 原本の横に画像名＋.anchors.json のサイドカーを置く。例：new-image.png.anchors.json。人間が画像と照合して初めてreviewed: trueにする。
+3. 原本の横に画像名＋.anchors.json のサイドカーを置く。例：new-image.webp.anchors.json。**該当する画像実体のSHA-256と、目・顎の実測方法・確認者・確認根拠を記録する。** 顔の注釈は画像から自動認識しないため、同じ画像を見て人間がオーバーレイを照合した場合にのみ reviewed: true とする。画像バイナリを差し替えたら再計測・再レビュー必須。
 
 ```json
 {
   "standard": "home-portrait-v1",
+  "imageSha256": "ここに画像実体のSHA-256（64桁）",
   "reviewed": true,
+  "review": {
+    "reviewer": "目視検査の担当",
+    "method": "元画像上の両眼中心・頭頂・顎を実測",
+    "evidence": "同じハッシュの画像に座標を重ねて確認した記録"
+  },
   "samePoseAsReference": false,
   "anchors": {
     "eyeCenter": [449, 321],
@@ -41,17 +47,17 @@ python -m unittest discover -s tests -v
 
 数値は**共通基準を示す形式例**であり、個々の新しい画像を測らずコピーすることは禁止。画像内に実在する顔の座標を注釈した結果だけを登録する。立ち絵の姿勢が参照画像と完全に同じ場合はsamePoseAsReference: trueとしてleftShoulder、rightShoulderも記載する。
 
-4. Pillow を用意して検査する。
+4. Pillow を用意して検査する。基準JSONは独立監査後 `provisional` へ差し戻されているため、再校正が完了するまでは正式検査でPASSを出さない。診断の `--allow-provisional` を採用判定に使わない。
 
 ```bash
 python -m pip install Pillow
 python scripts/check_home_portrait.py /path/to/new-image.png
 ```
 
-5. 必須検査に合格したらWebP品質85の別コピーへ変換し、同じ寸法・透明余白・アンカーを維持したことを再検査してからGitHubへ登録する。GitHub Actionsは**PRで新規に追加するホーム立ち絵**を対象にチェックする。もともとのレガシー画像・一枚絵・SD絵は対象外。顔の同一性、毛先、手指、透過縁、表示画面での見え方は引き続き人間による検査が必要。
+5. 必須検査に合格したらWebP品質85の別コピーへ変換し、同じ寸法・透明余白・アンカーを維持したことを再検査する。配布用WebPを `docs/shiori/home-portraits-registry-v1.json` の `portraits` へ登録し、対応する `.anchors.json` とともにGitHubへ追加する。**CIは差分の名前で選別せず、既存8枚のGit blobハッシュ固定と新規格画像の全件検査を毎回行う。** 登録されない画像・孤立注釈・既存8枚の変更は不合格。SD絵や一枚絵を同じディレクトリに追加する際は、先に別用途の分類管理を設計する。
 
 ### 試行時の注意
 
-基準JSONは監査後の再校正待ちで、通常の検査は基準未確定としてFAILする。--allow-provisional は検査器の**開発診断専用**であり、本採用やGitHub Actionsでは使用しない。新しい画像の寸法・透過・人手レビュー済みのアンカー注釈が欠ければ引き続き不合格となる。
+基準JSONは監査後の再校正待ちで、通常の検査は基準未確定としてFAILする。CIが通ることと、GitHubの必須ステータスとしてマージを止めることは別。後者はリポジトリ設定で required checks を指定する必要がある。--allow-provisional は検査器の**開発診断専用**であり、本採用やGitHub Actionsでは使用しない。新しい画像の寸法・透過・人手レビュー済みのアンカー注釈が欠ければ引き続き不合格となる。
 
 **スクリプトが目の位置を画像から自動検出するわけではない。** 人手による実測・注釈と、自動の寸法／アルファ／透明余白／座標差計算を組み合わせる。顔以外の線画の同一性や下端の自然な見切れについては別途目視する。
