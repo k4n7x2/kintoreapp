@@ -58,6 +58,18 @@ const recordPlanPanel = byId("record-plan-panel");
 const recordNoteDetails = byId("record-note-details");
 const recordWorkoutPanel = byId("record-workout-panel");
 const recordHistoryView = byId("record-history-view");
+const analysisExerciseView = byId("analysis-exercise-view");
+const analysisDateView = byId("analysis-date-view");
+const analysisExerciseList = byId("analysis-exercise-list");
+const analysisDateList = byId("analysis-date-list");
+const analysisExerciseFeedback = byId("analysis-exercise-feedback");
+const analysisDateFeedback = byId("analysis-date-feedback");
+let selectedAnalysisExercise = "";
+let analysisListRequestId = 0;
+let analysisDatesRequestId = 0;
+let editorEntry = "record";
+let pendingAnalysisRecord = null;
+let analysisSaveNotice = "";
 const exercisePicker = byId("exercise-picker-view");
 const pickerInput = byId("exercise-picker-input");
 const pickerList = byId("exercise-picker-list");
@@ -274,6 +286,141 @@ function renumberSets(container) {
   if (card?.renderSummary) card.renderSummary();
 }
 
+
+function analysisDateSummary(sets) {
+  const max = Math.max(...sets.map(set => Number(set.weight_kg)));
+  return Number(max.toFixed(2)) + "kg / " + sets.length + "セット";
+}
+function showAnalysisExerciseList({ reload = true } = {}) {
+  ++analysisDatesRequestId;
+  analysisDateView.hidden = true;
+  analysisExerciseView.hidden = false;
+  if (reload) loadAnalysisExercises();
+}
+async function loadAnalysisExercises() {
+  const requestId = ++analysisListRequestId;
+  analysisExerciseList.replaceChildren();
+  analysisExerciseFeedback.textContent = "種目を読み込み中…";
+  byId("analysis-exercise-retry").hidden = true;
+  try {
+    const result = await fetchJSON("/api/exercises");
+    if (requestId !== analysisListRequestId || !authorized) return;
+    const names = [...new Set((result.exercises || []).map(normalizeExerciseName).filter(Boolean))];
+    analysisExerciseFeedback.textContent = names.length ? "" : "まだ記録した種目がありません。";
+    for (const name of names) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "analysis-link-card";
+      const title = document.createElement("strong");
+      title.textContent = name;
+      const chevron = document.createElement("span");
+      chevron.setAttribute("aria-hidden", "true");
+      chevron.textContent = "›";
+      button.append(title, chevron);
+      button.addEventListener("click", () => showAnalysisDates(name));
+      analysisExerciseList.appendChild(button);
+    }
+  } catch (error) {
+    if (requestId !== analysisListRequestId || !authorized) return;
+    if (error.status === 401) { setAuthenticated(false); return; }
+    analysisExerciseFeedback.textContent = "種目一覧を取得できませんでした。";
+    byId("analysis-exercise-retry").hidden = false;
+  }
+}
+async function showAnalysisDates(rawName) {
+  const name = normalizeExerciseName(rawName);
+  if (!name || !authorized) return;
+  selectedAnalysisExercise = name;
+  analysisExerciseView.hidden = true;
+  analysisDateView.hidden = false;
+  byId("analysis-selected-exercise").textContent = name;
+  analysisDateList.replaceChildren();
+  analysisDateFeedback.textContent = "実施日を読み込み中…";
+  byId("analysis-date-retry").hidden = true;
+  const requestId = ++analysisDatesRequestId;
+  try {
+    const result = await fetchJSON("/api/exercises/history?name=" + encodeURIComponent(name));
+    if (requestId !== analysisDatesRequestId || !authorized || selectedAnalysisExercise !== name) return;
+    const byDate = new Map();
+    for (const set of result.sets || []) {
+      if (!byDate.has(set.performed_on)) byDate.set(set.performed_on, []);
+      byDate.get(set.performed_on).push(set);
+    }
+    const recordMessage = byDate.size
+      ? (result.truncated ? "古い履歴の一部は表示されていません。" : "")
+      : "この種目の実施記録はまだありません。";
+    analysisDateFeedback.textContent = [analysisSaveNotice, recordMessage].filter(Boolean).join(" ");
+    analysisSaveNotice = "";
+    for (const [date, sets] of byDate) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "analysis-link-card";
+      const label = document.createElement("span");
+      const heading = document.createElement("strong");
+      heading.textContent = date;
+      const detail = document.createElement("small");
+      detail.textContent = analysisDateSummary(sets);
+      label.append(heading, detail);
+      const chevron = document.createElement("span");
+      chevron.textContent = "›";
+      chevron.setAttribute("aria-hidden", "true");
+      button.append(label, chevron);
+      button.addEventListener("click", () => openAnalysisRecord(name, date));
+      analysisDateList.appendChild(button);
+    }
+  } catch (error) {
+    if (requestId !== analysisDatesRequestId || !authorized) return;
+    if (error.status === 401) { setAuthenticated(false); return; }
+    analysisDateFeedback.textContent = "実施日を取得できませんでした。";
+    byId("analysis-date-retry").hidden = false;
+  }
+}
+function openSelectedAnalysisCard(name, date) {
+  const card = [...exerciseList.querySelectorAll(".exercise-card")].find(item =>
+    normalizeExerciseName(item.nameInput.value) === name);
+  if (card && selectedDate === date) {
+    openExerciseEditor(card, "analysis");
+  } else {
+    analysisDateFeedback.textContent = "この日の記録を開けませんでした。";
+    setScreen("analysis");
+    showAnalysisDates(name);
+  }
+}
+function openAnalysisRecord(name, date) {
+  if (!selectRecordDate(date)) return;
+  if (recordsLoaded && selectedDate === date) {
+    openSelectedAnalysisCard(name, date);
+  } else {
+    pendingAnalysisRecord = { name, date };
+  }
+}
+function returnToAnalysisDays(name) {
+  // 記録編集という一時ビューを履歴スタックへ積み増さず、元の分析入口に復帰する。
+  if (location.hash === "#record") {
+    history.replaceState({ screen: "analysis" }, "", "#analysis");
+    setScreen("analysis", false);
+  } else {
+    setScreen("analysis");
+  }
+  showAnalysisDates(name);
+}
+function returnFromExerciseEditor() {
+  if (editorEntry === "analysis") {
+    if (hasRecordChanges() && !confirm("未保存の変更があります。保存せず実施日一覧へ戻りますか？")) return;
+    const name = selectedAnalysisExercise;
+    closeExerciseEditor();
+    returnToAnalysisDays(name);
+  } else {
+    closeExerciseEditor({ focus: true });
+  }
+}
+byId("analysis-dates-back").addEventListener("click", () => {
+  showAnalysisExerciseList({ reload: false });
+  byId("analysis-heading").focus?.();
+});
+byId("analysis-exercise-retry").addEventListener("click", loadAnalysisExercises);
+byId("analysis-date-retry").addEventListener("click", () => showAnalysisDates(selectedAnalysisExercise));
+
 function setRecordHistoryVisible(visible) {
   if (visible) closeExerciseEditor();
   recordWorkoutPanel.hidden = visible;
@@ -312,16 +459,21 @@ function closeExerciseEditor({ focus = false } = {}) {
   card.append(card.editorBody);
   card.editorBody.hidden = true;
   activeExerciseCard = null;
+  editorEntry = "record";
   recordEditor.hidden = true;
   recordOverview.hidden = false;
   card.renderSummary();
   byId("record-scroll").scrollTop = 0;
   if (focus && card.isConnected) card.overviewButton.focus();
 }
-function openExerciseEditor(card) {
+function openExerciseEditor(card, origin = "record") {
   if (!card || !dbReady) return;
   if (activeExerciseCard && activeExerciseCard !== card) closeExerciseEditor();
   activeExerciseCard = card;
+  editorEntry = origin;
+  byId("record-editor-back").textContent = origin === "analysis"
+    ? "‹ 実施日一覧へ戻る" : "‹ その日の種目一覧へ戻る";
+  byId("record-editor-date").textContent = saveDate.value + " の記録";
   exercisePicker.hidden = true;
   recordOverview.hidden = true;
   recordEditor.hidden = false;
@@ -334,8 +486,8 @@ function openExerciseEditor(card) {
   byId("record-scroll").scrollTop = 0;
   byId("record-editor-back").focus();
 }
-byId("record-editor-back").addEventListener("click", () => closeExerciseEditor({ focus: true }));
-byId("record-editor-done").addEventListener("click", () => closeExerciseEditor({ focus: true }));
+byId("record-editor-back").addEventListener("click", returnFromExerciseEditor);
+byId("record-editor-done").addEventListener("click", returnFromExerciseEditor);
 
 function showExercisePicker() {
   if (!dbReady) return;
@@ -678,6 +830,11 @@ async function loadWorkouts() {
         normalizeExerciseName(entry.nameInput.value) === name);
       if (card) openExerciseEditor(card);
     }
+    if (pendingAnalysisRecord && activePage === "record") {
+      const target = pendingAnalysisRecord;
+      pendingAnalysisRecord = null;
+      openSelectedAnalysisCard(target.name, target.date);
+    }
   } catch (error) {
     if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
     if (error.status === 401) {
@@ -695,6 +852,12 @@ async function loadWorkouts() {
     byId("month-count").textContent = "取得できません";
     setReady(false);
     list.textContent = error.status === 503 ? "D1のテーブル準備が必要です。" : "記録を読み込めませんでした。";
+    if (pendingAnalysisRecord) {
+      const target = pendingAnalysisRecord;
+      pendingAnalysisRecord = null;
+      setScreen("analysis");
+      showAnalysisDates(target.name);
+    }
   }
 }
 async function removeWorkout(id) {
@@ -773,6 +936,7 @@ byId("workout-form").addEventListener("submit", async event => {
     return;
   }
   card.noteValue = saveNote.value;
+  const returnToAnalysis = editorEntry === "analysis";
   if (card.noteValue.length > 300) {
     saveFeedback.textContent = "メモは300文字以内です。";
     return;
@@ -796,7 +960,12 @@ byId("workout-form").addEventListener("submit", async event => {
     // ほかの種目の入力DOMは維持し、月間データだけ更新。
     await loadWorkouts();
     loadExerciseNames();
-    if (activePage === "record") showSideDialogue("record", "saved");
+    if (returnToAnalysis && authorized && activePage === "record") {
+      analysisSaveNotice = "記録を保存しました。";
+      returnToAnalysisDays(result.exercise_name);
+    } else if (activePage === "record") {
+      showSideDialogue("record", "saved");
+    }
   } catch (error) {
     if (error.status === 401) {
       setAuthenticated(false);
@@ -1267,6 +1436,7 @@ function setScreen(screen, pushHistory = true) {
   }
   // 画面間の非同期応答が別画面の吹き出しへ入り込まないよう破棄する。
   if (screen !== previousPage) ++sideDialogueRequestId;
+  if (screen === "analysis" && previousPage !== "analysis") showAnalysisExerciseList();
   if (screen === "record" || screen === "calendar") {
     if (screen !== previousPage) {
       byId("record-scroll").scrollTop = 0;
@@ -1307,6 +1477,13 @@ document.querySelectorAll("[data-screen]").forEach((button) => {
 window.addEventListener("popstate", () => {
   if (!authorized) return;
   const screen = location.hash.slice(1);
+  if (screen === "analysis" && activePage === "record" && editorEntry === "analysis") {
+    const name = selectedAnalysisExercise;
+    closeExerciseEditor();
+    setScreen("analysis", false);
+    showAnalysisDates(name);
+    return;
+  }
   setScreen(pages.has(screen) ? screen : screen === "history" ? "calendar" : "home", false);
 });
 
@@ -1376,6 +1553,18 @@ function setAuthenticated(next) {
     completeDates.clear();
     selectedDate = todayISO();
     pendingRecordDate = "";
+    pendingAnalysisRecord = null;
+    editorEntry = "record";
+    analysisSaveNotice = "";
+    ++analysisListRequestId;
+    ++analysisDatesRequestId;
+    selectedAnalysisExercise = "";
+    analysisExerciseList.replaceChildren();
+    analysisDateList.replaceChildren();
+    analysisExerciseFeedback.textContent = "";
+    analysisDateFeedback.textContent = "";
+    analysisDateView.hidden = true;
+    analysisExerciseView.hidden = false;
     knownExerciseNames = starterExercises;
     recordPlanPanel.hidden = true;
     recordPlanToggle.setAttribute("aria-expanded", "false");

@@ -322,9 +322,10 @@ export default {
             const history = await env.DB.prepare(
               "SELECT s.performed_on, ws.set_number, ws.weight_kg, ws.reps " +
               "FROM workout_sets ws JOIN workout_sessions s ON s.id=ws.session_id " +
-              "WHERE ws.exercise_name=? ORDER BY s.performed_on DESC, s.created_at DESC, ws.set_number ASC, ws.id ASC LIMIT 1200"
+              "WHERE ws.exercise_name=? ORDER BY s.performed_on DESC, s.created_at DESC, ws.set_number ASC, ws.id ASC LIMIT 1201"
             ).bind(name).all();
-            return respond({ exercise_name: name, sets: history.results ?? [] });
+            const sets = history.results ?? [];
+            return respond({ exercise_name: name, sets: sets.slice(0, 1200), truncated: sets.length > 1200 });
           }
 
           if (url.pathname === "/api/workouts" && method === "GET") {

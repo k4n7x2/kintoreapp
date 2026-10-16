@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261016-exercise-log-r1">
-  <script type="module" src="/app.js?v=20261016-exercise-log-r1"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261016-shared-exercise-v1">
+  <script type="module" src="/app.js?v=20261016-shared-exercise-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -142,6 +142,7 @@
                     <button type="button" id="record-editor-back" class="secondary-action">‹ 一覧に戻る</button>
                     <h2 id="record-editor-title">種目を編集</h2>
                   </div>
+                  <p id="record-editor-date" class="record-editor-date"></p>
                   <div id="record-editor-host"></div>
                   <div class="record-extra-fields">
                     <details id="record-note-details" class="record-note-details">
@@ -222,11 +223,24 @@
           </div>
         </section>
 
-        <section class="app-page" id="page-analysis" data-page="analysis" aria-labelledby="analysis-heading" hidden>
+        <section class="app-page analysis-exercises-page" id="page-analysis" data-page="analysis" aria-labelledby="analysis-heading" hidden>
           <div class="page-heading"><h1 id="analysis-heading">分析</h1></div>
-          <div class="planned-stage">
-            <div class="planned-character-slot" aria-hidden="true"></div>
-            <div class="panel planned-panel"><p>実装予定</p></div>
+          <div class="panel analysis-exercises-panel">
+            <div id="analysis-exercise-view">
+              <h2>実施している種目</h2>
+              <p class="analysis-guide">種目を選ぶと、記録した日付を確認できます。</p>
+              <div id="analysis-exercise-list" class="analysis-link-list" aria-label="種目一覧"></div>
+              <p id="analysis-exercise-feedback" class="feedback" role="status" aria-live="polite">読み込み中…</p>
+              <button type="button" id="analysis-exercise-retry" class="secondary-action" hidden>もう一度読み込む</button>
+            </div>
+            <div id="analysis-date-view" hidden>
+              <button type="button" id="analysis-dates-back" class="secondary-action">‹ 種目一覧に戻る</button>
+              <h2 id="analysis-selected-exercise"></h2>
+              <p class="analysis-guide">実施日を選ぶと、その日の重量・回数・セットを編集できます。</p>
+              <div id="analysis-date-list" class="analysis-link-list" aria-label="実施日の一覧"></div>
+              <p id="analysis-date-feedback" class="feedback" role="status" aria-live="polite"></p>
+              <button type="button" id="analysis-date-retry" class="secondary-action" hidden>もう一度読み込む</button>
+            </div>
           </div>
         </section>
 
