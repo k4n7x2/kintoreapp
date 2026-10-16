@@ -249,30 +249,39 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   row.className = "exercise-set";
   const number = document.createElement("span");
   number.className = "set-number";
-  const last = document.createElement("span");
-  last.className = "set-previous";
-  last.textContent = "前回：—";
   const weightLabel = document.createElement("label");
-  weightLabel.textContent = "重量 kg";
+  weightLabel.className = "set-metric";
+  const weightTitle = document.createElement("span");
+  weightTitle.className = "set-metric-title";
+  weightTitle.textContent = "重量（kg）";
+  const previousWeight = document.createElement("span");
+  previousWeight.className = "set-prev-weight";
+  previousWeight.textContent = "前回：—";
   const weight = document.createElement("input");
   weight.type = "number"; weight.min = "0"; weight.max = "2000"; weight.step = "0.5";
   weight.inputMode = "decimal";
   weight.className = "set-weight";
   weight.value = String(set.weight_kg ?? 0);
-  weightLabel.appendChild(weight);
+  weightLabel.append(weightTitle, previousWeight, weight);
   const repsLabel = document.createElement("label");
-  repsLabel.textContent = "回数";
+  repsLabel.className = "set-metric";
+  const repsTitle = document.createElement("span");
+  repsTitle.className = "set-metric-title";
+  repsTitle.textContent = "回数";
+  const previousReps = document.createElement("span");
+  previousReps.className = "set-prev-reps";
+  previousReps.textContent = "前回：—";
   const reps = document.createElement("input");
   reps.type = "number"; reps.min = "0"; reps.max = "1000"; reps.step = "1";
   reps.inputMode = "numeric";
   reps.className = "set-reps";
   reps.value = String(set.reps ?? 10);
-  repsLabel.appendChild(reps);
+  repsLabel.append(repsTitle, previousReps, reps);
   const remove = document.createElement("button");
   remove.type = "button"; remove.className = "secondary-action";
   remove.textContent = "×"; remove.setAttribute("aria-label", "このセットを削除");
   remove.addEventListener("click", () => { row.remove(); renumberSets(container); });
-  row.append(number, last, weightLabel, repsLabel, remove);
+  row.append(number, weightLabel, repsLabel, remove);
   container.appendChild(row);
   renumberSets(container);
   return row;
@@ -648,8 +657,10 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
       : "前回の記録なし";
     rows.querySelectorAll(".exercise-set").forEach((row, i) => {
       const set = previous.find(p => Number(p.set_number) === i + 1);
-      row.querySelector(".set-previous").textContent = set
-        ? "前回：" + formatPrevious(set) : "前回：—";
+      row.querySelector(".set-prev-weight").textContent = set
+        ? "前回：" + Number(set.weight_kg).toString() + "kg" : "前回：—";
+      row.querySelector(".set-prev-reps").textContent = set
+        ? "前回：" + set.reps + "回" : "前回：—";
     });
     recent.disabled = !dbReady || !previous.length;
   };
