@@ -1688,3 +1688,79 @@ async function initialize() {
 }
 initialize();
 
+/* Trial-only event player: independent of the canonical story and D1 persistence. */
+const storyDemoLines = [
+  "あ、こんにちは。ちゃんと見えてる？",
+  "今日はセリフ送りのテストなんだって。",
+  "画面をタップすると、こんなふうに会話が進むよ。",
+  "立ち絵の大きさも、いつものホームと比べてみてね。",
+  "これで最後だよ。もう一度タップすると一覧に戻るね。"
+];
+const storyPlayer = byId("story-test-player");
+const storyOpen = byId("story-test-open");
+const storyNext = byId("story-test-next");
+const storyClose = byId("story-test-close");
+let storyIndex = 0;
+function renderStoryDemo() {
+  byId("story-test-line").textContent = storyDemoLines[storyIndex];
+  byId("story-test-progress").textContent = (storyIndex + 1) + " / " + storyDemoLines.length;
+}
+function closeStoryDemo(fromPopstate = false) {
+  if (storyPlayer.hidden) return;
+  storyPlayer.hidden = true;
+  document.body.classList.remove("is-story-test");
+  byId("app-screen").inert = false;
+  byId("app-header").inert = false;
+  if (authorized && activePage === "events") storyOpen.focus();
+  if (!fromPopstate && location.hash === "#events-test") history.back();
+}
+storyOpen.addEventListener("click", () => {
+  if (!authorized || activePage !== "events" || !storyPlayer.hidden) return;
+  const portrait = homePortraits.training[0];
+  const portraitBox = byId("story-test-portrait");
+  const portraitImage = byId("story-test-portrait-image");
+  portraitBox.style.aspectRatio = portrait.width + " / " + portrait.height;
+  for (const size of ["base", "narrow", "short"]) {
+    const layout = portrait.layout[size];
+    portraitBox.style.setProperty("--story-scale-" + size, String(layout.scale));
+    portraitBox.style.setProperty("--story-origin-" + size, layout.origin);
+    portraitBox.style.setProperty("--story-bottom-" + size, layout.bottom);
+  }
+  portraitImage.width = portrait.width;
+  portraitImage.height = portrait.height;
+  portraitImage.src = portrait.src;
+  byId("story-test-backdrop").style.backgroundImage =
+    'url("/assets/backgrounds/gym-' + sceneTimeSlot(new Date().getHours()) + '.webp")';
+  storyIndex = 0;
+  renderStoryDemo();
+  storyPlayer.hidden = false;
+  document.body.classList.add("is-story-test");
+  byId("app-screen").inert = true;
+  byId("app-header").inert = true;
+  history.pushState({ screen: "events", storyTest: true }, "", "#events-test");
+  storyNext.focus();
+});
+storyNext.addEventListener("click", () => {
+  if (storyPlayer.hidden) return;
+  if (++storyIndex >= storyDemoLines.length) closeStoryDemo();
+  else renderStoryDemo();
+});
+storyClose.addEventListener("click", () => closeStoryDemo());
+window.addEventListener("popstate", () => {
+  if (!storyPlayer.hidden) closeStoryDemo(true);
+});
+document.addEventListener("keydown", (event) => {
+  if (storyPlayer.hidden) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeStoryDemo();
+  } else if (event.key === "Tab") {
+    if (event.shiftKey && document.activeElement === storyNext) {
+      event.preventDefault();
+      storyClose.focus();
+    } else if (!event.shiftKey && document.activeElement === storyClose) {
+      event.preventDefault();
+      storyNext.focus();
+    }
+  }
+});

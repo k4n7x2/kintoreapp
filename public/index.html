@@ -6,8 +6,9 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261016-compact-sets-v2">
-  <script type="module" src="/app.js?v=20261016-compact-sets-v2"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261016-story-test-v1">
+  <link rel="stylesheet" href="/story-test.css?v=1">
+  <script type="module" src="/app.js?v=20261016-story-test-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -252,9 +253,11 @@
 
         <section class="app-page" id="page-events" data-page="events" aria-labelledby="events-heading" hidden>
           <div class="page-heading"><h1 id="events-heading">イベント</h1></div>
-          <div class="planned-stage">
-            <div class="planned-character-slot" aria-hidden="true"></div>
-            <div class="panel planned-panel"><p>実装予定</p></div>
+          <div class="panel" id="story-test-entry">
+            <p class="section-caption">STORY TEST</p>
+            <h2>テスト</h2>
+            <p>既存の栞の立ち絵と背景で、セリフ送りを確認します。</p>
+            <button id="story-test-open" type="button">テストを始める <span aria-hidden="true">›</span></button>
           </div>
         </section>
 
@@ -313,6 +316,35 @@
         </section>
       </div>
     </main>
+    <!-- 試作専用ノベル画面。採用ストーリーや既読記録には接続しない。 -->
+    <section id="story-test-player" role="dialog" aria-modal="true" aria-labelledby="story-test-title" hidden>
+      <div class="story-test-frame">
+        <div id="story-test-backdrop" class="story-test-backdrop" aria-hidden="true"></div>
+        <div class="story-test-art-stage" aria-hidden="true">
+          <div class="story-test-character-scene">
+            <div class="story-test-character-layer">
+              <div id="story-test-portrait" class="story-test-portrait">
+                <img id="story-test-portrait-image" src="/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp"
+                  width="800" height="1067" alt="" draggable="false">
+              </div>
+            </div>
+          </div>
+        </div>
+        <button id="story-test-next" type="button" aria-label="次のセリフへ"></button>
+        <div class="story-test-topbar">
+          <button id="story-test-close" type="button" aria-label="イベント一覧へ戻る">‹ 戻る</button>
+          <h2 id="story-test-title">テスト</h2>
+        </div>
+        <div class="story-test-dialogue">
+          <div class="story-test-dialogue-header">
+            <strong>朝倉 栞</strong>
+            <span id="story-test-progress" aria-hidden="true"></span>
+          </div>
+          <p id="story-test-line" aria-live="polite" aria-atomic="true"></p>
+          <span class="story-test-continue" aria-hidden="true">タップで次へ　⌄</span>
+        </div>
+      </div>
+    </section>
     <section id="dev-settings-panel" class="dev-settings-panel" aria-labelledby="development-heading" hidden>
       <div class="dev-panel-heading">
         <h2 id="development-heading">開発設定</h2>

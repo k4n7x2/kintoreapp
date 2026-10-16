@@ -1,0 +1,97 @@
+/* Events screen demo and standalone visual-novel test viewport. */
+#page-events #story-test-entry { margin-top: 17px; padding: 20px; background: var(--surface); }
+#story-test-entry h2 { margin: 8px 0 6px; font-size: 20px; }
+#story-test-entry > p:not(.section-caption) { font-size: 13px; color: var(--muted); line-height: 1.8; margin: 0 0 19px; }
+#story-test-open {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; min-height: 48px; padding: 10px 17px;
+  border: 0; border-radius: 12px; background: var(--accent); color: var(--on-accent);
+  font-weight: 700; cursor: pointer;
+}
+#story-test-open span { font-size: 24px; line-height: 1; }
+#story-test-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+body.is-story-test { height: 100dvh; overflow: hidden; overscroll-behavior: none; }
+#story-test-player[hidden] { display: none; }
+#story-test-player { position: fixed; inset: 0; z-index: 140; background: var(--bg); color: #fff; }
+.story-test-frame {
+  position: relative; width: min(100%, 640px); height: 100%; margin-inline: auto;
+  isolation: isolate; overflow: hidden;
+}
+.story-test-backdrop {
+  position: absolute; inset: 0; z-index: 0; background-color: var(--deep);
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+.story-test-backdrop::after { content: ""; position: absolute; inset: 0; background: rgba(25,21,35,.22); }
+/* Match the home portrait's container geometry. Home-specific image scale/origin/bottom
+   are supplied by the existing portrait layout definition in app.js. */
+.story-test-art-stage {
+  position: absolute; z-index: 1;
+  top: calc(var(--topbar-h) + env(safe-area-inset-top) + 26px);
+  left: 20px; right: 20px; bottom: 0; pointer-events: none;
+}
+.story-test-character-scene {
+  position: absolute; top: -9px; right: -18px;
+  width: calc(100% + 18px); height: calc(100% + 9px);
+}
+.story-test-character-layer { position: absolute; top: 0; right: 0; width: 94%; height: 100%; }
+.story-test-portrait {
+  position: absolute; right: -10px; bottom: var(--story-bottom-base, 0px);
+  width: 100%; height: auto; max-height: 100%; aspect-ratio: 800 / 1067;
+  --story-scale: var(--story-scale-base, 1.14);
+  --story-origin: var(--story-origin-base, right bottom);
+  transform: scale(var(--story-scale)); transform-origin: var(--story-origin);
+}
+.story-test-portrait img {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  object-fit: contain; object-position: right bottom; user-select: none; -webkit-user-drag: none;
+}
+#story-test-next {
+  position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; padding: 0;
+  border: 0; background: transparent; cursor: pointer; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#story-test-next:focus:not(:focus-visible) { outline: none; }
+#story-test-next:focus-visible { outline: 2px solid var(--accent); outline-offset: -6px; }
+.story-test-topbar {
+  position: absolute; z-index: 5; top: calc(env(safe-area-inset-top) + 10px);
+  left: 12px; right: 12px; display: flex; align-items: center; gap: 12px; pointer-events: none;
+}
+.story-test-topbar h2 { margin: 0; font-size: 13px; font-weight: 700; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+#story-test-close {
+  pointer-events: auto; min-height: 44px; padding: 8px 15px;
+  border: 1px solid rgba(255,255,255,.35); border-radius: 11px;
+  background: rgba(28,25,42,.77); color: #fff; font-size: 14px;
+  font-weight: 700; cursor: pointer;
+}
+#story-test-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.story-test-dialogue {
+  position: absolute; z-index: 3; left: 12px; right: 12px;
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
+  min-height: clamp(155px, 25svh, 212px); padding: 17px 19px 15px;
+  border: 1px solid rgba(224,207,240,.48); border-radius: 16px;
+  background: rgba(29,25,43,.90); box-shadow: 0 8px 30px rgba(0,0,0,.22);
+  -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); pointer-events: none;
+}
+.story-test-dialogue-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.story-test-dialogue-header strong { color: #e5cffb; font-size: 14px; }
+#story-test-progress { color: #cec4d7; font-size: 11px; font-variant-numeric: tabular-nums; }
+#story-test-line { margin: 12px 0 26px; font-size: clamp(15px,4vw,17px); line-height: 1.85; overflow-wrap: anywhere; }
+.story-test-continue { position: absolute; right: 18px; bottom: 12px; font-size: 11px; color: #e2d5ee; }
+@media (max-width: 380px) {
+  .story-test-art-stage { left: 14px; right: 14px; }
+  .story-test-portrait {
+    bottom: var(--story-bottom-narrow, var(--story-bottom-base,0px));
+    --story-scale: var(--story-scale-narrow,1.159);
+    --story-origin: var(--story-origin-narrow,right bottom);
+  }
+  .story-test-dialogue { left: 9px; right: 9px; padding-inline: 15px; }
+}
+@media (max-height: 640px) {
+  .story-test-portrait {
+    bottom: var(--story-bottom-short, var(--story-bottom-base,0px));
+    --story-scale: var(--story-scale-short,1.064);
+    --story-origin: var(--story-origin-short,right bottom);
+  }
+  .story-test-dialogue { min-height: 136px; padding-top: 12px; }
+  #story-test-line { margin-top: 7px; margin-bottom: 19px; }
+}
