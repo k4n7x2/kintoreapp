@@ -27,8 +27,9 @@ def check_registry():
         if not isinstance(registry,dict):return ['registry root must be an object']
         legacy=registry.get('legacy')
         portraits=registry.get('portraits')
-        if not isinstance(legacy,dict) or not isinstance(portraits,list):
-            return ['registry must contain legacy object and portraits list']
+        excluded=registry.get('outOfScopeAssets',{})
+        if not isinstance(legacy,dict) or not isinstance(portraits,list) or not isinstance(excluded,dict):
+            return ['registry must contain legacy/outOfScopeAssets objects and portraits list']
         paths=run_git('ls-files','-z','--',ASSET_PREFIX).decode('utf-8').strip('\0').split('\0')
     except (ValueError,OSError,subprocess.CalledProcessError,UnicodeDecodeError) as exc:
         return [f'cannot enumerate tracked portrait assets: {exc}']
@@ -40,8 +41,8 @@ def check_registry():
         p=item['path']
         if p in standard:issues.append(f'duplicate registry portrait: {p}')
         standard[p]=item
-    declared=set(legacy)|set(standard)
-    if len(declared)!=len(legacy)+len(standard):issues.append('image in both legacy and new standard registry')
+    declared=set(legacy)|set(standard)|set(excluded)
+    if len(declared)!=len(legacy)+len(standard)+len(excluded):issues.append('asset must have exactly one registry category')
     for name in sorted(paths):
         if name.endswith('/.gitkeep'):continue
         if name.endswith('.anchors.json'):
@@ -50,14 +51,14 @@ def check_registry():
             continue
         if name not in declared:
             issues.append(f'unregistered or unexpected portrait asset: {name}')
-    for path,blob in legacy.items():
+    for path,blob in {**legacy,**excluded}.items():
         if not path.startswith(ASSET_PREFIX) or not isinstance(blob,str) or len(blob)!=40:
             issues.append(f'invalid legacy registry entry: {path}');continue
         if path not in paths:
-            issues.append(f'pinned legacy asset missing: {path}');continue
+            issues.append(f'pinned classified asset missing: {path}');continue
         try:
             actual=run_git('hash-object','--',path).decode('ascii').strip()
-            if actual!=blob:issues.append(f'legacy asset modified, add a NEW version instead: {path}')
+            if actual!=blob:issues.append(f'pinned asset modified, add a NEW version instead: {path}')
         except (OSError,subprocess.CalledProcessError,UnicodeDecodeError) as exc:
             issues.append(f'cannot hash legacy asset {path}: {exc}')
     for path,item in standard.items():
