@@ -80,6 +80,8 @@ def _validate_standard(s, allow_provisional):
     chin=_height(anchors.get('chinY'),'reference.chinY',h,errors)
     if top is not None and chin is not None and chin <= top:
         errors.append('reference head height must be positive')
+    if errors:
+        return None, errors
     return (w,h),errors
 
 
