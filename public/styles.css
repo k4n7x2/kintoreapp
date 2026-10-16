@@ -1644,3 +1644,45 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   #page-record .record-status-action,
   #page-record .exercise-overview { transition: none; }
 }
+
+/* Exercise-name workflow: candidate picker → one exercise editor → independently saved card. */
+#page-record #exercise-picker-view[hidden] { display: none !important; }
+#page-record #exercise-picker-view { padding: 8px 2px 12px; }
+#page-record #exercise-picker-view h2 { margin: 14px 0 18px; font-size: 19px; }
+#page-record #exercise-picker-view label { display: block; margin: 8px 0 6px; font-weight: 700; }
+#page-record #exercise-picker-input {
+  width: 100%; min-height: 48px; font-size: 16px;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--raised); color: var(--ink);
+}
+#page-record .exercise-picker-list {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px; margin: 18px 0 15px;
+  max-height: min(44dvh, 330px); overflow-y: auto;
+  overscroll-behavior-y: contain; padding: 1px;
+}
+#page-record .exercise-choice {
+  min-height: 46px; width: 100%; padding: 10px 8px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--raised); color: var(--ink);
+  font: inherit; font-size: 12px; text-align: left; cursor: pointer;
+  overflow-wrap: anywhere;
+}
+#page-record .exercise-choice:focus-visible,
+#page-record #exercise-picker-input:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+#page-record #exercise-picker-confirm,
+#page-record #record-editor-view #save-workout {
+  min-height: 48px; width: 100%;
+}
+#page-record #exercise-picker-feedback { margin-top: 10px; }
+#page-record #record-overview-feedback:empty { display: none; }
+#page-record #record-editor-view .record-extra-fields { margin-top: 17px; }
+#page-record #record-editor-done { min-height: 44px; margin-top: 10px; }
+#page-record #record-editor-view .exercise-name[readonly] {
+  color: var(--ink); font-weight: 750; opacity: 1;
+}
+@media (max-width: 340px) {
+  #page-record .exercise-picker-list { grid-template-columns: 1fr; }
+}

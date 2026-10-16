@@ -119,6 +119,32 @@ function monthRange(value) {
 }
 
 
+// 種目IDは設けず、NFKC・全空白除去・英数字小文字化した種目名で照合する。
+// UIとAPIはともにこの表記へ統一し、スペース違い等による履歴分断を防ぐ。
+function normalizedExerciseName(value) {
+  if (typeof value !== "string") return "";
+  const name = value.normalize("NFKC").replace(/[\s\u3000]+/g, "").toLowerCase();
+  return name.length <= 60 ? name : "";
+}
+function normalizeExerciseLog(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body) ||
+      !validDate(body.performed_on)) return null;
+  const exercise_name = normalizedExerciseName(body.exercise_name);
+  const note = body.note ?? "";
+  const sets = body.sets;
+  if (!exercise_name || typeof note !== "string" || note.length > 300 ||
+      !Array.isArray(sets) || sets.length < 1 || sets.length > 12) return null;
+  const normalized = [];
+  for (const [index, set] of sets.entries()) {
+    const weight = set?.weight_kg, reps = set?.reps;
+    if (typeof weight !== "number" || !Number.isFinite(weight) ||
+        weight < 0 || weight > 2000 || !Number.isInteger(reps) ||
+        reps < 0 || reps > 1000) return null;
+    normalized.push({ exercise_name, set_number: index + 1, weight_kg: weight, reps });
+  }
+  return { performed_on: body.performed_on, exercise_name, note: note.trim(), sets: normalized };
+}
+
 function normalizeWorkout(body) {
   if (!body || typeof body !== "object" || Array.isArray(body) || !validDate(body.performed_on)) return null;
   const note = body.note ?? "";
@@ -211,7 +237,8 @@ export default {
       }
 
       if (url.pathname === "/api/calendar" || url.pathname.startsWith("/api/calendar/") ||
-          url.pathname === "/api/workouts" || url.pathname.startsWith("/api/workouts/")) {
+          url.pathname === "/api/workouts" || url.pathname.startsWith("/api/workouts/") ||
+          url.pathname === "/api/exercises" || url.pathname.startsWith("/api/exercises/")) {
         if (!env.DB) return respond({ error: "database_not_configured" }, 503);
         if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && !sameOriginJSON(request, url)) {
           return respond({ error: "invalid_origin_or_type" }, 403);
@@ -247,11 +274,64 @@ export default {
             return respond({ on_date: dayMatch[1], planned, attended });
           }
 
+          // 既存記録から種目候補を取得。固定候補と合わせてUIで選択する。
+          if (url.pathname === "/api/exercises" && method === "GET") {
+            const rows = await env.DB.prepare(
+              "SELECT DISTINCT exercise_name FROM workout_sets ORDER BY exercise_name COLLATE NOCASE LIMIT 300"
+            ).all();
+            const names = [...new Set((rows.results ?? []).map(row =>
+              normalizedExerciseName(row.exercise_name)).filter(Boolean))];
+            return respond({ exercises: names });
+          }
+
+          // 一覧から開いた種目ページは1種目単位で保存する。既存の単一種目セッションが
+          // あれば上書きし、複数種目を持つ旧セッションには触れない。
+          if (url.pathname === "/api/exercises/log" && method === "PUT") {
+            const parsed = await readJSON(request);
+            if (parsed.error) return respond({ error: parsed.error }, parsed.status);
+            const body = normalizeExerciseLog(parsed.value);
+            if (!body) return respond({ error: "invalid_exercise_log" }, 400);
+            const existing = await env.DB.prepare(
+              "SELECT s.id FROM workout_sessions s WHERE s.performed_on = ? " +
+              "AND EXISTS (SELECT 1 FROM workout_sets ws WHERE ws.session_id = s.id AND ws.exercise_name = ?) " +
+              "AND NOT EXISTS (SELECT 1 FROM workout_sets other WHERE other.session_id = s.id AND other.exercise_name <> ?) " +
+              "ORDER BY s.updated_at DESC, s.created_at DESC, s.id DESC LIMIT 1"
+            ).bind(body.performed_on, body.exercise_name, body.exercise_name).first();
+            const id = existing?.id ?? crypto.randomUUID();
+            if (existing) {
+              await env.DB.batch([
+                env.DB.prepare("UPDATE workout_sessions SET note=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+                  .bind(body.note, id),
+                env.DB.prepare("DELETE FROM workout_sets WHERE session_id=?").bind(id),
+                ...body.sets.map(set => insertSet(env.DB, id, set))
+              ]);
+            } else {
+              await env.DB.batch([
+                env.DB.prepare("INSERT INTO workout_sessions(id, performed_on, note) VALUES(?, ?, ?)")
+                  .bind(id, body.performed_on, body.note),
+                ...body.sets.map(set => insertSet(env.DB, id, set))
+              ]);
+            }
+            return respond({ id, performed_on: body.performed_on, exercise_name: body.exercise_name,
+              sets: body.sets.length, updated: !!existing });
+          }
+
+          if (url.pathname === "/api/exercises/history" && method === "GET") {
+            const name = normalizedExerciseName(url.searchParams.get("name"));
+            if (!name) return respond({ error: "invalid_exercise" }, 400);
+            const history = await env.DB.prepare(
+              "SELECT s.performed_on, ws.set_number, ws.weight_kg, ws.reps " +
+              "FROM workout_sets ws JOIN workout_sessions s ON s.id=ws.session_id " +
+              "WHERE ws.exercise_name=? ORDER BY s.performed_on DESC, s.created_at DESC, ws.set_number ASC, ws.id ASC LIMIT 1200"
+            ).bind(name).all();
+            return respond({ exercise_name: name, sets: history.results ?? [] });
+          }
+
           if (url.pathname === "/api/workouts" && method === "GET") {
             const range = monthRange(url.searchParams.get("month"));
             if (!range) return respond({ error: "invalid_month" }, 400);
             const result = await env.DB.prepare(
-              "SELECT id, performed_on, note, created_at FROM workout_sessions WHERE performed_on >= ? AND performed_on < ? ORDER BY performed_on DESC, created_at DESC LIMIT 200"
+              "SELECT id, performed_on, note, created_at FROM workout_sessions WHERE performed_on >= ? AND performed_on < ? ORDER BY performed_on DESC, updated_at DESC, created_at DESC, id DESC LIMIT 200"
             ).bind(...range).all();
             const workouts = (result.results ?? []).map(record => ({ ...record, sets: [] }));
             if (workouts.length) {

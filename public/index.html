@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261016-record-cards-roomwear-r4">
-  <script type="module" src="/app.js?v=20261016-record-cards-roomwear-r4"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261016-exercise-log-r1">
+  <script type="module" src="/app.js?v=20261016-exercise-log-r1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -126,15 +126,16 @@
                   <div id="exercise-list" class="exercise-list" aria-label="この日のトレーニング種目"></div>
                   <p id="exercise-empty" class="exercise-empty">この日の種目はまだありません。</p>
                   <button type="button" class="record-add-exercise" id="add-exercise" disabled>＋ 種目を追加</button>
-                  <div class="record-extra-fields">
-                    <details id="record-note-details" class="record-note-details">
-                      <summary>メモ（任意）</summary>
-                      <label for="workout-note" class="visually-hidden">メモ（任意）</label>
-                      <textarea id="workout-note" name="note" maxlength="300" rows="2" placeholder="今日のフォームや感想をメモ" disabled></textarea>
-                    </details>
-                    <button id="save-workout" type="submit" disabled>記録を保存</button>
-                    <p id="save-feedback" class="feedback" role="status" aria-live="polite"></p>
-                  </div>
+                  <p id="record-overview-feedback" class="feedback" role="status" aria-live="polite"></p>
+                </div>
+                <div id="exercise-picker-view" class="record-editor-view" hidden>
+                  <button type="button" id="exercise-picker-back" class="secondary-action">‹ 一覧に戻る</button>
+                  <h2>種目を選択</h2>
+                  <label for="exercise-picker-input">種目名</label>
+                  <input id="exercise-picker-input" type="text" maxlength="60" list="exercise-suggestions" autocomplete="off" placeholder="種目を入力・選択">
+                  <div id="exercise-picker-list" class="exercise-picker-list" aria-label="種目の候補"></div>
+                  <button type="button" id="exercise-picker-confirm" class="primary-action">この種目を開く</button>
+                  <p id="exercise-picker-feedback" class="feedback" role="status"></p>
                 </div>
                 <div id="record-editor-view" class="record-editor-view" hidden>
                   <div class="record-editor-navigation">
@@ -142,7 +143,16 @@
                     <h2 id="record-editor-title">種目を編集</h2>
                   </div>
                   <div id="record-editor-host"></div>
-                  <button type="button" id="record-editor-done" class="primary-action">入力を終えて一覧に戻る</button>
+                  <div class="record-extra-fields">
+                    <details id="record-note-details" class="record-note-details">
+                      <summary>この種目のメモ（任意）</summary>
+                      <label for="workout-note" class="visually-hidden">この種目のメモ</label>
+                      <textarea id="workout-note" name="note" maxlength="300" rows="2" placeholder="フォームや感想をメモ" disabled></textarea>
+                    </details>
+                    <button id="save-workout" type="submit" disabled>この種目を保存</button>
+                    <p id="save-feedback" class="feedback" role="status" aria-live="polite"></p>
+                  </div>
+                  <button type="button" id="record-editor-done" class="secondary-action">保存せず一覧へ戻る</button>
                 </div>
               </form>
             </div>

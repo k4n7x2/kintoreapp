@@ -58,6 +58,13 @@ const recordPlanPanel = byId("record-plan-panel");
 const recordNoteDetails = byId("record-note-details");
 const recordWorkoutPanel = byId("record-workout-panel");
 const recordHistoryView = byId("record-history-view");
+const exercisePicker = byId("exercise-picker-view");
+const pickerInput = byId("exercise-picker-input");
+const pickerList = byId("exercise-picker-list");
+const pickerFeedback = byId("exercise-picker-feedback");
+const overviewFeedback = byId("record-overview-feedback");
+const starterExercises = [...byId("exercise-suggestions").options].map(option => option.value);
+let knownExerciseNames = starterExercises;
 let activeExerciseCard = null;
 let recordBaseline = "";
 let pendingRecordDate = "";
@@ -82,16 +89,32 @@ dateLabel.textContent = new Intl.DateTimeFormat("ja-JP", {
 saveDate.value = todayISO();
 selectedDate = todayISO();
 
+function normalizeExerciseName(value) {
+  return typeof value === "string"
+    ? value.normalize("NFKC").replace(/[\s\u3000]+/g, "").toLowerCase()
+    : "";
+}
 function hydrateStoredRecordForDate(date) {
-  // 同じ日付に複数セッションがある場合は最新の1件を表示。他は履歴から編集できる。
-  const record = workouts.find(item => item.performed_on === date);
-  if (record) editWorkout(record);
-  else resetWorkoutForm(date);
+  resetWorkoutForm(date);
+  // 日別セッションを種目名で横断的に束ねる。日付の最新1件しか表示しない旧制約を撤廃。
+  const records = workouts.filter(item => item.performed_on === date);
+  const groups = new Map();
+  for (const record of records) {
+    for (const set of record.sets || []) {
+      const key = normalizeExerciseName(set.exercise_name);
+      if (!key || groups.has(key) && groups.get(key).sourceId !== record.id) continue;
+      if (!groups.has(key)) groups.set(key, { sourceId: record.id, note: record.note || "", sets: [] });
+      groups.get(key).sets.push(set);
+    }
+  }
+  for (const [name, group] of groups) addExercise(name, group.sets, group.note, true);
+  updateExerciseEmpty();
+  markRecordBaseline();
 }
 function selectRecordDate(date, { navigate = true } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < "2000-01-01" || date > "2100-12-31") return false;
   if (hasRecordChanges() &&
-      !confirm("未保存の変更を破棄して、日付を切り替えますか？")) return false;
+      !confirm("未保存の種目入力を破棄して、日付を切り替えますか？")) return false;
   closeExerciseEditor();
   setRecordHistoryVisible(false);
   const previousMonth = currentMonth();
@@ -190,6 +213,9 @@ function setReady(ready) {
   saveNote.disabled = !ready;
   saveButton.disabled = !ready;
   addExerciseButton.disabled = !ready;
+  for (const id of ["record-prev-day", "record-next-day", "record-history-open"]) {
+    byId(id).disabled = !ready;
+  }
   document.querySelectorAll("#exercise-list input, #exercise-list button, #record-editor-host input, #record-editor-host button").forEach(el => { el.disabled = !ready; });
   exerciseList.querySelectorAll(".exercise-card").forEach(card => {
     if (card.renderPrevious) card.renderPrevious();
@@ -259,23 +285,30 @@ function setRecordHistoryVisible(visible) {
 byId("record-history-open").addEventListener("click", () => setRecordHistoryVisible(true));
 byId("record-history-back").addEventListener("click", () => setRecordHistoryVisible(false));
 
-function recordDraftSnapshot() {
+
+function cardDraftSnapshot(card) {
   return JSON.stringify({
-    date: saveDate.value,
-    note: saveNote.value,
-    exercises: [...exerciseList.querySelectorAll(".exercise-card")].map(card => ({
-      name: card.nameInput.value,
-      sets: [...card.rows.querySelectorAll(".exercise-set")].map(row => [
-        row.querySelector(".set-weight").value, row.querySelector(".set-reps").value
-      ])
-    }))
+    name: normalizeExerciseName(card.nameInput.value),
+    note: card.noteValue || "",
+    sets: [...card.rows.querySelectorAll(".exercise-set")].map(row => [
+      row.querySelector(".set-weight").value, row.querySelector(".set-reps").value
+    ])
   });
 }
-function markRecordBaseline() { recordBaseline = recordDraftSnapshot(); }
-function hasRecordChanges() { return recordDraftSnapshot() !== recordBaseline; }
+function markRecordBaseline() {
+  exerciseList.querySelectorAll(".exercise-card").forEach(card => {
+    card.savedSnapshot = cardDraftSnapshot(card);
+  });
+}
+function hasRecordChanges() {
+  if (activeExerciseCard) activeExerciseCard.noteValue = saveNote.value;
+  return [...exerciseList.querySelectorAll(".exercise-card")].some(card =>
+    card.savedSnapshot !== cardDraftSnapshot(card));
+}
 function closeExerciseEditor({ focus = false } = {}) {
   if (!activeExerciseCard) return;
   const card = activeExerciseCard;
+  card.noteValue = saveNote.value;
   card.append(card.editorBody);
   card.editorBody.hidden = true;
   activeExerciseCard = null;
@@ -283,24 +316,86 @@ function closeExerciseEditor({ focus = false } = {}) {
   recordOverview.hidden = false;
   card.renderSummary();
   byId("record-scroll").scrollTop = 0;
-  if (focus) card.overviewButton.focus();
+  if (focus && card.isConnected) card.overviewButton.focus();
 }
 function openExerciseEditor(card) {
   if (!card || !dbReady) return;
-  if (activeExerciseCard) closeExerciseEditor();
+  if (activeExerciseCard && activeExerciseCard !== card) closeExerciseEditor();
   activeExerciseCard = card;
+  exercisePicker.hidden = true;
   recordOverview.hidden = true;
   recordEditor.hidden = false;
   card.editorBody.hidden = false;
   recordEditorHost.appendChild(card.editorBody);
-  byId("record-editor-title").textContent = card.nameInput.value.trim() || "新しい種目";
+  byId("record-editor-title").textContent = card.nameInput.value.trim() || "種目を編集";
+  saveNote.value = card.noteValue || "";
+  recordNoteDetails.open = !!saveNote.value;
+  saveFeedback.textContent = "";
   byId("record-scroll").scrollTop = 0;
   byId("record-editor-back").focus();
 }
 byId("record-editor-back").addEventListener("click", () => closeExerciseEditor({ focus: true }));
 byId("record-editor-done").addEventListener("click", () => closeExerciseEditor({ focus: true }));
 
-function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
+function showExercisePicker() {
+  if (!dbReady) return;
+  closeExerciseEditor();
+  recordOverview.hidden = true;
+  recordEditor.hidden = true;
+  exercisePicker.hidden = false;
+  pickerInput.value = "";
+  pickerFeedback.textContent = "";
+  renderExerciseChoices();
+  byId("record-scroll").scrollTop = 0;
+  pickerInput.focus();
+}
+function closeExercisePicker() {
+  exercisePicker.hidden = true;
+  recordOverview.hidden = false;
+  byId("record-scroll").scrollTop = 0;
+}
+function renderExerciseChoices() {
+  pickerList.replaceChildren();
+  const query = normalizeExerciseName(pickerInput.value);
+  for (const name of knownExerciseNames.filter(item => item.includes(query)).slice(0, 50)) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "exercise-choice";
+    button.textContent = name;
+    button.addEventListener("click", () => chooseExercise(name));
+    pickerList.appendChild(button);
+  }
+}
+async function loadExerciseNames() {
+  try {
+    const data = await fetchJSON("/api/exercises");
+    if (!authorized) return;
+    knownExerciseNames = [...new Set([...starterExercises, ...(data.exercises || [])]
+      .map(normalizeExerciseName).filter(Boolean))];
+    renderExerciseChoices();
+  } catch { /* 候補取得に失敗しても固定候補と手入力は利用可能 */ }
+}
+function chooseExercise(raw) {
+  if (!authorized || !dbReady) return;
+  const name = normalizeExerciseName(raw);
+  if (!name || name.length > 60) {
+    pickerFeedback.textContent = "種目名を60文字以内で入力してください。";
+    return;
+  }
+  exercisePicker.hidden = true;
+  const existing = [...exerciseList.querySelectorAll(".exercise-card")].find(card =>
+    normalizeExerciseName(card.nameInput.value) === name);
+  const card = existing || addExercise(name);
+  openExerciseEditor(card);
+}
+byId("exercise-picker-back").addEventListener("click", closeExercisePicker);
+byId("exercise-picker-confirm").addEventListener("click", () => chooseExercise(pickerInput.value));
+pickerInput.addEventListener("input", renderExerciseChoices);
+pickerInput.addEventListener("keydown", event => {
+  if (event.key === "Enter") { event.preventDefault(); chooseExercise(pickerInput.value); }
+});
+
+function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", saved = false) {
   // 一覧のカードと専用編集ビューを分ける。編集中の値は同じDOM上に維持する。
   const card = document.createElement("div");
   card.className = "exercise-card";
@@ -328,12 +423,17 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
   nameInput.setAttribute("list", "exercise-suggestions");
   nameInput.placeholder = "例：ラットプルダウン";
   nameInput.value = name;
+  nameInput.readOnly = true; // 種目名をキーにするため、記録済み名称は直接書き換えない。
   label.appendChild(nameInput);
   const remove = document.createElement("button");
   remove.type = "button"; remove.className = "secondary-action";
   remove.textContent = "種目を削除";
   remove.addEventListener("click", () => {
-    if (!confirm("この種目の入力を削除しますか？")) return;
+    if (saved || card.savedOnServer) {
+      feedback.textContent = "保存済みの種目は履歴から削除できます。";
+      return;
+    }
+    if (!confirm("この未保存の種目入力を破棄しますか？")) return;
     closeExerciseEditor();
     card.remove();
     updateExerciseEmpty();
@@ -346,6 +446,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
   card.nameInput = nameInput;
   card.editorBody = body;
   card.overviewButton = summary;
+  card.noteValue = note;
   const previousLabel = document.createElement("p");
   previousLabel.className = "exercise-previous-heading";
   previousLabel.textContent = "前回の記録を確認中…";
@@ -452,15 +553,21 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
   card.renderPrevious();
   card.querySelectorAll("input, button").forEach(el => { el.disabled = !dbReady; });
   if (name && dbReady) card.refreshPrevious();
+  if (saved) {
+    card.savedSnapshot = cardDraftSnapshot(card);
+    card.savedOnServer = true;
+  }
   updateExerciseEmpty();
   return card;
 }
 function resetWorkoutForm(date = todayISO()) {
   closeExerciseEditor();
+  exercisePicker.hidden = true;
+  recordOverview.hidden = false;
   editingWorkoutId = null;
   byId("record-form-title").textContent = date === todayISO() ? "今日のトレーニング" : "この日のトレーニング";
   cancelWorkoutEdit.hidden = true;
-  saveButton.textContent = "記録を保存";
+  saveButton.textContent = "この種目を保存";
   saveDate.value = date;
   selectedDate = date;
   saveNote.value = "";
@@ -476,37 +583,18 @@ function workoutSummary(record) {
   return record.note || "日付のみの記録";
 }
 function editWorkout(record) {
-  closeExerciseEditor();
-  setRecordHistoryVisible(false);
-  editingWorkoutId = record.id;
-  byId("record-form-title").textContent = "記録を編集";
-  cancelWorkoutEdit.hidden = false;
-  saveButton.textContent = "変更を保存";
-  saveDate.value = record.performed_on;
-  selectedDate = record.performed_on;
-  if (currentMonth() !== selectedDate.slice(0, 7)) {
-    shownYear = Number(selectedDate.slice(0, 4));
-    shownMonth = Number(selectedDate.slice(5, 7)) - 1;
-    loadWorkouts();
-  } else {
-    renderDayDetail();
-  }
-  saveNote.value = record.note || "";
-  recordNoteDetails.open = !!saveNote.value;
-  exerciseList.replaceChildren();
-  const groups = new Map();
-  for (const set of record.sets || []) {
-    if (!groups.has(set.exercise_name)) groups.set(set.exercise_name, []);
-    groups.get(set.exercise_name).push(set);
-  }
-  if (groups.size) for (const [name, sets] of groups) addExercise(name, sets);
-  updateExerciseEmpty();
-  if (dbReady) refreshPreviousReferences();
-  saveFeedback.textContent = "過去の記録を編集中です。";
-  setScreen("record");
-  markRecordBaseline();
-  byId("record-scroll").scrollTop = 0;
+  // 旧セッションを開いても1つの記録だけで日別一覧を上書きしない。
+  if (!selectRecordDate(record.performed_on)) return;
+  const selectedName = normalizeExerciseName(record.sets?.[0]?.exercise_name);
+  const openMatch = () => {
+    const card = [...exerciseList.querySelectorAll(".exercise-card")].find(entry =>
+      normalizeExerciseName(entry.nameInput.value) === selectedName);
+    if (card) openExerciseEditor(card);
+  };
+  if (recordsLoaded && currentMonth() === record.performed_on.slice(0, 7)) openMatch();
+  else pendingExerciseToOpen = selectedName;
 }
+let pendingExerciseToOpen = "";
 function renderHistory() {
   list.replaceChildren();
   if (!recordsLoaded) { list.textContent = "読み込み中…"; return; }
@@ -583,6 +671,13 @@ async function loadWorkouts() {
       hydrateStoredRecordForDate(date);
     }
     refreshPreviousReferences();
+    if (pendingExerciseToOpen && activePage === "record") {
+      const name = pendingExerciseToOpen;
+      pendingExerciseToOpen = "";
+      const card = [...exerciseList.querySelectorAll(".exercise-card")].find(entry =>
+        normalizeExerciseName(entry.nameInput.value) === name);
+      if (card) openExerciseEditor(card);
+    }
   } catch (error) {
     if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
     if (error.status === 401) {
@@ -609,21 +704,16 @@ async function removeWorkout(id) {
     await fetchJSON("/api/workouts/" + encodeURIComponent(id), {
       method: "DELETE", headers: { "Content-Type": "application/json" }
     });
-    if (editingWorkoutId === id) resetWorkoutForm();
+    pendingRecordDate = selectedDate;
     await loadWorkouts();
-    saveFeedback.textContent = "筋トレ記録を削除しました。";
+    overviewFeedback.textContent = "筋トレ記録を削除しました。";
   } catch {
     setReady(true);
     saveFeedback.textContent = "削除できませんでした。";
   }
 }
 
-addExerciseButton.addEventListener("click", () => {
-  if (!dbReady) return;
-  const card = addExercise();
-  openExerciseEditor(card);
-  card.nameInput.focus();
-});
+addExerciseButton.addEventListener("click", showExercisePicker);
 cancelWorkoutEdit.addEventListener("click", () => {
   if (hasRecordChanges() && !confirm("入力中の変更を破棄して、新しい記録を作りますか？")) return;
   resetWorkoutForm(saveDate.value);
@@ -650,80 +740,71 @@ for (const [id, delta] of [["record-prev-day", -1], ["record-next-day", 1]]) {
 }
 resetWorkoutForm();
 
-function collectSets() {
-  const result = [];
-  for (const card of exerciseList.querySelectorAll(".exercise-card")) {
-    const name = card.nameInput.value.trim();
-    const rows = [...card.rows.querySelectorAll(".exercise-set")];
-    if (!name) {
-      const untouched = rows.length === 1 &&
-        rows[0].querySelector(".set-weight").value === "0" &&
-        rows[0].querySelector(".set-reps").value === "10";
-      // 空のひな形だけなら、既存の「メモのみ記録」を妨げない。
-      if (!rows.length || untouched) continue;
-      openExerciseEditor(card);
-      card.nameInput.focus();
-      throw new Error("種目名を入力してください。");
+function collectExerciseSets(card) {
+  const rows = [...card.rows.querySelectorAll(".exercise-set")];
+  if (!rows.length || rows.length > 12) throw new Error("セットは1～12個にしてください。");
+  const sets = [];
+  for (const row of rows) {
+    const weightInput = row.querySelector(".set-weight");
+    const repsInput = row.querySelector(".set-reps");
+    const weight = Number(weightInput.value), reps = Number(repsInput.value);
+    if (!weightInput.value || !repsInput.value ||
+        !Number.isFinite(weight) || weight < 0 || weight > 2000 ||
+        !Number.isInteger(reps) || reps < 0 || reps > 1000 ||
+        !weightInput.validity.valid || !repsInput.validity.valid) {
+      (weightInput.value && weightInput.validity.valid ? repsInput : weightInput).focus();
+      throw new Error("重量・回数を確認してください。");
     }
-    if (name.length > 60) throw new Error("種目名は60文字以内です。");
-    if (!rows.length) { openExerciseEditor(card); throw new Error("セットを追加してください。"); }
-    for (let i = 0; i < rows.length; i++) {
-      const weightInput = rows[i].querySelector(".set-weight");
-      const repsInput = rows[i].querySelector(".set-reps");
-      const weight = Number(weightInput.value);
-      const reps = Number(repsInput.value);
-      if (!weightInput.value || !repsInput.value ||
-          !Number.isFinite(weight) || weight < 0 || weight > 2000 ||
-          !Number.isInteger(reps) || reps < 0 || reps > 1000 ||
-          !weightInput.validity.valid || !repsInput.validity.valid) {
-        openExerciseEditor(card);
-        (weightInput.value && weightInput.validity.valid ? repsInput : weightInput).focus();
-        throw new Error("重量・回数を確認してください。");
-      }
-      result.push({ exercise_name: name, set_number: i + 1, weight_kg: weight, reps });
-    }
+    sets.push({ weight_kg: weight, reps });
   }
-  if (result.length > 48) throw new Error("1件に保存できるのは48セットまでです。");
-  return result;
+  return sets;
 }
-byId("workout-form").addEventListener("submit", async (event) => {
+byId("workout-form").addEventListener("submit", async event => {
   event.preventDefault();
-  if (!authorized || !dbReady) return;
+  const card = activeExerciseCard;
+  if (!authorized || !dbReady || !card) return;
   let sets;
-  try {
-    sets = collectSets();
-    if (!sets.length && !saveNote.value.trim()) throw new Error("種目を追加するか、メモを入力してください。");
-  } catch (error) {
-    saveFeedback.textContent = error.message;
+  try { sets = collectExerciseSets(card); }
+  catch (error) { saveFeedback.textContent = error.message; return; }
+  const date = saveDate.value;
+  const name = normalizeExerciseName(card.nameInput.value);
+  if (!name || name.length > 60) {
+    saveFeedback.textContent = "種目名を確認してください。";
+    return;
+  }
+  card.noteValue = saveNote.value;
+  if (card.noteValue.length > 300) {
+    saveFeedback.textContent = "メモは300文字以内です。";
     return;
   }
   setReady(false);
-  saveFeedback.textContent = "保存中…";
-  const wasEditing = !!editingWorkoutId;
-  const savedDate = saveDate.value;
+  saveFeedback.textContent = "この種目を保存中…";
   try {
-    const saved = await fetchJSON(wasEditing ? "/api/workouts/" + encodeURIComponent(editingWorkoutId) : "/api/workouts", {
-      method: wasEditing ? "PUT" : "POST",
+    const result = await fetchJSON("/api/exercises/log", {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ performed_on: savedDate, note: saveNote.value, sets })
+      body: JSON.stringify({ performed_on: date, exercise_name: name,
+        sets, note: card.noteValue })
     });
-    shownYear = Number(savedDate.slice(0, 4));
-    shownMonth = Number(savedDate.slice(5, 7)) - 1;
-    selectedDate = savedDate;
+    if (!card.isConnected || !authorized) return;
+    card.nameInput.value = result.exercise_name;
+    card.savedSnapshot = cardDraftSnapshot(card);
+    card.savedOnServer = true;
     closeExerciseEditor();
-    resetWorkoutForm(savedDate);
-    pendingRecordDate = savedDate;
+    overviewFeedback.textContent = result.exercise_name + "を保存しました。";
+    pendingRecordDate = "";
+    // ほかの種目の入力DOMは維持し、月間データだけ更新。
     await loadWorkouts();
-    // 保存した記録を一覧として表示。既存の同日別セッションは履歴から選べる。
-    const savedRecord = workouts.find(item => item.id === saved.id);
-    if (savedRecord && activePage === "record" && editingWorkoutId !== saved.id) {
-      editWorkout(savedRecord);
-    }
-    saveFeedback.textContent = wasEditing ? "記録を更新しました。" : "クラウドに保存しました。";
+    loadExerciseNames();
     if (activePage === "record") showSideDialogue("record", "saved");
-  } catch {
+  } catch (error) {
+    if (error.status === 401) {
+      setAuthenticated(false);
+      loginFeedback.textContent = "ログイン期限が切れました。";
+      return;
+    }
     setReady(true);
-    saveFeedback.textContent = "保存できませんでした。日付・入力内容・接続状態を確認してください。";
+    saveFeedback.textContent = "保存できませんでした。接続状態を確認してください。";
   }
 });
 async function persistDaySwitches() {
@@ -1190,6 +1271,13 @@ function setScreen(screen, pushHistory = true) {
     if (screen !== previousPage) {
       byId("record-scroll").scrollTop = 0;
       showSideDialogue(screen);
+      if (screen === "record" && !recordsLoaded && !pendingRecordDate) {
+        pendingRecordDate = selectedDate;
+      }
+      if (screen === "record" && recordsLoaded && !hasRecordChanges() &&
+          !exerciseList.querySelector(".exercise-card")) {
+        hydrateStoredRecordForDate(selectedDate);
+      }
     }
   }
   document.querySelectorAll("[data-page]").forEach((page) => {
@@ -1246,6 +1334,7 @@ function setAuthenticated(next) {
   loginSuccess.hidden = !next;
   if (next) {
     if (!wasAuthorized) {
+      loadExerciseNames();
       sceneLocation = randomSceneLocation();
       sceneTime = null;
       currentOutfit = "training";
@@ -1287,6 +1376,7 @@ function setAuthenticated(next) {
     completeDates.clear();
     selectedDate = todayISO();
     pendingRecordDate = "";
+    knownExerciseNames = starterExercises;
     recordPlanPanel.hidden = true;
     recordPlanToggle.setAttribute("aria-expanded", "false");
     resetWorkoutForm();
