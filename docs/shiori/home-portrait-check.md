@@ -30,16 +30,16 @@ python -m unittest discover -s tests -v
   "reviewed": true,
   "samePoseAsReference": false,
   "anchors": {
-    "eyeCenter": [460, 328],
-    "headTopY": 22,
-    "chinY": 455
+    "eyeCenter": [449, 321],
+    "headTopY": 27,
+    "chinY": 449
   }
 }
 ```
 
 画像ファイル名には用途識別子 `-home-` を含める（例：`shiori-gim-home-normal-r1.webp`）。PR検査が通常ホーム立ち絵とSD絵・一枚絵を区別するための必須の命名規則。
 
-数値は**暫定例**であり、新しい画像を測らずコピーすることは禁止。立ち絵の姿勢が参照画像と完全に同じ場合はsamePoseAsReference: trueとしてleftShoulder、rightShoulderも記載する。
+数値は**共通基準を示す形式例**であり、個々の新しい画像を測らずコピーすることは禁止。画像内に実在する顔の座標を注釈した結果だけを登録する。立ち絵の姿勢が参照画像と完全に同じ場合はsamePoseAsReference: trueとしてleftShoulder、rightShoulderも記載する。
 
 4. Pillow を用意して検査する。
 
