@@ -6,7 +6,9 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": [
+      "/api/*"
+    ]
   },
   "d1_databases": [
     {
@@ -14,5 +16,14 @@
       "database_name": "kintore-db",
       "database_id": "08e556f8-8c88-47af-bac8-5c3ac4ed2903"
     }
-  ]
+  ],
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "kintore-db-preview",
+        "database_id": "c1a2118b-3544-4ee7-822a-9ec25160e9db"
+      }
+    ]
+  }
 }
