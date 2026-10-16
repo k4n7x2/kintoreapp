@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>朝倉栞 | Monogatari演出試作</title>
+  <link rel="stylesheet" href="./vendor/monogatari.css">
+  <link rel="stylesheet" href="./prototype.css?v=1">
+  <script defer src="./vendor/monogatari.js"></script>
+  <script defer src="./prototype.js?v=1"></script>
+</head>
+<body>
+  <!-- 標準メニュー・セーブ・ロード・PWA・履歴ビューをマウントしない。 -->
+  <div id="monogatari">
+    <visual-novel>
+      <loading-screen></loading-screen>
+      <game-screen><text-box></text-box></game-screen>
+    </visual-novel>
+  </div>
+  <div id="prototype-failure" role="alert" hidden>
+    演出エンジンを開始できませんでした。画面左上の「戻る」でイベント一覧に戻れます。
+  </div>
+</body>
+</html>

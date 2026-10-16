@@ -95,3 +95,25 @@ body.is-story-test { height: 100dvh; overflow: hidden; overscroll-behavior: none
   .story-test-dialogue { min-height: 136px; padding-top: 12px; }
   #story-test-line { margin-top: 7px; margin-bottom: 19px; }
 }
+
+/* Separate Monogatari trial, loaded only when opened. */
+#monogatari-test-entry { margin-top: 12px; padding: 20px; }
+#monogatari-test-entry h2 { margin: 8px 0 6px; font-size: 20px; }
+#monogatari-test-entry > p:not(.section-caption) { font-size: 13px; color: var(--muted); line-height: 1.8; margin: 0 0 19px; }
+#monogatari-test-open { display: flex; width: 100%; min-height: 48px; padding: 10px 17px;
+  align-items: center; justify-content: space-between; border: 0; border-radius: 12px;
+  background: var(--accent); color: var(--on-accent); font-weight: 700; cursor: pointer; }
+#monogatari-test-open span { font-size: 24px; line-height: 1; }
+#monogatari-test-open:focus-visible, #monogatari-test-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+#monogatari-test-shell[hidden] { display: none !important; }
+#monogatari-test-shell { position: fixed; inset: 0; z-index: 160;
+  background: #171420; color: #fff; overflow: hidden; }
+.monogatari-test-layout { width: min(100%,640px); height: 100%; margin: auto; position: relative; }
+.monogatari-test-toolbar { position: absolute; z-index: 3;
+  top: calc(env(safe-area-inset-top) + 8px); left: 12px; right: 12px;
+  display: flex; align-items: center; gap: 12px; pointer-events: none; }
+.monogatari-test-toolbar h2 { margin: 0; font-size: 13px; text-shadow: 0 1px 5px #000; }
+#monogatari-test-close { pointer-events: auto; min-height: 44px; border: 1px solid #ffffff61;
+  border-radius: 11px; padding: 8px 15px; font-size: 14px; font-weight: 700;
+  background: #211d32e6; color: #fff; cursor: pointer; }
+#monogatari-test-frame { display: block; width: 100%; height: 100%; border: 0; background: #171420; }

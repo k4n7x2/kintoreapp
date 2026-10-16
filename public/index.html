@@ -7,8 +7,8 @@
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
   <link rel="stylesheet" href="/styles.css?v=20261016-fixed-sd-threepages-v1">
-  <link rel="stylesheet" href="/story-test.css?v=1">
-  <script type="module" src="/app.js?v=20261016-set-unit-infield-v1"></script>
+  <link rel="stylesheet" href="/story-test.css?v=2">
+  <script type="module" src="/app.js?v=20261016-monogatari-prototype-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -275,6 +275,12 @@
             <p>既存の栞の立ち絵と背景で、セリフ送りを確認します。</p>
             <button id="story-test-open" type="button">テストを始める <span aria-hidden="true">›</span></button>
           </div>
+          <div class="panel monogatari-entry" id="monogatari-test-entry">
+            <p class="section-caption">ENGINE COMPARISON · MONOGATARI v2.8.0</p>
+            <h2>Monogatari試作</h2>
+            <p>立ち絵の移動・間・暗転・選択肢を、独立した演出エンジンで比較します。</p>
+            <button id="monogatari-test-open" type="button">Monogatari試作を始める <span aria-hidden="true">›</span></button>
+          </div>
         </section>
 
         <section class="app-page" id="page-gallery" data-page="gallery" aria-labelledby="gallery-heading" hidden>
@@ -359,6 +365,18 @@
           <p id="story-test-line" aria-live="polite" aria-atomic="true"></p>
           <span class="story-test-continue" aria-hidden="true">タップで次へ　⌄</span>
         </div>
+      </div>
+    </section>
+    <!-- Monogatari試作は独立iframeに置き、既存アプリのJS・CSSと分離。 -->
+    <section id="monogatari-test-shell" class="monogatari-test-shell" role="dialog"
+      aria-modal="true" aria-labelledby="monogatari-test-title" hidden>
+      <div class="monogatari-test-layout">
+        <div class="monogatari-test-toolbar">
+          <button id="monogatari-test-close" type="button" aria-label="イベント一覧へ戻る">‹ 戻る</button>
+          <h2 id="monogatari-test-title">Monogatari試作</h2>
+        </div>
+        <iframe id="monogatari-test-frame" title="朝倉栞 Monogatari演出試作"
+          src="about:blank" referrerpolicy="same-origin"></iframe>
       </div>
     </section>
     <section id="dev-settings-panel" class="dev-settings-panel" aria-labelledby="development-heading" hidden>

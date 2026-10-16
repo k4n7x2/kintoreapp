@@ -1,0 +1,65 @@
+/* Scoped to the standalone Monogatari iframe; never loaded by the app. */
+:root { --main-color: #211b32eb; --character-name-color: #e5cffb; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+  background: #171420; font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; }
+#monogatari, visual-novel, game-screen { display: block; width: 100%; height: 100%;
+  min-height: 100%; max-height: 100%; }
+visual-novel { overflow: hidden; isolation: isolate; }
+game-screen { background: #171420; }
+game-screen [data-content="visuals"], game-screen [data-ui="background"] {
+  position: absolute; inset: 0; width: 100%; height: 100%; }
+game-screen [data-ui="background"] { background-position: center; background-size: cover; }
+game-screen [data-content="visuals"]::after { content: ""; position: absolute; inset: 0;
+  background: rgba(23,18,32,.12); pointer-events: none; }
+/* Narrow moves + 4% zoom preserve portrait contours on portrait mobile. */
+game-screen img[data-character="s"] {
+  position: absolute; z-index: 2; width: min(90vw, 540px); height: auto;
+  max-width: none; max-height: none; margin: 0;
+  bottom: clamp(125px,19svh,185px); left: 50%; right: auto;
+  object-fit: contain; object-position: center bottom;
+  transform: translateX(-50%) scale(1); transform-origin: 50% 82%;
+  pointer-events: none; user-select: none;
+  transition: left .65s ease, transform .55s ease;
+}
+game-screen img[data-character="s"][data-position="left"] { left: 48%; }
+game-screen img[data-character="s"][data-position="right"] { left: 52%; }
+game-screen img[data-character="s"][data-pose="near"] { transform: translateX(-50%) scale(1.04); }
+game-screen img[data-character="s"][data-pose="far"] { transform: translateX(-50%) scale(.96); }
+game-screen img[data-character="s"][data-pose="tilt"] { transform: translateX(-50%) rotate(3deg); }
+game-screen text-box { display: grid; grid-template-columns: 1fr;
+  grid-template-areas: "header" "text"; grid-template-rows: auto 1fr;
+  position: absolute; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 12px);
+  width: auto; min-height: clamp(155px,25svh,212px); max-height: clamp(155px,25svh,212px);
+  padding: 13px 15px 10px; box-sizing: border-box;
+  border: 1px solid #e0cff07a; border-radius: 16px;
+  background: rgba(29,25,43,.93); color: #fff; box-shadow: 0 8px 30px #0005;
+  backdrop-filter: blur(9px); z-index: 10; overflow: hidden; font-size: 16px; line-height: 1.8;
+}
+game-screen text-box::after { display: none; }
+game-screen text-box [data-content="name"] { grid-area: header; padding: 0; margin: 0; }
+game-screen text-box [data-ui="who"] { font-size: 14px; font-weight: 700; padding: 0; }
+game-screen text-box [data-content="text"] { grid-area: text; overflow-y: auto; min-width: 0; }
+game-screen text-box [data-content="dialog"] { padding: 0; }
+game-screen text-box type-writer, game-screen text-box p { padding: 7px 0 0; margin: 0;
+  font-size: clamp(15px,4vw,17px); line-height: 1.85; overflow-wrap: anywhere; }
+game-screen choice-container { position: absolute; z-index: 30; width: min(92%,400px);
+  max-height: min(60svh,440px); left: 50%; top: 43%;
+  transform: translate(-50%,-50%); overflow-y: auto; }
+game-screen choice-container [data-content="wrapper"] { display: flex; flex-direction: column; }
+game-screen choice-container button { color: #fff; width: 100%; min-height: 48px;
+  padding: 10px 16px; margin: 6px 0; border: 1px solid #e0cff07a;
+  border-radius: 12px; background: #31243fee; font: 600 15px system-ui,sans-serif; }
+game-screen choice-container button:focus-visible { outline: 3px solid #dab9fc; outline-offset: 2px; }
+#prototype-failure:not([hidden]) { position: absolute; inset: 25% 18px auto; z-index: 100;
+  background: #291f39; color: #fff; padding: 22px; border-radius: 12px; }
+@media (max-width: 380px) {
+  game-screen text-box { left: 9px; right: 9px; padding-inline: 13px; }
+}
+@media (max-height: 640px) {
+  game-screen img[data-character="s"] { width: min(82vw,430px); bottom: 110px; }
+  game-screen text-box { min-height: 135px; max-height: 135px; padding-top: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

@@ -1919,3 +1919,47 @@ document.addEventListener("keydown", (event) => {
     }
   }
 });
+
+
+/* Monogatari comparison: lazy iframe only. No D1, app storage or new auth flow. */
+const monogatariTestShell = byId("monogatari-test-shell");
+const monogatariTestOpen = byId("monogatari-test-open");
+const monogatariTestClose = byId("monogatari-test-close");
+const monogatariTestFrame = byId("monogatari-test-frame");
+function closeMonogatariTest(fromPopstate = false) {
+  if (monogatariTestShell.hidden) return;
+  monogatariTestShell.hidden = true;
+  monogatariTestFrame.src = "about:blank";
+  document.body.classList.remove("is-story-test");
+  byId("app-screen").inert = false;
+  byId("app-header").inert = false;
+  if (authorized && activePage === "events") monogatariTestOpen.focus();
+  if (!fromPopstate && location.hash === "#events-monogatari") history.back();
+}
+monogatariTestOpen.addEventListener("click", () => {
+  if (!authorized || activePage !== "events" ||
+      !storyPlayer.hidden || !monogatariTestShell.hidden) return;
+  monogatariTestShell.hidden = false;
+  document.body.classList.add("is-story-test");
+  byId("app-screen").inert = true;
+  byId("app-header").inert = true;
+  history.pushState({ screen: "events", monogatariTest: true }, "", "#events-monogatari");
+  monogatariTestFrame.src = "/experiments/monogatari/index.html";
+  monogatariTestClose.focus();
+});
+monogatariTestClose.addEventListener("click", () => closeMonogatariTest());
+window.addEventListener("popstate", () => {
+  if (!monogatariTestShell.hidden) closeMonogatariTest(true);
+});
+window.addEventListener("message", (event) => {
+  if (monogatariTestShell.hidden || event.origin !== window.location.origin ||
+      event.source !== monogatariTestFrame.contentWindow) return;
+  if (event.data && event.data.type === "kintore-monogatari-finished-v1") {
+    closeMonogatariTest();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (monogatariTestShell.hidden || event.key !== "Escape") return;
+  event.preventDefault();
+  closeMonogatariTest();
+});
