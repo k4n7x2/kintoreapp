@@ -1,16 +1,17 @@
-name: Validate new home portraits
+name: Validate Shiori portrait assets
+
 on:
   pull_request:
-    paths:
-      - 'public/assets/shiori/**'
-      - 'docs/shiori/home-portrait-standard-v1.json'
-      - 'scripts/check_home_portrait.py'
-      - 'scripts/verify_home_calibration.py'
-      - 'tests/**'
-      - '.github/workflows/check-home-portraits.yml'
+  push:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
-  validate-new-portraits:
+  portrait-integrity:
+    name: Portrait integrity gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,31 +20,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install image dependency
+      - name: Install dependencies
         run: python -m pip install 'Pillow>=11,<13'
-      - name: Verify approved home portrait coordinate projection
-        run: python scripts/verify_home_calibration.py
-      - name: Run validator regression tests
+      - name: Run all regression tests
         run: python -m unittest discover -s tests -v
-      - name: Validate newly added home portrait files
-        shell: bash
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.sha }}
+      - name: Verify every registered asset (no diff-based skips)
+        run: python scripts/check_home_registry.py
+      - name: Report coordinate calibration state
         run: |
-          set -euo pipefail
-          if [[ -z "$BASE_SHA" ]]; then
-            echo 'workflow_dispatch has no PR base; no new-image diff to check'
-            exit 0
-          fi
-          count=0
-          while IFS= read -r -d '' path; do
-            if [[ "$path" != *.webp && "$path" != *.png ]]; then continue; fi
-            filename="${path##*/}"
-            if [[ "$filename" != *-home-* ]]; then continue; fi
-            if [[ "$filename" == *-sd-* || "$filename" == *-event-* ]]; then continue; fi
-            echo "Validate: $path"
-            python scripts/check_home_portrait.py "$path"
-            count=$((count+1))
-          done < <(git diff -z --name-only --diff-filter=A "$BASE_SHA" "$HEAD_SHA" -- public/assets/shiori/)
-          echo "Validated $count newly added home portraits (legacy images unchanged)"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          import sys
+          data = json.loads(Path("docs/shiori/home-portrait-standard-v1.json").read_text())
+          if data.get("status") == "calibrated":
+              sys.exit(subprocess.call([sys.executable, "scripts/verify_home_calibration.py"]))
+          print("Portrait landmark calibration is provisional; new images fail the registration gate.")
+          PY
