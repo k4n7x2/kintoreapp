@@ -2060,3 +2060,98 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
     height: 78px;
   }
 }
+
+/* Workout quick entry: compact one-tap previous values and contextual large steppers. */
+#page-record #record-number-adjust[hidden] { display: none !important; }
+#page-record .record-number-adjust {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  align-items: center;
+  gap: 5px;
+  min-height: 52px;
+  padding: 4px 5px;
+  margin: 0 0 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 7px 16px rgba(0,0,0,.12);
+}
+#page-record .record-adjust-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-inline: 4px;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+#page-record .record-number-adjust button {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1;
+  touch-action: manipulation;
+}
+#page-record .record-number-adjust button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+#page-record .record-number-adjust .record-adjust-close {
+  flex-basis: 32px;
+  width: 32px;
+  font-size: 18px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+#page-record #record-editor-view .exercise-set .set-metric .set-prev-copy {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  min-height: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--completed);
+  color: var(--accent-soft);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.3;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+#page-record #record-editor-view .exercise-set .set-metric .set-prev-copy:disabled {
+  background: transparent;
+  color: var(--muted);
+  opacity: .7;
+  cursor: default;
+}
+#page-record #record-editor-view .exercise-set .set-metric .set-prev-copy:focus-visible,
+#page-record .record-number-adjust button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (max-width: 360px) {
+  #page-record .record-number-adjust { gap: 2px; padding-inline: 2px; }
+  #page-record .record-adjust-label { font-size: 10px; }
+  #page-record .record-number-adjust button { flex-basis: 42px; width: 42px; }
+  #page-record .record-number-adjust .record-adjust-close { flex-basis: 28px; width: 28px; }
+  #page-record #record-editor-view .exercise-set .set-metric .set-prev-copy { font-size: 9px; }
+}
