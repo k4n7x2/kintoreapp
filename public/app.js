@@ -49,6 +49,18 @@ const dayPlanned = byId("day-planned");
 const dayAttended = byId("day-attended");
 const calendarError = byId("calendar-error");
 const exerciseEmpty = byId("exercise-empty");
+const recordOverview = byId("record-overview-view");
+const recordEditor = byId("record-editor-view");
+const recordEditorHost = byId("record-editor-host");
+const recordAttendance = byId("record-attendance");
+const recordPlanToggle = byId("record-plan-toggle");
+const recordPlanPanel = byId("record-plan-panel");
+const recordNoteDetails = byId("record-note-details");
+const recordWorkoutPanel = byId("record-workout-panel");
+const recordHistoryView = byId("record-history-view");
+let activeExerciseCard = null;
+let recordBaseline = "";
+let pendingRecordDate = "";
 let calendarSaving = false;
 let calendarStatusDate = "";
 let calendarStatusMessage = "";
@@ -70,18 +82,45 @@ dateLabel.textContent = new Intl.DateTimeFormat("ja-JP", {
 saveDate.value = todayISO();
 selectedDate = todayISO();
 
-function showDay(date) {
-  // カレンダーから選択した日付で記録画面へ直行。編集中のフォームは上書きしない。
-  if (editingWorkoutId || saveNote.value.trim() ||
-      [...exerciseList.querySelectorAll(".exercise-name")].some(input => input.value.trim())) {
-    if (!confirm("入力中の内容を破棄して、この日の記録画面へ移動しますか？")) return;
-  }
-  resetWorkoutForm(date);
-  selectedDate = date;
-  saveFeedback.textContent = "";
-  renderCalendar();
-  setScreen("record");
+function hydrateStoredRecordForDate(date) {
+  // 同じ日付に複数セッションがある場合は最新の1件を表示。他は履歴から編集できる。
+  const record = workouts.find(item => item.performed_on === date);
+  if (record) editWorkout(record);
+  else resetWorkoutForm(date);
 }
+function selectRecordDate(date, { navigate = true } = {}) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < "2000-01-01" || date > "2100-12-31") return false;
+  if (hasRecordChanges() &&
+      !confirm("未保存の変更を破棄して、日付を切り替えますか？")) return false;
+  closeExerciseEditor();
+  setRecordHistoryVisible(false);
+  const previousMonth = currentMonth();
+  shownYear = Number(date.slice(0, 4));
+  shownMonth = Number(date.slice(5, 7)) - 1;
+  pendingRecordDate = date;
+  resetWorkoutForm(date);
+  saveFeedback.textContent = "";
+  recordPlanPanel.hidden = true;
+  recordPlanToggle.setAttribute("aria-expanded", "false");
+  if (previousMonth !== currentMonth() || !recordsLoaded) {
+    ++recordsRequestId;
+    recordsLoaded = false;
+    calendarAvailable = false;
+    calendarDays.clear();
+    completeDates.clear();
+    workouts = [];
+    setReady(false);
+    renderCalendar();
+    if (authorized) loadWorkouts();
+  } else {
+    pendingRecordDate = "";
+    hydrateStoredRecordForDate(date);
+    renderCalendar();
+  }
+  if (navigate) setScreen("record");
+  return true;
+}
+function showDay(date) { selectRecordDate(date); }
 function renderOverview() {
   // 集計カードは撤去。取得状態のみスクリーンリーダーへ伝える。
   byId("month-count").textContent = recordsLoaded
@@ -135,6 +174,11 @@ function renderDayDetail() {
   dayAttended.checked = !!state?.attended;
   dayPlanned.disabled = !authorized || !calendarAvailable || calendarSaving;
   dayAttended.disabled = !authorized || !calendarAvailable || calendarSaving;
+  recordAttendance.disabled = dayAttended.disabled;
+  recordAttendance.textContent = dayAttended.checked ? "来館済み" : "来館していない";
+  recordAttendance.setAttribute("aria-pressed", String(dayAttended.checked));
+  recordPlanToggle.disabled = dayPlanned.disabled;
+  recordPlanToggle.textContent = dayPlanned.checked ? "予定あり・編集" : "予定を編集";
   calendarError.textContent = authorized && recordsLoaded && !calendarAvailable
     ? "予定・来館の保存にはD1の追加マイグレーション（0002）が必要です。"
     : calendarStatusDate === selectedDate ? calendarStatusMessage : "";
@@ -146,7 +190,7 @@ function setReady(ready) {
   saveNote.disabled = !ready;
   saveButton.disabled = !ready;
   addExerciseButton.disabled = !ready;
-  exerciseList.querySelectorAll("input, button").forEach(el => { el.disabled = !ready; });
+  document.querySelectorAll("#exercise-list input, #exercise-list button, #record-editor-host input, #record-editor-host button").forEach(el => { el.disabled = !ready; });
   exerciseList.querySelectorAll(".exercise-card").forEach(card => {
     if (card.renderPrevious) card.renderPrevious();
   });
@@ -199,17 +243,69 @@ function renumberSets(container) {
   container.querySelectorAll(".exercise-set").forEach((row, index) => {
     row.querySelector(".set-number").textContent = (index + 1) + "セット";
   });
-  const card = container.closest(".exercise-card");
+  const card = container.exerciseCard;
   if (card?.renderPrevious) card.renderPrevious();
   if (card?.renderSummary) card.renderSummary();
 }
+
+function setRecordHistoryVisible(visible) {
+  if (visible) closeExerciseEditor();
+  recordWorkoutPanel.hidden = visible;
+  recordHistoryView.hidden = !visible;
+  byId("record-scroll").scrollTop = 0;
+  if (visible) byId("record-history-back").focus();
+  else if (activePage === "record") byId("record-history-open").focus();
+}
+byId("record-history-open").addEventListener("click", () => setRecordHistoryVisible(true));
+byId("record-history-back").addEventListener("click", () => setRecordHistoryVisible(false));
+
+function recordDraftSnapshot() {
+  return JSON.stringify({
+    date: saveDate.value,
+    note: saveNote.value,
+    exercises: [...exerciseList.querySelectorAll(".exercise-card")].map(card => ({
+      name: card.nameInput.value,
+      sets: [...card.rows.querySelectorAll(".exercise-set")].map(row => [
+        row.querySelector(".set-weight").value, row.querySelector(".set-reps").value
+      ])
+    }))
+  });
+}
+function markRecordBaseline() { recordBaseline = recordDraftSnapshot(); }
+function hasRecordChanges() { return recordDraftSnapshot() !== recordBaseline; }
+function closeExerciseEditor({ focus = false } = {}) {
+  if (!activeExerciseCard) return;
+  const card = activeExerciseCard;
+  card.append(card.editorBody);
+  card.editorBody.hidden = true;
+  activeExerciseCard = null;
+  recordEditor.hidden = true;
+  recordOverview.hidden = false;
+  card.renderSummary();
+  byId("record-scroll").scrollTop = 0;
+  if (focus) card.overviewButton.focus();
+}
+function openExerciseEditor(card) {
+  if (!card || !dbReady) return;
+  if (activeExerciseCard) closeExerciseEditor();
+  activeExerciseCard = card;
+  recordOverview.hidden = true;
+  recordEditor.hidden = false;
+  card.editorBody.hidden = false;
+  recordEditorHost.appendChild(card.editorBody);
+  byId("record-editor-title").textContent = card.nameInput.value.trim() || "新しい種目";
+  byId("record-scroll").scrollTop = 0;
+  byId("record-editor-back").focus();
+}
+byId("record-editor-back").addEventListener("click", () => closeExerciseEditor({ focus: true }));
+byId("record-editor-done").addEventListener("click", () => closeExerciseEditor({ focus: true }));
+
 function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
-  // 通常時は一覧、編集中だけ展開する。SD栞の下部表示を維持する。
-  exerciseList.querySelectorAll(".exercise-card").forEach(card => { card.open = false; });
-  const card = document.createElement("details");
+  // 一覧のカードと専用編集ビューを分ける。編集中の値は同じDOM上に維持する。
+  const card = document.createElement("div");
   card.className = "exercise-card";
-  card.open = true;
-  const summary = document.createElement("summary");
+  const summary = document.createElement("button");
+  summary.type = "button";
   summary.className = "exercise-overview";
   const heading = document.createElement("strong");
   heading.className = "exercise-overview-name";
@@ -220,6 +316,8 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
   summary.append(heading, current, previousSummary);
   const body = document.createElement("div");
   body.className = "exercise-editor";
+  body.hidden = true;
+  card.nameInput = null;
   const head = document.createElement("div");
   head.className = "exercise-card-head";
   const label = document.createElement("label");
@@ -233,11 +331,21 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
   label.appendChild(nameInput);
   const remove = document.createElement("button");
   remove.type = "button"; remove.className = "secondary-action";
-  remove.textContent = "削除";
-  remove.addEventListener("click", () => { card.remove(); updateExerciseEmpty(); });
+  remove.textContent = "種目を削除";
+  remove.addEventListener("click", () => {
+    if (!confirm("この種目の入力を削除しますか？")) return;
+    closeExerciseEditor();
+    card.remove();
+    updateExerciseEmpty();
+  });
   head.append(label, remove);
   const rows = document.createElement("div");
   rows.className = "exercise-sets";
+  rows.exerciseCard = card;
+  card.rows = rows;
+  card.nameInput = nameInput;
+  card.editorBody = body;
+  card.overviewButton = summary;
   const previousLabel = document.createElement("p");
   previousLabel.className = "exercise-previous-heading";
   previousLabel.textContent = "前回の記録を確認中…";
@@ -264,14 +372,19 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
   let referenceKey = "";
   let lookupId = 0;
   card.renderSummary = () => {
-    heading.textContent = nameInput.value.trim() || "新しい種目";
+    const chosen = nameInput.value.trim();
+    heading.textContent = chosen || "新しい種目";
+    summary.setAttribute("aria-label", (chosen || "新しい種目") + "のセットを編集");
     const currentSets = [...rows.querySelectorAll(".exercise-set")];
-    current.textContent = currentSets.length
-      ? "今回 " + currentSets.map(row => {
-        const kg = row.querySelector(".set-weight").value;
-        const reps = row.querySelector(".set-reps").value;
-        return (kg || "—") + "kg×" + (reps || "—") + "回";
-      }).join(" / ") : "セットなし";
+    const values = currentSets.map(row => {
+      const kg = row.querySelector(".set-weight").value;
+      const reps = row.querySelector(".set-reps").value;
+      return (kg || "—") + "kg × " + (reps || "—") + "回";
+    });
+    const uniform = values.length && values.every(value => value === values[0]);
+    current.textContent = !values.length ? "セットなし" :
+      uniform ? values[0] + " × " + values.length + "セット" :
+      values.join(" / ");
   };
   card.renderPrevious = () => {
     previousSummary.textContent = previous.length
@@ -315,18 +428,21 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
     previous = [];
     card.renderSummary();
     card.renderPrevious();
+    byId("record-editor-title").textContent = nameInput.value.trim() || "新しい種目";
   });
   nameInput.addEventListener("change", () => card.refreshPrevious());
   rows.addEventListener("input", card.renderSummary);
   recent.addEventListener("click", () => {
     if (!previous.length || !dbReady) return;
-    if (rows.querySelector(".exercise-set") && !confirm("入力中のセットを前回の内容に置き換えますか？")) return;
+    if (rows.querySelector(".exercise-set") &&
+        !confirm("入力中のセットを前回の内容に置き換えますか？")) return;
     rows.replaceChildren();
     for (const set of previous) newSetRow(rows, set);
     card.renderPrevious();
     card.renderSummary();
     feedback.textContent = "前回のセットを反映しました。";
   });
+  summary.addEventListener("click", () => openExerciseEditor(card));
   actions.append(addSet, recent);
   body.append(head, previousLabel, rows, actions, feedback);
   card.append(summary, body);
@@ -334,28 +450,25 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
   for (const set of sets) newSetRow(rows, set);
   card.renderSummary();
   card.renderPrevious();
-  card.addEventListener("toggle", () => {
-    if (card.open) exerciseList.querySelectorAll(".exercise-card").forEach(other => {
-      if (other !== card) other.open = false;
-    });
-  });
   card.querySelectorAll("input, button").forEach(el => { el.disabled = !dbReady; });
-  // 同日・未来の記録を「前回」に混ぜず、選択日より前の最新実績だけ参照。
   if (name && dbReady) card.refreshPrevious();
   updateExerciseEmpty();
   return card;
 }
 function resetWorkoutForm(date = todayISO()) {
+  closeExerciseEditor();
   editingWorkoutId = null;
-  byId("record-form-title").textContent = "トレーニングを記録";
+  byId("record-form-title").textContent = date === todayISO() ? "今日のトレーニング" : "この日のトレーニング";
   cancelWorkoutEdit.hidden = true;
   saveButton.textContent = "記録を保存";
   saveDate.value = date;
   selectedDate = date;
   saveNote.value = "";
+  recordNoteDetails.open = false;
   exerciseList.replaceChildren();
   updateExerciseEmpty();
   renderDayDetail();
+  markRecordBaseline();
 }
 function workoutSummary(record) {
   const names = [...new Set((record.sets || []).map(x => x.exercise_name))];
@@ -363,6 +476,8 @@ function workoutSummary(record) {
   return record.note || "日付のみの記録";
 }
 function editWorkout(record) {
+  closeExerciseEditor();
+  setRecordHistoryVisible(false);
   editingWorkoutId = record.id;
   byId("record-form-title").textContent = "記録を編集";
   cancelWorkoutEdit.hidden = false;
@@ -377,6 +492,7 @@ function editWorkout(record) {
     renderDayDetail();
   }
   saveNote.value = record.note || "";
+  recordNoteDetails.open = !!saveNote.value;
   exerciseList.replaceChildren();
   const groups = new Map();
   for (const set of record.sets || []) {
@@ -388,6 +504,7 @@ function editWorkout(record) {
   if (dbReady) refreshPreviousReferences();
   saveFeedback.textContent = "過去の記録を編集中です。";
   setScreen("record");
+  markRecordBaseline();
   byId("record-scroll").scrollTop = 0;
 }
 function renderHistory() {
@@ -407,7 +524,10 @@ function renderHistory() {
     actions.className = "record-item-actions";
     const edit = document.createElement("button");
     edit.type = "button"; edit.className = "secondary-action"; edit.textContent = "編集";
-    edit.addEventListener("click", () => editWorkout(record));
+    edit.addEventListener("click", () => {
+      if (hasRecordChanges() && !confirm("入力中の変更を破棄して、この記録を編集しますか？")) return;
+      editWorkout(record);
+    });
     const del = document.createElement("button");
     del.type = "button"; del.className = "delete-record"; del.textContent = "削除";
     del.setAttribute("aria-label", record.performed_on + "の記録を削除");
@@ -457,6 +577,11 @@ async function loadWorkouts() {
     renderCalendar();
     renderHistory();
     setReady(true);
+    if (pendingRecordDate && pendingRecordDate.slice(0, 7) === month && activePage === "record") {
+      const date = pendingRecordDate;
+      pendingRecordDate = "";
+      hydrateStoredRecordForDate(date);
+    }
     refreshPreviousReferences();
   } catch (error) {
     if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
@@ -496,28 +621,52 @@ async function removeWorkout(id) {
 addExerciseButton.addEventListener("click", () => {
   if (!dbReady) return;
   const card = addExercise();
-  card.querySelector(".exercise-name").focus();
+  openExerciseEditor(card);
+  card.nameInput.focus();
 });
-cancelWorkoutEdit.addEventListener("click", () => { resetWorkoutForm(saveDate.value); saveFeedback.textContent = ""; });
+cancelWorkoutEdit.addEventListener("click", () => {
+  if (hasRecordChanges() && !confirm("入力中の変更を破棄して、新しい記録を作りますか？")) return;
+  resetWorkoutForm(saveDate.value);
+  saveFeedback.textContent = "";
+});
+recordAttendance.addEventListener("click", () => {
+  if (!authorized || !calendarAvailable || calendarSaving) return;
+  dayAttended.checked = !dayAttended.checked;
+  persistDaySwitches();
+});
+recordPlanToggle.addEventListener("click", () => {
+  if (!authorized || !calendarAvailable) return;
+  recordPlanPanel.hidden = !recordPlanPanel.hidden;
+  recordPlanToggle.setAttribute("aria-expanded", String(!recordPlanPanel.hidden));
+});
+for (const [id, delta] of [["record-prev-day", -1], ["record-next-day", 1]]) {
+  byId(id).addEventListener("click", () => {
+    const date = saveDate.value;
+    if (!date) return;
+    const [year, month, day] = date.split("-").map(Number);
+    const next = new Date(year, month - 1, day + delta);
+    selectRecordDate(localISO(next));
+  });
+}
 resetWorkoutForm();
 
 function collectSets() {
   const result = [];
   for (const card of exerciseList.querySelectorAll(".exercise-card")) {
-    const name = card.querySelector(".exercise-name").value.trim();
-    const rows = [...card.querySelectorAll(".exercise-set")];
+    const name = card.nameInput.value.trim();
+    const rows = [...card.rows.querySelectorAll(".exercise-set")];
     if (!name) {
       const untouched = rows.length === 1 &&
         rows[0].querySelector(".set-weight").value === "0" &&
         rows[0].querySelector(".set-reps").value === "10";
       // 空のひな形だけなら、既存の「メモのみ記録」を妨げない。
       if (!rows.length || untouched) continue;
-      card.open = true;
-      card.querySelector(".exercise-name").focus();
+      openExerciseEditor(card);
+      card.nameInput.focus();
       throw new Error("種目名を入力してください。");
     }
     if (name.length > 60) throw new Error("種目名は60文字以内です。");
-    if (!rows.length) { card.open = true; throw new Error("セットを追加してください。"); }
+    if (!rows.length) { openExerciseEditor(card); throw new Error("セットを追加してください。"); }
     for (let i = 0; i < rows.length; i++) {
       const weightInput = rows[i].querySelector(".set-weight");
       const repsInput = rows[i].querySelector(".set-reps");
@@ -527,7 +676,7 @@ function collectSets() {
           !Number.isFinite(weight) || weight < 0 || weight > 2000 ||
           !Number.isInteger(reps) || reps < 0 || reps > 1000 ||
           !weightInput.validity.valid || !repsInput.validity.valid) {
-        card.open = true;
+        openExerciseEditor(card);
         (weightInput.value && weightInput.validity.valid ? repsInput : weightInput).focus();
         throw new Error("重量・回数を確認してください。");
       }
@@ -553,7 +702,7 @@ byId("workout-form").addEventListener("submit", async (event) => {
   const wasEditing = !!editingWorkoutId;
   const savedDate = saveDate.value;
   try {
-    await fetchJSON(wasEditing ? "/api/workouts/" + encodeURIComponent(editingWorkoutId) : "/api/workouts", {
+    const saved = await fetchJSON(wasEditing ? "/api/workouts/" + encodeURIComponent(editingWorkoutId) : "/api/workouts", {
       method: wasEditing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ performed_on: savedDate, note: saveNote.value, sets })
@@ -561,8 +710,15 @@ byId("workout-form").addEventListener("submit", async (event) => {
     shownYear = Number(savedDate.slice(0, 4));
     shownMonth = Number(savedDate.slice(5, 7)) - 1;
     selectedDate = savedDate;
+    closeExerciseEditor();
     resetWorkoutForm(savedDate);
+    pendingRecordDate = savedDate;
     await loadWorkouts();
+    // 保存した記録を一覧として表示。既存の同日別セッションは履歴から選べる。
+    const savedRecord = workouts.find(item => item.id === saved.id);
+    if (savedRecord && activePage === "record" && editingWorkoutId !== saved.id) {
+      editWorkout(savedRecord);
+    }
     saveFeedback.textContent = wasEditing ? "記録を更新しました。" : "クラウドに保存しました。";
     if (activePage === "record") showSideDialogue("record", "saved");
   } catch {
@@ -606,27 +762,11 @@ async function persistDaySwitches() {
 }
 dayPlanned.addEventListener("change", persistDaySwitches);
 dayAttended.addEventListener("change", persistDaySwitches);
-// 記録の日付を直接変更した場合も予定・来館の表示先を追従させる。
+// Androidのネイティブ日付ピッカーにも同じ日別ナビゲーションを適用する。
 saveDate.addEventListener("change", () => {
-  if (!saveDate.value) return;
-  selectedDate = saveDate.value;
-  calendarStatusDate = "";
-  calendarStatusMessage = "";
-  if (currentMonth() !== selectedDate.slice(0, 7)) {
-    shownYear = Number(selectedDate.slice(0, 4));
-    shownMonth = Number(selectedDate.slice(5, 7)) - 1;
-    ++recordsRequestId;
-    recordsLoaded = false;
-    calendarAvailable = false;
-    calendarDays.clear();
-    completeDates.clear();
-    workouts = [];
-    renderCalendar();
-    if (authorized) loadWorkouts();
-  } else {
-    renderDayDetail();
-  }
-  refreshPreviousReferences();
+  const date = saveDate.value;
+  saveDate.value = selectedDate;
+  if (date) selectRecordDate(date);
 });
 
 function changeMonth(offset) {
@@ -994,20 +1134,8 @@ function setScreen(screen, pushHistory = true) {
 
 document.querySelectorAll("[data-screen]").forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.closest("#page-home") && button.dataset.screen === "record" && !editingWorkoutId) {
-      resetWorkoutForm(todayISO());
-      if (currentMonth() !== todayISO().slice(0, 7)) {
-        shownYear = Number(todayISO().slice(0, 4));
-        shownMonth = Number(todayISO().slice(5, 7)) - 1;
-        ++recordsRequestId;
-        recordsLoaded = false;
-        calendarAvailable = false;
-        calendarDays.clear();
-        completeDates.clear();
-        workouts = [];
-        renderCalendar();
-        if (authorized) loadWorkouts();
-      }
+    if (button.closest("#page-home") && button.dataset.screen === "record") {
+      if (!selectRecordDate(todayISO())) return;
     }
     setScreen(button.dataset.screen);
   });
@@ -1079,6 +1207,9 @@ function setAuthenticated(next) {
     calendarDays.clear();
     completeDates.clear();
     selectedDate = todayISO();
+    pendingRecordDate = "";
+    recordPlanPanel.hidden = true;
+    recordPlanToggle.setAttribute("aria-expanded", "false");
     resetWorkoutForm();
     saveFeedback.textContent = "";
     renderCalendar();
