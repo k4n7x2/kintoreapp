@@ -1,0 +1,44 @@
+{
+  "id": "home-portrait-v1",
+  "status": "provisional",
+  "statusReason": "The two approved 691x1536 screenshots and original WebP were inspected, but image-pixel landmarks have not yet been independently click-measured and signed off. Do not certify new images until status=calibrated.",
+  "coordinateSystem": "source image pixels; top-left origin, x right, y down",
+  "canvas": { "width": 941, "height": 1672 },
+  "alphaThreshold": 32,
+  "minimumHorizontalMargin": 0.10,
+  "tolerances": {
+    "eyePositionPx": 4,
+    "headPositionPx": 6,
+    "headHeightPercent": 1.5,
+    "shoulderPositionPx": 6
+  },
+  "anchors": {
+    "eyeCenter": [460, 328],
+    "headTopY": 22,
+    "chinY": 455,
+    "leftShoulder": [280, 517],
+    "rightShoulder": [720, 511]
+  },
+  "anchorsAre": "approximate candidate landmarks from direct visual inspection of original WebP; not verified +/-4px coordinates",
+  "reference": {
+    "approvedDisplayCommit": "5b8d16ce23eab0ec188d69b2d5e33ea5923a4018",
+    "inspectedSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
+    "canonicalImageCandidate": "public/assets/shiori/home/v1/shiori-home-roomwear-joy-r1.webp",
+    "trainingImage": "public/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp",
+    "approvedScreenshotMeasurements": {
+      "basis": "approximate manual visual positions, not DOM-corrected measurements",
+      "screenshotSize": [691, 1536],
+      "training": {
+        "headTopY": 571,
+        "eyeCenter": [348, 818],
+        "chinY": 948
+      },
+      "roomwearJoy": {
+        "headTopY": 567,
+        "eyeCenter": [344, 811],
+        "chinY": 931
+      }
+    },
+    "privacy": "Screenshot image bytes and Android status bar are not stored in GitHub. Only image coordinates are retained."
+  }
+}

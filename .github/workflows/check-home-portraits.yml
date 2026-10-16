@@ -1,0 +1,43 @@
+name: Validate new home portraits
+on:
+  pull_request:
+    paths:
+      - 'public/assets/shiori/**'
+      - 'docs/shiori/home-portrait-standard-v1.json'
+      - 'scripts/check_home_portrait.py'
+      - '.github/workflows/check-home-portraits.yml'
+  workflow_dispatch:
+jobs:
+  validate-new-portraits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image dependency
+        run: python -m pip install 'Pillow>=11,<13'
+      - name: Validate newly added home portrait files
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$BASE_SHA" ]]; then
+            echo 'workflow_dispatch has no PR base; no new-image diff to check'
+            exit 0
+          fi
+          count=0
+          while IFS= read -r -d '' path; do
+            if [[ "$path" != *.webp && "$path" != *.png ]]; then continue; fi
+            filename="${path##*/}"
+            if [[ "$filename" != *-home-* ]]; then continue; fi
+            if [[ "$filename" == *-sd-* || "$filename" == *-event-* ]]; then continue; fi
+            echo "Validate: $path"
+            python scripts/check_home_portrait.py "$path"
+            count=$((count+1))
+          done < <(git diff -z --name-only --diff-filter=A "$BASE_SHA" "$HEAD_SHA" -- public/assets/shiori/)
+          echo "Validated $count newly added home portraits (legacy images unchanged)"
