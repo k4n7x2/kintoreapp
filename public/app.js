@@ -249,8 +249,8 @@ function inlineStepSpec(input) {
 }
 function updateInlineStepButtons(input) {
   const spec = inlineStepSpec(input);
-  const wrapper = input?.parentElement;
-  if (!spec || !wrapper?.classList.contains("set-inline-stepper")) return;
+  const wrapper = input?.closest(".set-inline-stepper");
+  if (!spec || !wrapper) return;
   const minus = wrapper.querySelector(".set-step-minus");
   const plus = wrapper.querySelector(".set-step-plus");
   const current = input.value === "" ? 0 : Number(input.value);
@@ -283,7 +283,14 @@ function makeInlineStepper(input, typeName) {
   plus.setAttribute("aria-label", typeName + "を増やす");
   minus.addEventListener("click", () => stepNumericInput(input, -1));
   plus.addEventListener("click", () => stepNumericInput(input, 1));
-  wrapper.append(minus, input, plus);
+  const valueField = document.createElement("div");
+  valueField.className = "set-value-field";
+  const suffix = document.createElement("span");
+  suffix.className = "set-value-unit";
+  suffix.setAttribute("aria-hidden", "true");
+  suffix.textContent = typeName === "重量" ? "kg" : "回";
+  valueField.append(input, suffix);
+  wrapper.append(minus, valueField, plus);
   input.addEventListener("input", () => updateInlineStepButtons(input));
   updateInlineStepButtons(input);
   return wrapper;
@@ -318,9 +325,6 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   number.className = "set-number";
   const weightLabel = document.createElement("div");
   weightLabel.className = "set-metric";
-  const weightTitle = document.createElement("label");
-  weightTitle.className = "set-metric-title";
-  weightTitle.textContent = "重量（kg）";
   const previousWeight = document.createElement("button");
   previousWeight.type = "button";
   previousWeight.className = "set-prev-weight set-prev-copy";
@@ -332,15 +336,12 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   weight.inputMode = "decimal";
   weight.className = "set-weight";
   weight.id = "set-weight-" + (++nextSetInputId);
-  weightTitle.htmlFor = weight.id;
   weight.value = String(set.weight_kg ?? 0);
-  weightLabel.append(weightTitle, previousWeight, makeInlineStepper(weight, "重量"));
+  weight.setAttribute("aria-label", "重量（kg）");
+  weightLabel.append(previousWeight, makeInlineStepper(weight, "重量"));
   attachNumericInput(weight);
   const repsLabel = document.createElement("div");
   repsLabel.className = "set-metric";
-  const repsTitle = document.createElement("label");
-  repsTitle.className = "set-metric-title";
-  repsTitle.textContent = "回数";
   const previousReps = document.createElement("button");
   previousReps.type = "button";
   previousReps.className = "set-prev-reps set-prev-copy";
@@ -352,9 +353,9 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   reps.inputMode = "numeric";
   reps.className = "set-reps";
   reps.id = "set-reps-" + (++nextSetInputId);
-  repsTitle.htmlFor = reps.id;
   reps.value = String(set.reps ?? 10);
-  repsLabel.append(repsTitle, previousReps, makeInlineStepper(reps, "回数"));
+  reps.setAttribute("aria-label", "回数");
+  repsLabel.append(previousReps, makeInlineStepper(reps, "回数"));
   attachNumericInput(reps);
   previousWeight.addEventListener("click", () => {
     if (!dbReady || !row.previousSet) return;
@@ -407,8 +408,10 @@ function renumberSets(container) {
     row.querySelector(".set-number").textContent = (index + 1) + "セット";
     for (const [selector, label] of [[".set-weight", "重量"], [".set-reps", "回数"]]) {
       const input = row.querySelector(selector);
-      const wrapper = input?.parentElement;
+      const wrapper = input?.closest(".set-inline-stepper");
       if (!wrapper) continue;
+      input.setAttribute("aria-label",
+        (index + 1) + "セット目の" + label + (label === "重量" ? "（kg）" : ""));
       wrapper.querySelector(".set-step-minus")?.setAttribute("aria-label",
         (index + 1) + "セット目の" + label + "を減らす");
       wrapper.querySelector(".set-step-plus")?.setAttribute("aria-label",
