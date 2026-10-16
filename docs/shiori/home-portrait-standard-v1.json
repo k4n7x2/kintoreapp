@@ -1,7 +1,7 @@
 {
   "id": "home-portrait-v1",
   "status": "provisional",
-  "statusReason": "Independent technical audit 2026-10-16 (F05): 11514.jpg matches roomwear-fun, not the formerly attributed roomwear-joy. Screenshot-derived eye/chin landmarks are still design candidates only; direct source pixel verification and provenance review required before formal calibration.",
+  "statusReason": "F05 source attribution resolved: SHA256-pinned approved screenshot 11514.jpg corresponds to roomwear-fun (not joy), supported by independent multi-region pixel registration; original image-pixel landmark annotations are still not directly measured or repeatability-tested to +/-4 source px, so the image-registration gate must remain closed.",
   "coordinateSystem": "source image pixels; top-left origin, x right, y down",
   "canvas": {
     "width": 941,
@@ -30,7 +30,7 @@
     "canonicalImageCandidate": "public/assets/shiori/home/v1/shiori-home-roomwear-fun-r1.webp",
     "trainingImage": "public/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp",
     "approvedScreenshotMeasurements": {
-      "basis": "Screen coordinate candidates measured against the supplied 691x1536 screenshot. Independent audit matched screenshot 11514.jpg to roomwear-fun, not joy; verification pending.",
+      "basis": "Screen coordinates annotated from SHA-256-identified 11514.jpg. Audit independently established corresponding source roomwear-fun by pixel matching; raw source-image landmark picks remain unverified.",
       "screenshotSize": [
         691,
         1536
@@ -64,6 +64,29 @@
       },
       "source": "Independent Work Astra audit report dated 2026-10-16; requires confirmation before final calibration",
       "note": "Hash-based attribution is evidence of source identity, not a new person design or position approval"
+    },
+    "sourceAttribution": {
+      "status": "verified-by-independent-pixel-registration",
+      "sourceAsset": "public/assets/shiori/home/v1/shiori-home-roomwear-fun-r1.webp",
+      "gitBlobSha": "5b78328cb5dd174ddca5bb330ab10be2814c00e6",
+      "sourceAssetSha256": "1e055d3096baf1f0f4514d0219c271a429c265fb8a784ae15867fbe4a506e74a",
+      "screenshot": "11514.jpg",
+      "screenshotSha256": "a2092c7f7bdfa1b2ce3f2ea32195ea2a141e1b43ec0b7ff143564457c6e71098",
+      "screenshotDimensions": [
+        691,
+        1536
+      ],
+      "screenshotSource": "user-supplied Android screenshot (private, not included in public repository)",
+      "verifiedImageSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
+      "method": "independent 3-parameter pixel registration of face (3339 alpha>=250 points), hair and clothing, compared against all seven roomwear portraits, 2026-10-16 Astra audit",
+      "pixelRegistrationRMSE": {
+        "funFace": 4.17,
+        "joyFace": 15.2,
+        "funHair": 2.63,
+        "funClothing": 2.42
+      },
+      "note": "RGB RMSE in 8-bit intensity units is evidence of image identity, not an estimate of face landmark coordinate precision",
+      "outcome": "Fun source identity confirmed; direct original-image landmark measurement remains open."
     }
   },
   "calibration": {
@@ -123,7 +146,19 @@
     "shoulderStatus": "unmeasured; samePoseAsReference checking requires independent shoulder annotation",
     "referenceSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
     "screenshotPrivacy": "Reference screenshots remain in conversation, not committed to public repository.",
-    "nextStep": "Confirm screenshot source with original roomwear-fun pixel landmarks and browser dimensions; retain all legacy assets and CSS unchanged",
-    "sourceImageReview": "Independent screenshot/source image comparison indicates roomwear-fun. Eye/head design coordinates remain provisional until direct original image landmark inspection."
+    "nextStep": "Use a directly accessible binary of the pinned roomwear-fun WebP to independently mark original source-image eye/top/chin pixels with repeatability checks; do not promote to calibrated until this evidence and first new standardized-image app render are reviewed.",
+    "sourceImageReview": "Resolved F05: 11514.jpg corresponds to roomwear-fun, confirmed by pixel registration across face/hair/clothing in independent audit and visual comparison. Original WebP point coordinates not directly clicked or re-measured.",
+    "calibrationStatus": "screen-projected-only",
+    "sourceLandmarkAnnotationStatus": "unverified",
+    "sourceLandmarkAnnotationRequirement": "Pin 941x1672 roomwear-fun WebP SHA256; independently pick both eye outlines, top hair and chin pixels on the actual WebP at original raster resolution (repeat picks); compare with [449,321],27,449 within measurement uncertainty; attach coordinate overlays privately; then explicitly review status change.",
+    "screenshotHashVerifiedLocally": "a2092c7f7bdfa1b2ce3f2ea32195ea2a141e1b43ec0b7ff143564457c6e71098",
+    "checkedInversePositions": {
+      "eyeX": 448.7241915776976,
+      "eyeY": 321.0134480864916,
+      "headTopY": 26.55965475603975,
+      "chinY": 448.75002238259395
+    },
+    "inverseProjectionType": "round-trip geometry check only (not independent face pixel identification)",
+    "sourceReferenceGitBlobSha": "5b78328cb5dd174ddca5bb330ab10be2814c00e6"
   }
 }
