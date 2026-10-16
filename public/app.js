@@ -232,87 +232,74 @@ function setReady(ready) {
   exerciseList.querySelectorAll(".exercise-card").forEach(card => {
     if (card.renderPrevious) card.renderPrevious();
   });
-  updateNumberAdjustAvailability();
+  document.querySelectorAll("#exercise-list .set-weight, #exercise-list .set-reps, #record-editor-host .set-weight, #record-editor-host .set-reps")
+    .forEach(updateInlineStepButtons);
 }
 
 
 const formatPrevious = set => Number(set.weight_kg).toString() + "kg × " + set.reps + "回";
 
-// 入力欄を増やさず、選択した重量・回数だけ大きなボタンで調整する。
-const numberAdjust = byId("record-number-adjust");
-const numberAdjustLabel = byId("record-adjust-label");
-const numberAdjustMinus = byId("record-adjust-minus");
-const numberAdjustPlus = byId("record-adjust-plus");
-let numberAdjustTarget = null;
+// 各セットの重量・回数それぞれに [−][数値入力][＋] を直接配置する。
 let nextSetInputId = 0;
-function numericTargetInfo(input) {
-  if (!input?.isConnected || !input.closest(".exercise-set")) return null;
-  const weight = input.classList.contains("set-weight");
-  const reps = input.classList.contains("set-reps");
-  if (!weight && !reps) return null;
-  return { step: weight ? 2.5 : 1, max: weight ? 2000 : 1000,
-    unit: weight ? "kg" : "回", kind: weight ? "重量" : "回数" };
+function inlineStepSpec(input) {
+  if (!input) return null;
+  if (input.classList.contains("set-weight")) return { step: 2.5, max: 2000 };
+  if (input.classList.contains("set-reps")) return { step: 1, max: 1000 };
+  return null;
 }
-function closeNumberAdjust() {
-  numberAdjustTarget = null;
-  numberAdjust.hidden = true;
+function updateInlineStepButtons(input) {
+  const spec = inlineStepSpec(input);
+  const wrapper = input?.parentElement;
+  if (!spec || !wrapper?.classList.contains("set-inline-stepper")) return;
+  const minus = wrapper.querySelector(".set-step-minus");
+  const plus = wrapper.querySelector(".set-step-plus");
+  const current = input.value === "" ? 0 : Number(input.value);
+  const enabled = dbReady && !input.disabled && Number.isFinite(current);
+  minus.disabled = !enabled || current <= 0;
+  plus.disabled = !enabled || current >= spec.max;
 }
-function updateNumberAdjustAvailability() {
-  const data = numericTargetInfo(numberAdjustTarget);
-  if (!data || !dbReady) {
-    numberAdjustMinus.disabled = true;
-    numberAdjustPlus.disabled = true;
-    return;
-  }
-  const current = Number(numberAdjustTarget.value);
-  numberAdjustMinus.disabled = !Number.isFinite(current) || current <= 0;
-  numberAdjustPlus.disabled = !Number.isFinite(current) || current >= data.max;
-}
-function openNumberAdjust(input) {
-  const data = numericTargetInfo(input);
-  if (!data || !dbReady) return;
-  numberAdjustTarget = input;
-  const row = input.closest(".exercise-set");
-  const set = row.querySelector(".set-number")?.textContent ?? "";
-  numberAdjustLabel.textContent = set + " " + data.kind + "（±" + data.step + data.unit + "）";
-  numberAdjust.hidden = false;
-  updateNumberAdjustAvailability();
-}
-function writeNumericInput(input, nextValue) {
-  if (!input || input.disabled || !Number.isFinite(nextValue)) return;
-  input.value = String(nextValue);
+function stepNumericInput(input, direction) {
+  const spec = inlineStepSpec(input);
+  if (!spec || !dbReady || input.disabled) return;
+  const current = input.value === "" ? 0 : Number(input.value);
+  if (!Number.isFinite(current)) return;
+  const next = Math.min(spec.max, Math.max(0, Math.round((current + direction * spec.step) * 100) / 100));
+  if (next === current && input.value !== "") return;
+  input.value = String(next);
   input.dispatchEvent(new Event("input", { bubbles: true }));
-  updateNumberAdjustAvailability();
 }
-function adjustSelectedNumber(direction) {
-  const data = numericTargetInfo(numberAdjustTarget);
-  if (!data || !dbReady || numberAdjustTarget.disabled) return;
-  const number = Number(numberAdjustTarget.value);
-  const current = Number.isFinite(number) ? number : 0;
-  const next = Math.min(data.max, Math.max(0, Math.round((current + direction * data.step) * 100) / 100));
-  writeNumericInput(numberAdjustTarget, next);
-}
-numberAdjustMinus.addEventListener("click", () => adjustSelectedNumber(-1));
-numberAdjustPlus.addEventListener("click", () => adjustSelectedNumber(1));
-byId("record-adjust-close").addEventListener("click", closeNumberAdjust);
-for (const button of [numberAdjustMinus, numberAdjustPlus]) {
-  button.addEventListener("pointerdown", event => event.preventDefault());
+function makeInlineStepper(input, typeName) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "set-inline-stepper";
+  const minus = document.createElement("button");
+  minus.type = "button";
+  minus.className = "set-step-minus";
+  minus.textContent = "−";
+  minus.setAttribute("aria-label", typeName + "を減らす");
+  const plus = document.createElement("button");
+  plus.type = "button";
+  plus.className = "set-step-plus";
+  plus.textContent = "＋";
+  plus.setAttribute("aria-label", typeName + "を増やす");
+  minus.addEventListener("click", () => stepNumericInput(input, -1));
+  plus.addEventListener("click", () => stepNumericInput(input, 1));
+  wrapper.append(minus, input, plus);
+  input.addEventListener("input", () => updateInlineStepButtons(input));
+  updateInlineStepButtons(input);
+  return wrapper;
 }
 function attachNumericInput(input) {
   input.enterKeyHint = "next";
   input.addEventListener("focus", () => {
-    openNumberAdjust(input);
-    // サポートする環境では既存数値を全選択し、打ち直しを1操作に。
     try { input.select(); } catch {}
   });
-  input.addEventListener("input", updateNumberAdjustAvailability);
   input.addEventListener("keydown", event => {
     if (event.key !== "Enter") return;
-    event.preventDefault(); // Enterで誤保存せず、次の項目へ。
-    const current = [...recordEditorHost.querySelectorAll(".set-weight, .set-reps")];
-    const next = current[current.indexOf(input) + 1];
+    event.preventDefault();
+    const fields = [...recordEditorHost.querySelectorAll(".set-weight, .set-reps")];
+    const next = fields[fields.indexOf(input) + 1];
     if (next && !next.disabled) next.focus();
-    else { input.blur(); closeNumberAdjust(); }
+    else input.blur();
   });
 }
 
@@ -347,7 +334,7 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   weight.id = "set-weight-" + (++nextSetInputId);
   weightTitle.htmlFor = weight.id;
   weight.value = String(set.weight_kg ?? 0);
-  weightLabel.append(weightTitle, previousWeight, weight);
+  weightLabel.append(weightTitle, previousWeight, makeInlineStepper(weight, "重量"));
   attachNumericInput(weight);
   const repsLabel = document.createElement("div");
   repsLabel.className = "set-metric";
@@ -367,22 +354,24 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   reps.id = "set-reps-" + (++nextSetInputId);
   repsTitle.htmlFor = reps.id;
   reps.value = String(set.reps ?? 10);
-  repsLabel.append(repsTitle, previousReps, reps);
+  repsLabel.append(repsTitle, previousReps, makeInlineStepper(reps, "回数"));
   attachNumericInput(reps);
   previousWeight.addEventListener("click", () => {
     if (!dbReady || !row.previousSet) return;
-    writeNumericInput(weight, Number(row.previousSet.weight_kg));
+    weight.value = String(Number(row.previousSet.weight_kg));
+    weight.dispatchEvent(new Event("input", { bubbles: true }));
   });
   previousReps.addEventListener("click", () => {
     if (!dbReady || !row.previousSet) return;
-    writeNumericInput(reps, Number(row.previousSet.reps));
+    reps.value = String(Number(row.previousSet.reps));
+    reps.dispatchEvent(new Event("input", { bubbles: true }));
   });
   const remove = document.createElement("button");
   remove.type = "button"; remove.className = "secondary-action";
   remove.textContent = "×"; remove.setAttribute("aria-label", "このセットを削除");
   remove.addEventListener("click", () => {
-    if (numberAdjustTarget && row.contains(numberAdjustTarget)) closeNumberAdjust();
-    row.remove(); renumberSets(container);
+    row.remove();
+    renumberSets(container);
   });
   row.append(number, weightLabel, repsLabel, remove);
   container.appendChild(row);
@@ -392,6 +381,15 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
 function renumberSets(container) {
   container.querySelectorAll(".exercise-set").forEach((row, index) => {
     row.querySelector(".set-number").textContent = (index + 1) + "セット";
+    for (const [selector, label] of [[".set-weight", "重量"], [".set-reps", "回数"]]) {
+      const input = row.querySelector(selector);
+      const wrapper = input?.parentElement;
+      if (!wrapper) continue;
+      wrapper.querySelector(".set-step-minus")?.setAttribute("aria-label",
+        (index + 1) + "セット目の" + label + "を減らす");
+      wrapper.querySelector(".set-step-plus")?.setAttribute("aria-label",
+        (index + 1) + "セット目の" + label + "を増やす");
+    }
   });
   const card = container.exerciseCard;
   if (card?.renderPrevious) card.renderPrevious();
@@ -586,7 +584,6 @@ function closeExerciseEditor({ focus = false } = {}) {
   if (!activeExerciseCard) return;
   const card = activeExerciseCard;
   card.noteValue = saveNote.value;
-  closeNumberAdjust();
   card.append(card.editorBody);
   card.editorBody.hidden = true;
   activeExerciseCard = null;
@@ -602,7 +599,6 @@ function openExerciseEditor(card, origin = "record") {
   if (!card || !dbReady) return;
   if (activeExerciseCard && activeExerciseCard !== card) closeExerciseEditor();
   activeExerciseCard = card;
-  closeNumberAdjust();
   editorEntry = origin;
   byId("record-editor-back").textContent = origin === "analysis"
     ? "‹ 実施日一覧へ戻る" : "‹ その日の種目一覧へ戻る";
@@ -845,8 +841,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     if (!previous.length || !dbReady) return;
     if (rows.querySelector(".exercise-set") &&
         !confirm("入力中のセットを前回の内容に置き換えますか？")) return;
-    closeNumberAdjust();
-    rows.replaceChildren();
+      rows.replaceChildren();
     for (const set of previous) newSetRow(rows, set);
     card.renderPrevious();
     card.renderSummary();
