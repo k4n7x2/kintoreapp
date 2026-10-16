@@ -1835,3 +1835,228 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
     min-width: 40px;
   }
 }
+
+/* Compact exercise editor — approximately three sets visible without scrolling on
+   a typical Android portrait viewport. Keep 44px touch inputs and a scroll fallback. */
+#page-record .record-unsaved-badge[hidden],
+#page-record #save-feedback:empty { display: none !important; }
+#page-record .record-unsaved-badge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  border: 1px solid var(--danger-line);
+  border-radius: 100px;
+  color: var(--danger);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.55;
+  white-space: nowrap;
+}
+#page-record .exercise-overview-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  min-width: 0;
+}
+#page-record .exercise-overview-heading .exercise-overview-name {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+#page-record .record-editor-navigation {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  margin: 0 0 3px;
+}
+#page-record #record-editor-back {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 3px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+#page-record .record-editor-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+}
+#page-record .record-editor-heading h2 {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+#page-record .record-editor-heading .record-unsaved-badge { margin-left: auto; }
+#page-record .record-panel button[type="submit"].record-save-icon {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+}
+#page-record .record-panel button[type="submit"].record-save-icon svg {
+  display: block;
+  width: 23px;
+  height: 23px;
+}
+#page-record .record-panel button[type="submit"].record-save-icon:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+  background: var(--raised);
+  color: var(--muted);
+}
+#page-record .record-editor-date {
+  margin: 0 0 2px;
+  padding-inline: 1px;
+  font-size: 11px;
+}
+#page-record #save-feedback { margin: 2px 0 4px; min-height: 0; }
+#page-record #record-editor-view .exercise-editor {
+  padding: 0 1px 2px;
+  border: 0;
+}
+#page-record #record-editor-view .exercise-previous-heading {
+  margin: 0 0 2px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+#page-record #record-editor-view .exercise-set {
+  display: grid;
+  grid-template-columns: 27px repeat(2, minmax(0, 1fr)) 40px;
+  gap: 4px 6px;
+  padding: 5px 0;
+  margin: 0;
+  align-items: end;
+  border-color: var(--line);
+}
+#page-record #record-editor-view .exercise-set .set-number {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  font-size: 11px;
+  line-height: 1.1;
+}
+#page-record #record-editor-view .exercise-set .set-metric {
+  display: flex;
+  grid-row: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  font-size: 11px;
+}
+#page-record #record-editor-view .exercise-set .set-metric:nth-child(2) { grid-column: 2; }
+#page-record #record-editor-view .exercise-set .set-metric:nth-child(3) { grid-column: 3; }
+#page-record #record-editor-view .exercise-set .set-metric-title {
+  font-size: 11px;
+  line-height: 1.3;
+}
+#page-record #record-editor-view .exercise-set .set-prev-weight,
+#page-record #record-editor-view .exercise-set .set-prev-reps {
+  min-height: 15px;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--accent-soft);
+}
+#page-record #record-editor-view .exercise-set .set-metric input {
+  min-height: 44px;
+  height: 44px;
+  padding: 6px 7px;
+  margin: 2px 0 0;
+  font-size: 16px;
+}
+#page-record #record-editor-view .exercise-set .secondary-action {
+  grid-row: 1;
+  grid-column: 4;
+  width: 40px;
+  min-width: 40px;
+  min-height: 44px;
+  padding-inline: 0;
+  margin: 0;
+  align-self: end;
+}
+#page-record #record-editor-view .exercise-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  margin: 7px 0 0;
+}
+#page-record #record-editor-view .exercise-actions button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 42px;
+  padding: 7px 5px;
+  margin: 0;
+  font-size: 11px;
+}
+#page-record #record-editor-view .exercise-editor > .field-hint:empty { display: none; }
+#page-record #record-editor-view .exercise-card-head {
+  display: flex;
+  justify-content: flex-end;
+  margin: 5px 0 0;
+}
+#page-record #record-editor-view .exercise-card-head > label { display: none; }
+#page-record #record-editor-view .exercise-card-head .secondary-action {
+  min-height: 36px;
+  padding: 4px 9px;
+  margin: 0;
+  font-size: 11px;
+}
+#page-record #record-editor-view .record-extra-fields {
+  margin: 0;
+}
+#page-record #record-editor-view .record-note-details {
+  margin: 0;
+}
+#page-record #record-editor-view .record-note-details > summary {
+  min-height: 36px;
+}
+#page-record:has(#record-editor-view:not([hidden])) .record-scroll {
+  padding-top: 4px;
+  padding-bottom: 7px;
+}
+#page-record:has(#record-editor-view:not([hidden])) .record-panel {
+  padding: 8px 10px;
+}
+#page-record:has(#record-editor-view:not([hidden])) .record-companion {
+  height: clamp(86px, 13dvh, 112px);
+}
+@media (max-width: 360px) {
+  #page-record #record-editor-view .exercise-set {
+    grid-template-columns: 25px repeat(2, minmax(0, 1fr)) 36px;
+    gap: 4px;
+  }
+  #page-record #record-editor-view .exercise-set .secondary-action {
+    min-width: 36px;
+    width: 36px;
+  }
+  #page-record #record-editor-view .record-editor-heading h2 { font-size: 15px; }
+}
+@media (max-height: 660px) {
+  #page-record:has(#record-editor-view:not([hidden])) .record-companion {
+    height: 78px;
+  }
+}

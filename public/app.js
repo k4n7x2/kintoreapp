@@ -293,6 +293,7 @@ function renumberSets(container) {
   const card = container.exerciseCard;
   if (card?.renderPrevious) card.renderPrevious();
   if (card?.renderSummary) card.renderSummary();
+  updateDraftIndicators();
 }
 
 
@@ -451,13 +452,26 @@ function cardDraftSnapshot(card) {
     ])
   });
 }
+function updateDraftIndicators() {
+  if (activeExerciseCard) activeExerciseCard.noteValue = saveNote.value;
+  for (const card of exerciseList.querySelectorAll(".exercise-card")) {
+    const dirty = card.savedSnapshot !== cardDraftSnapshot(card);
+    if (card.unsavedBadge) card.unsavedBadge.hidden = !dirty;
+    const name = card.nameInput.value.trim() || "新しい種目";
+    card.overviewButton.setAttribute("aria-label",
+      name + "のセットを編集" + (dirty ? "、未保存" : ""));
+  }
+  byId("record-editor-unsaved").hidden = !activeExerciseCard ||
+    activeExerciseCard.savedSnapshot === cardDraftSnapshot(activeExerciseCard);
+}
 function markRecordBaseline() {
   exerciseList.querySelectorAll(".exercise-card").forEach(card => {
     card.savedSnapshot = cardDraftSnapshot(card);
   });
+  updateDraftIndicators();
 }
 function hasRecordChanges() {
-  if (activeExerciseCard) activeExerciseCard.noteValue = saveNote.value;
+  updateDraftIndicators();
   return [...exerciseList.querySelectorAll(".exercise-card")].some(card =>
     card.savedSnapshot !== cardDraftSnapshot(card));
 }
@@ -472,6 +486,7 @@ function closeExerciseEditor({ focus = false } = {}) {
   recordEditor.hidden = true;
   recordOverview.hidden = false;
   card.renderSummary();
+  updateDraftIndicators();
   byId("record-scroll").scrollTop = 0;
   if (focus && card.isConnected) card.overviewButton.focus();
 }
@@ -492,11 +507,14 @@ function openExerciseEditor(card, origin = "record") {
   saveNote.value = card.noteValue || "";
   recordNoteDetails.open = !!saveNote.value;
   saveFeedback.textContent = "";
+  updateDraftIndicators();
   byId("record-scroll").scrollTop = 0;
   byId("record-editor-back").focus();
 }
 byId("record-editor-back").addEventListener("click", returnFromExerciseEditor);
-byId("record-editor-done").addEventListener("click", returnFromExerciseEditor);
+saveNote.addEventListener("input", () => {
+  if (activeExerciseCard) updateDraftIndicators();
+});
 
 function showExercisePicker() {
   if (!dbReady) return;
@@ -563,13 +581,20 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   const summary = document.createElement("button");
   summary.type = "button";
   summary.className = "exercise-overview";
+  const nameRow = document.createElement("span");
+  nameRow.className = "exercise-overview-heading";
   const heading = document.createElement("strong");
   heading.className = "exercise-overview-name";
+  const unsaved = document.createElement("span");
+  unsaved.className = "record-unsaved-badge";
+  unsaved.textContent = "未保存";
+  unsaved.hidden = true;
+  nameRow.append(heading, unsaved);
   const current = document.createElement("span");
   current.className = "exercise-overview-current";
   const previousSummary = document.createElement("span");
   previousSummary.className = "exercise-overview-previous";
-  summary.append(heading, current, previousSummary);
+  summary.append(nameRow, current, previousSummary);
   const body = document.createElement("div");
   body.className = "exercise-editor";
   body.hidden = true;
@@ -598,6 +623,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     closeExerciseEditor();
     card.remove();
     updateExerciseEmpty();
+    updateDraftIndicators();
   });
   head.append(label, remove);
   const rows = document.createElement("div");
@@ -607,6 +633,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   card.nameInput = nameInput;
   card.editorBody = body;
   card.overviewButton = summary;
+  card.unsavedBadge = unsaved;
   card.noteValue = note;
   const previousLabel = document.createElement("p");
   previousLabel.className = "exercise-previous-heading";
@@ -695,7 +722,10 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     byId("record-editor-title").textContent = nameInput.value.trim() || "新しい種目";
   });
   nameInput.addEventListener("change", () => card.refreshPrevious());
-  rows.addEventListener("input", card.renderSummary);
+  rows.addEventListener("input", () => {
+    card.renderSummary();
+    updateDraftIndicators();
+  });
   recent.addEventListener("click", () => {
     if (!previous.length || !dbReady) return;
     if (rows.querySelector(".exercise-set") &&
@@ -705,10 +735,12 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     card.renderPrevious();
     card.renderSummary();
     feedback.textContent = "前回のセットを反映しました。";
+    updateDraftIndicators();
   });
   summary.addEventListener("click", () => openExerciseEditor(card));
   actions.append(addSet, recent);
-  body.append(head, previousLabel, rows, actions, feedback);
+  // 編集画面の上部には入力と前回比較だけを表示し、種目削除は下部へ配置。
+  body.append(previousLabel, rows, actions, feedback, head);
   card.append(summary, body);
   exerciseList.appendChild(card);
   for (const set of sets) newSetRow(rows, set);
@@ -721,6 +753,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     card.savedOnServer = true;
   }
   updateExerciseEmpty();
+  updateDraftIndicators();
   return card;
 }
 function resetWorkoutForm(date = todayISO()) {
@@ -730,7 +763,8 @@ function resetWorkoutForm(date = todayISO()) {
   editingWorkoutId = null;
   byId("record-form-title").textContent = date === todayISO() ? "今日のトレーニング" : "この日のトレーニング";
   cancelWorkoutEdit.hidden = true;
-  saveButton.textContent = "この種目を保存";
+  saveButton.setAttribute("aria-label", "この種目を保存");
+  saveButton.title = "この種目を保存";
   saveDate.value = date;
   selectedDate = date;
   saveNote.value = "";
@@ -953,7 +987,9 @@ byId("workout-form").addEventListener("submit", async event => {
     return;
   }
   setReady(false);
-  saveFeedback.textContent = "この種目を保存中…";
+  saveButton.setAttribute("aria-label", "保存中");
+  saveButton.title = "保存中";
+  saveFeedback.textContent = "保存中…";
   try {
     const result = await fetchJSON("/api/exercises/log", {
       method: "PUT",
@@ -965,6 +1001,7 @@ byId("workout-form").addEventListener("submit", async event => {
     card.nameInput.value = result.exercise_name;
     card.savedSnapshot = cardDraftSnapshot(card);
     card.savedOnServer = true;
+    updateDraftIndicators();
     closeExerciseEditor();
     overviewFeedback.textContent = result.exercise_name + "を保存しました。";
     pendingRecordDate = "";
@@ -985,6 +1022,9 @@ byId("workout-form").addEventListener("submit", async event => {
     }
     setReady(true);
     saveFeedback.textContent = "保存できませんでした。接続状態を確認してください。";
+  } finally {
+    saveButton.setAttribute("aria-label", "この種目を保存");
+    saveButton.title = "この種目を保存";
   }
 });
 async function persistDaySwitches() {
