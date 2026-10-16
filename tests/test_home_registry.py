@@ -51,6 +51,20 @@ class RegistryChecks(TestCase):
         self.filenames.append(self.new+'.anchors.json')
         self.assertTrue(any('orphan' in x for x in self.verify()))
 
+    def test_explicit_sd_asset_is_out_of_scope(self):
+        sd='public/assets/shiori/gim/v1/shiori-gim-sd-training-test-r1.webp'
+        self.filenames.append(sd)
+        self.data['outOfScopeAssets']={sd:'a'*40}
+        self.registry.write_text(json.dumps(self.data))
+        self.assertEqual([],self.verify())
+
+    def test_out_of_scope_mutation_rejected(self):
+        sd='public/assets/shiori/gim/v1/shiori-gim-sd-training-test-r1.webp'
+        self.filenames.append(sd)
+        self.data['outOfScopeAssets']={sd:'b'*40}
+        self.registry.write_text(json.dumps(self.data))
+        self.assertTrue(any('modified' in x for x in self.verify()))
+
     def test_registered_new_portrait_accepts_sidecar(self):
         self.filenames += [self.new,self.new+'.anchors.json']
         self.data['portraits']=[{'path':self.new,'standard':'home-portrait-v1'}]
