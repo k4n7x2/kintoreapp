@@ -11,5 +11,8 @@
     "public/assets/shiori/home/v1/shiori-home-roomwear-sad-r1.webp": "b21adb7ad45308f91e49a0226e518381a4b30ce4",
     "public/assets/shiori/home/v1/shiori-home-roomwear-shy-r1.webp": "eadd0708d44ce458a752d2587d4913e940aa5d01"
   },
-  "portraits": []
+  "portraits": [],
+  "outOfScopeAssets": {
+    "public/assets/shiori/gim/v1/shiori-gim-sd-training-test-r1.webp": "0e5f063ba5444b7e40d1f53338cc29f5ef5e98f0"
+  }
 }
