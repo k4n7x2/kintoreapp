@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "d1_databases": [
+    {
+      "binding": "PREVIEW_DB",
+      "database_name": "kintore-db-preview",
+      "database_id": "c1a2118b-3544-4ee7-822a-9ec25160e9db",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
