@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "standard": "home-portrait-v1",
+  "legacy": {
+    "public/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp": "d206120629f19c28e0026d78b06b671c42683de9",
+    "public/assets/shiori/home/v1/shiori-home-roomwear-anger-r1.webp": "d99a31915a1662f4ea95fb31b7725a7240486c22",
+    "public/assets/shiori/home/v1/shiori-home-roomwear-fun-r1.webp": "5b78328cb5dd174ddca5bb330ab10be2814c00e6",
+    "public/assets/shiori/home/v1/shiori-home-roomwear-joy-r1.webp": "4b556c0e5b9beb13f6173d802b619dbf6ae088ed",
+    "public/assets/shiori/home/v1/shiori-home-roomwear-mischievous-r1.webp": "9b12a6d19e34b5a51753bccea86117865cffd84b",
+    "public/assets/shiori/home/v1/shiori-home-roomwear-normal-r1.webp": "34623c5faa08f1f501cb0174fd8f04a821b21d03",
+    "public/assets/shiori/home/v1/shiori-home-roomwear-sad-r1.webp": "b21adb7ad45308f91e49a0226e518381a4b30ce4",
+    "public/assets/shiori/home/v1/shiori-home-roomwear-shy-r1.webp": "eadd0708d44ce458a752d2587d4913e940aa5d01"
+  },
+  "portraits": []
+}
