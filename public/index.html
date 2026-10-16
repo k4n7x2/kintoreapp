@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261016-seamless-stepper-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261016-compact-header-v1">
   <link rel="stylesheet" href="/story-test.css?v=1">
   <script type="module" src="/app.js?v=20261016-set-unit-infield-v1"></script>
 </head>
@@ -140,7 +140,7 @@
                 </div>
                 <div id="record-editor-view" class="record-editor-view" hidden>
                   <div class="record-editor-navigation">
-                    <button type="button" id="record-editor-back" class="secondary-action">‹ 一覧に戻る</button>
+                    <button type="button" id="record-editor-back" class="secondary-action" aria-label="一覧に戻る" title="一覧に戻る">‹</button>
                     <div class="record-editor-heading">
                       <h2 id="record-editor-title">種目を編集</h2>
                       <span id="record-editor-unsaved" class="record-unsaved-badge" hidden>未保存</span>
@@ -151,7 +151,9 @@
                       </button>
                     </div>
                   </div>
-                  <p id="record-editor-date" class="record-editor-date"></p>
+                  <div id="record-editor-meta" class="record-editor-meta">
+                    <span id="record-editor-date" class="record-editor-date"></span>
+                  </div>
                   <p id="save-feedback" class="feedback" role="status" aria-live="polite"></p>
                   <div id="record-editor-host"></div>
                   <div class="record-extra-fields">

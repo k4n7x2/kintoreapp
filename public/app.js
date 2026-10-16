@@ -612,6 +612,8 @@ function closeExerciseEditor({ focus = false } = {}) {
   if (!activeExerciseCard) return;
   const card = activeExerciseCard;
   card.noteValue = saveNote.value;
+  // 前回の実施日表示を次回も再利用できるよう、編集DOMに戻す。
+  if (card.previousLabel) card.editorBody.prepend(card.previousLabel);
   card.append(card.editorBody);
   card.editorBody.hidden = true;
   activeExerciseCard = null;
@@ -628,14 +630,17 @@ function openExerciseEditor(card, origin = "record") {
   if (activeExerciseCard && activeExerciseCard !== card) closeExerciseEditor();
   activeExerciseCard = card;
   editorEntry = origin;
-  byId("record-editor-back").textContent = origin === "analysis"
-    ? "‹ 実施日一覧へ戻る" : "‹ その日の種目一覧へ戻る";
-  byId("record-editor-date").textContent = saveDate.value + " の記録";
+  const backText = origin === "analysis" ? "実施日一覧へ戻る" : "その日の種目一覧へ戻る";
+  byId("record-editor-back").setAttribute("aria-label", backText);
+  byId("record-editor-back").title = backText;
+  byId("record-editor-date").textContent = saveDate.value.replaceAll("-", "/");
   exercisePicker.hidden = true;
   recordOverview.hidden = true;
   recordEditor.hidden = false;
   card.editorBody.hidden = false;
   recordEditorHost.appendChild(card.editorBody);
+  // 同じDOMの前回情報をヘッダーへ移動。読み込み中・取得失敗も共通表示。
+  if (card.previousLabel) byId("record-editor-meta").appendChild(card.previousLabel);
   updateSetScrollLimit(card.rows);
   byId("record-editor-title").textContent = card.nameInput.value.trim() || "種目を編集";
   saveNote.value = card.noteValue || "";
@@ -776,7 +781,8 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   card.noteValue = note;
   const previousLabel = document.createElement("p");
   previousLabel.className = "exercise-previous-heading";
-  previousLabel.textContent = "前回の記録を確認中…";
+  previousLabel.textContent = "前回を確認中…";
+  card.previousLabel = previousLabel;
   const actions = document.createElement("div");
   actions.className = "exercise-actions";
   const addSet = document.createElement("button");
@@ -822,9 +828,11 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     previousSummary.textContent = previous.length
       ? "前回 " + previous.map(formatPrevious).join(" / ")
       : "前回の記録なし";
-    previousLabel.textContent = previous.length
-      ? "前回 " + previous[0].performed_on + " の記録"
-      : "前回の記録なし";
+    const lastDate = previous[0]?.performed_on || "";
+    const shortDate = lastDate.slice(0, 4) === saveDate.value.slice(0, 4)
+      ? lastDate.slice(5).replace("-", "/")
+      : lastDate.replaceAll("-", "/");
+    previousLabel.textContent = lastDate ? "前回 " + shortDate : "前回なし";
     rows.querySelectorAll(".exercise-set").forEach((row, i) => {
       const set = previous.find(p => Number(p.set_number) === i + 1);
       row.previousSet = set || null;
@@ -848,7 +856,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     card.renderPrevious();
     if (!chosen || !date || !dbReady) return;
     referenceKey = chosen + "|" + date;
-    previousLabel.textContent = "前回の記録を確認中…";
+    previousLabel.textContent = "前回を確認中…";
     try {
       const result = await fetchJSON("/api/workouts/recent?name=" +
         encodeURIComponent(chosen) + "&before=" + encodeURIComponent(date));
@@ -859,7 +867,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     } catch {
       if (id !== lookupId || !card.isConnected) return;
       previousSummary.textContent = "前回を取得できませんでした";
-      previousLabel.textContent = "前回の記録を取得できませんでした";
+      previousLabel.textContent = "前回を取得できませんでした";
       recent.disabled = true;
     }
   };
