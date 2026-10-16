@@ -20,6 +20,9 @@ REGIONS={
  'left-eye':(300,288,473,415,4),
  'right-eye':(448,213,600,345,4),
  'chin':(410,379,610,522,3),
+ 'left-eye-fine':(335,333,465,398,6),
+ 'right-eye-fine':(435,250,570,322,6),
+ 'chin-fine':(445,426,561,469,6),
 }
 
 def make_crop(source,region):
