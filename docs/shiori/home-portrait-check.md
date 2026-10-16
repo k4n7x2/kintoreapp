@@ -16,7 +16,7 @@
 2. 完成した画像上で、eyeCenter（左右の目の外形中心の中点）、headTopY、chinY を計測し、必要なら肩の座標も測る。これらは**画像内の座標**であり、スクリーンショット上の座標を転記しない。
 3. 原本の横に画像名＋.anchors.json のサイドカーを置く。例：new-image.png.anchors.json。人間が画像と照合して初めてreviewed: trueにする。
 
-\`\`\`json
+```json
 {
   "standard": "home-portrait-v1",
   "reviewed": true,
@@ -27,16 +27,18 @@
     "chinY": 455
   }
 }
-\`\`\`
+```
+
+画像ファイル名には用途識別子 `-home-` を含める（例：`shiori-gim-home-normal-r1.webp`）。PR検査が通常ホーム立ち絵とSD絵・一枚絵を区別するための必須の命名規則。
 
 数値は**暫定例**であり、新しい画像を測らずコピーすることは禁止。立ち絵の姿勢が参照画像と完全に同じ場合はsamePoseAsReference: trueとしてleftShoulder、rightShoulderも記載する。
 
 4. Pillow を用意して検査する。
 
-\`\`\`bash
+```bash
 python -m pip install Pillow
 python scripts/check_home_portrait.py /path/to/new-image.png
-\`\`\`
+```
 
 5. 必須検査に合格したらWebP品質85の別コピーへ変換し、同じ寸法・透明余白・アンカーを維持したことを再検査してからGitHubへ登録する。GitHub Actionsは**PRで新規に追加するホーム立ち絵**を対象にチェックする。もともとのレガシー画像・一枚絵・SD絵は対象外。顔の同一性、毛先、手指、透過縁、表示画面での見え方は引き続き人間による検査が必要。
 
