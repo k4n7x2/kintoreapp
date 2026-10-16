@@ -269,14 +269,19 @@ export default {
           if (url.pathname === "/api/workouts/recent" && method === "GET") {
             const name = url.searchParams.get("name")?.trim() ?? "";
             if (!name || name.length > 60) return respond({ error: "invalid_exercise" }, 400);
+            // "前回" は選択した記録日より前の最新実績。未指定なら従来の最新記録を返す。
+            const before = url.searchParams.get("before");
+            if (before !== null && !validDate(before)) return respond({ error: "invalid_date" }, 400);
+            const dateFilter = before ? "AND s2.performed_on < ? " : "";
             const recent = await env.DB.prepare(
               "SELECT ws.weight_kg, ws.reps, ws.set_number, s.performed_on FROM workout_sets ws " +
               "JOIN workout_sessions s ON s.id = ws.session_id WHERE ws.exercise_name = ? " +
               "AND ws.session_id = (SELECT ws2.session_id FROM workout_sets ws2 " +
               "JOIN workout_sessions s2 ON s2.id = ws2.session_id WHERE ws2.exercise_name = ? " +
+              dateFilter +
               "ORDER BY s2.performed_on DESC, s2.created_at DESC, ws2.id DESC LIMIT 1) " +
               "ORDER BY ws.set_number, ws.id LIMIT 12"
-            ).bind(name, name).all();
+            ).bind(...(before ? [name, name, before] : [name, name])).all();
             return respond({ sets: recent.results ?? [] });
           }
 

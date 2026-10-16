@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261016-record-sd-dock-v1">
-  <script type="module" src="/app.js?v=20261016-record-sd-dock-v1"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261016-record-v2">
+  <script type="module" src="/app.js?v=20261016-record-v2"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -95,8 +95,16 @@
                 <h2 id="record-form-title">トレーニングを記録</h2>
                 <button type="button" id="cancel-workout-edit" class="secondary-action" hidden>編集をやめる</button>
               </div>
-              <label for="workout-date">実施日</label>
-              <input id="workout-date" name="performed_on" type="date" min="2000-01-01" max="2100-12-31" required disabled>
+              <div class="record-date-bar">
+                <label for="workout-date" class="record-date-field">実施日
+                  <input id="workout-date" name="performed_on" type="date" min="2000-01-01" max="2100-12-31" required disabled>
+                </label>
+                <div class="record-status-switches" aria-label="この日のジム予定と来館">
+                  <label class="record-switch"><span>予定</span><input type="checkbox" id="day-planned" role="switch" disabled><span class="record-switch-track" aria-hidden="true"></span></label>
+                  <label class="record-switch"><span>来館</span><input type="checkbox" id="day-attended" role="switch" disabled><span class="record-switch-track" aria-hidden="true"></span></label>
+                </div>
+              </div>
+              <p id="calendar-error" class="feedback record-calendar-feedback" role="status" aria-live="polite"></p>
               <div class="record-exercises-heading">
                 <h3>種目とセット</h3>
                 <button type="button" class="secondary-action" id="add-exercise" disabled>＋ 種目を追加</button>
@@ -110,24 +118,13 @@
                 <option value="クランチ"></option>
               </datalist>
               <div id="exercise-list" class="exercise-list" aria-label="種目一覧"></div>
+              <p id="exercise-empty" class="exercise-empty">種目を追加すると、前回の重量・回数を確認できます。</p>
               <label for="workout-note">メモ（任意）</label>
               <textarea id="workout-note" name="note" maxlength="300" rows="2" placeholder="例：胸と背中。今日はフォームを意識。" disabled></textarea>
               <button id="save-workout" type="submit" disabled>記録を保存</button>
               <p id="save-feedback" class="feedback" role="status" aria-live="polite"></p>
             </form>
           </div>
-          <details class="record-fold record-day-fold">
-            <summary>予定・来館 <span id="selected-day-title" class="fold-date"></span></summary>
-            <div class="panel calendar-day-panel">
-              <p id="calendar-error" class="feedback" role="status" aria-live="polite"></p>
-              <div class="day-flags">
-                <label><input type="checkbox" id="day-planned" disabled><span>ジムに行く予定</span></label>
-                <label><input type="checkbox" id="day-attended" disabled><span>ジムに行った</span></label>
-              </div>
-              <button type="button" id="save-calendar-day" class="primary-action" disabled>予定・来館を保存</button>
-              <div class="day-records" id="selected-day-records" aria-live="polite"></div>
-            </div>
-          </details>
           <details class="record-fold record-history-fold">
             <summary>過去のトレーニング記録</summary>
             <div class="panel history-records-panel">

@@ -1277,3 +1277,196 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
 @media (prefers-reduced-motion: reduce) {
   #page-record .record-fold > summary::after { transition: none; }
 }
+
+/* Record v2: compact single-day controls, always-visible previous results, 
+   one expanded exercise at a time. SD companion at bottom unchanged. */
+#page-record .record-panel { padding: 12px; }
+#page-record .record-header { margin-bottom: 2px; }
+#page-record .record-header h2 { font-size: 15px; }
+#page-record .record-date-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  padding: 4px 0 7px;
+}
+#page-record .record-date-field { min-width: 0; }
+#page-record .record-date-field input {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  font-size: 13px;
+  padding: 7px 6px;
+}
+#page-record .record-status-switches {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 9px;
+  align-items: end;
+}
+#page-record .record-switch {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  justify-content: end;
+  gap: 5px;
+  min-width: 42px;
+  min-height: 58px;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#page-record .record-status-switches input {
+  position: absolute;
+  opacity: 0;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+#page-record .record-switch-track {
+  width: 38px;
+  height: 23px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  position: relative;
+  pointer-events: none;
+  transition: background .15s ease;
+}
+#page-record .record-switch-track::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  height: 17px;
+  width: 17px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform .15s ease;
+}
+#page-record .record-switch input:checked + .record-switch-track { background: var(--accent); border-color: var(--accent); }
+#page-record .record-switch input:checked + .record-switch-track::before {
+  transform: translateX(15px);
+  background: var(--on-accent);
+}
+#page-record .record-switch input:focus-visible + .record-switch-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+#page-record .record-switch input:disabled + .record-switch-track { opacity: .45; }
+#page-record .record-calendar-feedback { margin: 0; font-size: 11px; }
+#page-record .record-calendar-feedback:empty { display: none; }
+#page-record .record-exercises-heading { margin-top: 6px; }
+#page-record .record-panel .exercise-card {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+}
+#page-record .exercise-overview {
+  min-height: 61px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  position: relative;
+  cursor: pointer;
+  list-style: none;
+  padding-right: 31px;
+}
+#page-record .exercise-overview::-webkit-details-marker { display: none; }
+#page-record .exercise-overview::after {
+  content: "⌄";
+  position: absolute;
+  right: 11px;
+  top: 14px;
+  font-size: 19px;
+  line-height: 1;
+  color: var(--muted);
+}
+#page-record .exercise-card[open] > .exercise-overview::after { transform: rotate(180deg); }
+#page-record .exercise-overview:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+  border-radius: 12px;
+}
+#page-record .exercise-overview-name { font-size: 14px; font-weight: 750; color: var(--ink); }
+#page-record .exercise-overview-current {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+#page-record .exercise-overview-previous {
+  color: var(--accent-soft);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+#page-record .exercise-editor {
+  border-top: 1px solid var(--line);
+  padding: 9px 10px 12px;
+}
+#page-record .exercise-previous-heading {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 7px 0 1px;
+}
+#page-record .exercise-set {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr)) 34px;
+  gap: 4px 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: end;
+}
+#page-record .exercise-set .set-number {
+  grid-column: 1;
+  font-size: 11px;
+  color: var(--ink);
+  font-weight: 750;
+  align-self: center;
+}
+#page-record .exercise-set .set-previous {
+  grid-column: 2 / 4;
+  text-align: right;
+  font-size: 11px;
+  color: var(--accent-soft);
+  align-self: center;
+}
+#page-record .exercise-set label { grid-row: auto; }
+#page-record .exercise-empty {
+  margin: 12px 0 5px;
+  padding: 11px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+#page-record .exercise-empty[hidden] { display: none; }
+#page-record .record-history-fold { margin-top: 11px; }
+@media (max-width: 360px) {
+  #page-record .record-date-bar { gap: 5px; }
+  #page-record .record-status-switches { gap: 5px; }
+  #page-record .record-date-field input { font-size: 12px; }
+  #page-record .exercise-overview { padding-inline: 9px; padding-right: 27px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #page-record .record-switch-track,
+  #page-record .record-switch-track::before { transition: none; }
+}
+
+@media (max-width: 340px) {
+  #page-record .record-date-bar { grid-template-columns: minmax(0,1fr); }
+  #page-record .record-status-switches { justify-content: flex-start; gap: 15px; }
+}

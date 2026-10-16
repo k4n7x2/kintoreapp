@@ -66,11 +66,11 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 | POST | `/api/workouts` | 日付・メモと任意の`sets`を新規保存（旧形式も許容） |
 | PUT | `/api/workouts/:id` | 日付・メモ・全セットをトランザクションで更新 |
 | DELETE | `/api/workouts/:id` | 記録とセット明細を削除 |
-| GET | `/api/workouts/recent?name=種目名` | その種目の最新セッションのセット |
+| GET | `/api/workouts/recent?name=種目名&before=YYYY-MM-DD` | 同名種目の前回セット。`before`指定時はその日より前の最新実績、未指定時は従来どおり最新実績 |
 | GET | `/api/calendar?month=YYYY-MM` | 月別の予定・来館フラグ（0002必要） |
 | PUT | `/api/calendar/YYYY-MM-DD` | 予定／来館の独立保存、両方falseなら該当日のフラグを削除 |
 
-日付は2000～2100年の実在日、メモは最大300（JavaScriptの`length`）。同日複数記録が可能。実施日数と件数は別で、月200件超は全件集計にならない。種目は60文字以内、1件最大48セット。セットごとに重量（0〜2000kg）・回数（0〜1000回）を保存する。お気に入りの永続保存・設定保存APIは未実装。Secret未設定・不正長では`/api/health`以外のAPIは503。
+日付は2000～2100年の実在日、メモは最大300（JavaScriptの`length`）。同日複数記録が可能。実施日数と件数は別で、月200件超は全件集計にならない。種目は60文字以内、1件最大48セット。セットごとに重量（0〜2000kg）・回数（0〜1000回）を保存する。繰り返し予定・種目テンプレート・お気に入りの永続保存・設定保存APIは未実装。単発の予定・来館はスイッチ切り替え時にD1へ保存する。Secret未設定・不正長では`/api/health`以外のAPIは503。
 
 ## 開発・必要時の確認
 

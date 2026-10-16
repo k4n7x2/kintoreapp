@@ -48,7 +48,10 @@ const cancelWorkoutEdit = byId("cancel-workout-edit");
 const dayPlanned = byId("day-planned");
 const dayAttended = byId("day-attended");
 const calendarError = byId("calendar-error");
-const saveCalendarDay = byId("save-calendar-day");
+const exerciseEmpty = byId("exercise-empty");
+let calendarSaving = false;
+let calendarStatusDate = "";
+let calendarStatusMessage = "";
 const calendarDays = new Map();
 let calendarAvailable = false;
 let monthTruncated = false;
@@ -127,39 +130,16 @@ function renderCalendar() {
   renderDayDetail();
 }
 function renderDayDetail() {
-  byId("selected-day-title").textContent = selectedDate.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$1年$2月$3日");
   const state = calendarDays.get(selectedDate);
   dayPlanned.checked = !!state?.planned;
   dayAttended.checked = !!state?.attended;
-  dayPlanned.disabled = !authorized || !calendarAvailable;
-  dayAttended.disabled = !authorized || !calendarAvailable;
-  saveCalendarDay.disabled = !authorized || !calendarAvailable;
+  dayPlanned.disabled = !authorized || !calendarAvailable || calendarSaving;
+  dayAttended.disabled = !authorized || !calendarAvailable || calendarSaving;
   calendarError.textContent = authorized && recordsLoaded && !calendarAvailable
-    ? "予定・来館の保存にはD1の追加マイグレーション（0002）が必要です。" : "";
-  const host = byId("selected-day-records");
-  host.replaceChildren();
-  const entries = workouts.filter(x => x.performed_on === selectedDate);
-  if (!entries.length) {
-    host.textContent = "この日の筋トレ記録はありません。";
-    return;
-  }
-  const label = document.createElement("p");
-  label.textContent = "この日の筋トレ記録：" + entries.length + "件";
-  host.appendChild(label);
-  for (const record of entries) {
-    const row = document.createElement("div");
-    row.className = "day-record-row";
-    const summary = document.createElement("span");
-    summary.textContent = workoutSummary(record);
-    const edit = document.createElement("button");
-    edit.type = "button";
-    edit.className = "secondary-action";
-    edit.textContent = "編集";
-    edit.addEventListener("click", () => editWorkout(record));
-    row.append(summary, edit);
-    host.appendChild(row);
-  }
+    ? "予定・来館の保存にはD1の追加マイグレーション（0002）が必要です。"
+    : calendarStatusDate === selectedDate ? calendarStatusMessage : "";
 }
+
 function setReady(ready) {
   dbReady = ready;
   saveDate.disabled = !ready;
@@ -167,18 +147,34 @@ function setReady(ready) {
   saveButton.disabled = !ready;
   addExerciseButton.disabled = !ready;
   exerciseList.querySelectorAll("input, button").forEach(el => { el.disabled = !ready; });
+  exerciseList.querySelectorAll(".exercise-card").forEach(card => {
+    if (card.renderPrevious) card.renderPrevious();
+  });
 }
 
+
+const formatPrevious = set => Number(set.weight_kg).toString() + "kg × " + set.reps + "回";
+function updateExerciseEmpty() {
+  exerciseEmpty.hidden = !!exerciseList.querySelector(".exercise-card");
+}
+function refreshPreviousReferences() {
+  exerciseList.querySelectorAll(".exercise-card").forEach(card => {
+    if (typeof card.refreshPrevious === "function") card.refreshPrevious();
+  });
+}
 function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   const row = document.createElement("div");
   row.className = "exercise-set";
   const number = document.createElement("span");
   number.className = "set-number";
+  const last = document.createElement("span");
+  last.className = "set-previous";
+  last.textContent = "前回：—";
   const weightLabel = document.createElement("label");
   weightLabel.textContent = "重量 kg";
   const weight = document.createElement("input");
   weight.type = "number"; weight.min = "0"; weight.max = "2000"; weight.step = "0.5";
-  weight.inputMode = "decimal"; weight.required = true;
+  weight.inputMode = "decimal";
   weight.className = "set-weight";
   weight.value = String(set.weight_kg ?? 0);
   weightLabel.appendChild(weight);
@@ -186,7 +182,7 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   repsLabel.textContent = "回数";
   const reps = document.createElement("input");
   reps.type = "number"; reps.min = "0"; reps.max = "1000"; reps.step = "1";
-  reps.inputMode = "numeric"; reps.required = true;
+  reps.inputMode = "numeric";
   reps.className = "set-reps";
   reps.value = String(set.reps ?? 10);
   repsLabel.appendChild(reps);
@@ -194,18 +190,36 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   remove.type = "button"; remove.className = "secondary-action";
   remove.textContent = "×"; remove.setAttribute("aria-label", "このセットを削除");
   remove.addEventListener("click", () => { row.remove(); renumberSets(container); });
-  row.append(number, weightLabel, repsLabel, remove);
+  row.append(number, last, weightLabel, repsLabel, remove);
   container.appendChild(row);
   renumberSets(container);
+  return row;
 }
 function renumberSets(container) {
-  container.querySelectorAll(".set-number").forEach((el, index) => { el.textContent = (index + 1) + "セット目"; });
+  container.querySelectorAll(".exercise-set").forEach((row, index) => {
+    row.querySelector(".set-number").textContent = (index + 1) + "セット";
+  });
+  const card = container.closest(".exercise-card");
+  if (card?.renderPrevious) card.renderPrevious();
+  if (card?.renderSummary) card.renderSummary();
 }
 function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
-  const card = document.createElement("fieldset");
+  // 通常時は一覧、編集中だけ展開する。SD栞の下部表示を維持する。
+  exerciseList.querySelectorAll(".exercise-card").forEach(card => { card.open = false; });
+  const card = document.createElement("details");
   card.className = "exercise-card";
-  const legend = document.createElement("legend");
-  legend.textContent = "トレーニング種目";
+  card.open = true;
+  const summary = document.createElement("summary");
+  summary.className = "exercise-overview";
+  const heading = document.createElement("strong");
+  heading.className = "exercise-overview-name";
+  const current = document.createElement("span");
+  current.className = "exercise-overview-current";
+  const previousSummary = document.createElement("span");
+  previousSummary.className = "exercise-overview-previous";
+  summary.append(heading, current, previousSummary);
+  const body = document.createElement("div");
+  body.className = "exercise-editor";
   const head = document.createElement("div");
   head.className = "exercise-card-head";
   const label = document.createElement("label");
@@ -220,11 +234,13 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
   const remove = document.createElement("button");
   remove.type = "button"; remove.className = "secondary-action";
   remove.textContent = "削除";
-  remove.addEventListener("click", () => card.remove());
+  remove.addEventListener("click", () => { card.remove(); updateExerciseEmpty(); });
   head.append(label, remove);
   const rows = document.createElement("div");
   rows.className = "exercise-sets";
-  for (const set of sets) newSetRow(rows, set);
+  const previousLabel = document.createElement("p");
+  previousLabel.className = "exercise-previous-heading";
+  previousLabel.textContent = "前回の記録を確認中…";
   const actions = document.createElement("div");
   actions.className = "exercise-actions";
   const addSet = document.createElement("button");
@@ -232,39 +248,101 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }]) {
   addSet.addEventListener("click", () => {
     if (rows.children.length >= 12) return;
     const last = rows.lastElementChild;
-    newSetRow(rows, {
+    const row = newSetRow(rows, {
       weight_kg: last ? Number(last.querySelector(".set-weight").value) : 0,
       reps: last ? Number(last.querySelector(".set-reps").value) : 10
     });
-    rows.lastElementChild.querySelector(".set-weight").focus();
+    row.querySelector(".set-weight").focus();
   });
   const recent = document.createElement("button");
   recent.type = "button"; recent.className = "secondary-action";
-  recent.textContent = "前回の内容を使う";
+  recent.textContent = "前回のセットをコピー";
+  recent.disabled = true;
   const feedback = document.createElement("p");
   feedback.className = "field-hint"; feedback.setAttribute("role", "status");
-  recent.addEventListener("click", async () => {
+  let previous = [];
+  let referenceKey = "";
+  let lookupId = 0;
+  card.renderSummary = () => {
+    heading.textContent = nameInput.value.trim() || "新しい種目";
+    const currentSets = [...rows.querySelectorAll(".exercise-set")];
+    current.textContent = currentSets.length
+      ? "今回 " + currentSets.map(row => {
+        const kg = row.querySelector(".set-weight").value;
+        const reps = row.querySelector(".set-reps").value;
+        return (kg || "—") + "kg×" + (reps || "—") + "回";
+      }).join(" / ") : "セットなし";
+  };
+  card.renderPrevious = () => {
+    previousSummary.textContent = previous.length
+      ? "前回 " + previous.map(formatPrevious).join(" / ")
+      : "前回の記録なし";
+    previousLabel.textContent = previous.length
+      ? "前回 " + previous[0].performed_on + " の記録"
+      : "前回の記録なし";
+    rows.querySelectorAll(".exercise-set").forEach((row, i) => {
+      const set = previous.find(p => Number(p.set_number) === i + 1);
+      row.querySelector(".set-previous").textContent = set
+        ? "前回：" + formatPrevious(set) : "前回：—";
+    });
+    recent.disabled = !dbReady || !previous.length;
+  };
+  card.refreshPrevious = async () => {
     const chosen = nameInput.value.trim();
-    if (!chosen) { feedback.textContent = "種目名を入力してください。"; return; }
-    recent.disabled = true;
-    feedback.textContent = "前回の内容を確認中…";
+    const date = saveDate.value;
+    const id = ++lookupId;
+    previous = [];
+    card.renderPrevious();
+    if (!chosen || !date || !dbReady) return;
+    referenceKey = chosen + "|" + date;
+    previousLabel.textContent = "前回の記録を確認中…";
     try {
-      const result = await fetchJSON("/api/workouts/recent?name=" + encodeURIComponent(chosen));
-      if (!card.isConnected) return;
-      if (!result.sets.length) { feedback.textContent = "この種目の前回記録はありません。"; return; }
-      rows.replaceChildren();
-      result.sets.forEach(set => newSetRow(rows, set));
-      feedback.textContent = "前回（" + result.sets[0].performed_on + "）のセットを反映しました。";
+      const result = await fetchJSON("/api/workouts/recent?name=" +
+        encodeURIComponent(chosen) + "&before=" + encodeURIComponent(date));
+      if (id !== lookupId || !card.isConnected ||
+          referenceKey !== nameInput.value.trim() + "|" + saveDate.value) return;
+      previous = Array.isArray(result.sets) ? result.sets : [];
+      card.renderPrevious();
     } catch {
-      feedback.textContent = "前回の記録を取得できませんでした。";
-    } finally {
-      if (card.isConnected) recent.disabled = !dbReady;
+      if (id !== lookupId || !card.isConnected) return;
+      previousSummary.textContent = "前回を取得できませんでした";
+      previousLabel.textContent = "前回の記録を取得できませんでした";
+      recent.disabled = true;
     }
+  };
+  nameInput.addEventListener("input", () => {
+    ++lookupId;
+    previous = [];
+    card.renderSummary();
+    card.renderPrevious();
+  });
+  nameInput.addEventListener("change", () => card.refreshPrevious());
+  rows.addEventListener("input", card.renderSummary);
+  recent.addEventListener("click", () => {
+    if (!previous.length || !dbReady) return;
+    if (rows.querySelector(".exercise-set") && !confirm("入力中のセットを前回の内容に置き換えますか？")) return;
+    rows.replaceChildren();
+    for (const set of previous) newSetRow(rows, set);
+    card.renderPrevious();
+    card.renderSummary();
+    feedback.textContent = "前回のセットを反映しました。";
   });
   actions.append(addSet, recent);
-  card.append(legend, head, rows, actions, feedback);
+  body.append(head, previousLabel, rows, actions, feedback);
+  card.append(summary, body);
   exerciseList.appendChild(card);
+  for (const set of sets) newSetRow(rows, set);
+  card.renderSummary();
+  card.renderPrevious();
+  card.addEventListener("toggle", () => {
+    if (card.open) exerciseList.querySelectorAll(".exercise-card").forEach(other => {
+      if (other !== card) other.open = false;
+    });
+  });
   card.querySelectorAll("input, button").forEach(el => { el.disabled = !dbReady; });
+  // 同日・未来の記録を「前回」に混ぜず、選択日より前の最新実績だけ参照。
+  if (name && dbReady) card.refreshPrevious();
+  updateExerciseEmpty();
   return card;
 }
 function resetWorkoutForm(date = todayISO()) {
@@ -276,7 +354,7 @@ function resetWorkoutForm(date = todayISO()) {
   selectedDate = date;
   saveNote.value = "";
   exerciseList.replaceChildren();
-  addExercise();
+  updateExerciseEmpty();
   renderDayDetail();
 }
 function workoutSummary(record) {
@@ -305,8 +383,9 @@ function editWorkout(record) {
     if (!groups.has(set.exercise_name)) groups.set(set.exercise_name, []);
     groups.get(set.exercise_name).push(set);
   }
-  if (!groups.size) addExercise();
-  else for (const [name, sets] of groups) addExercise(name, sets);
+  if (groups.size) for (const [name, sets] of groups) addExercise(name, sets);
+  updateExerciseEmpty();
+  if (dbReady) refreshPreviousReferences();
   saveFeedback.textContent = "過去の記録を編集中です。";
   setScreen("record");
   byId("record-scroll").scrollTop = 0;
@@ -378,6 +457,7 @@ async function loadWorkouts() {
     renderCalendar();
     renderHistory();
     setReady(true);
+    refreshPreviousReferences();
   } catch (error) {
     if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
     if (error.status === 401) {
@@ -426,14 +506,31 @@ function collectSets() {
   for (const card of exerciseList.querySelectorAll(".exercise-card")) {
     const name = card.querySelector(".exercise-name").value.trim();
     const rows = [...card.querySelectorAll(".exercise-set")];
-    if (!name && rows.length) continue; // 名前未入力のひな形は送信しない。
-    if (!name) continue;
+    if (!name) {
+      const untouched = rows.length === 1 &&
+        rows[0].querySelector(".set-weight").value === "0" &&
+        rows[0].querySelector(".set-reps").value === "10";
+      // 空のひな形だけなら、既存の「メモのみ記録」を妨げない。
+      if (!rows.length || untouched) continue;
+      card.open = true;
+      card.querySelector(".exercise-name").focus();
+      throw new Error("種目名を入力してください。");
+    }
     if (name.length > 60) throw new Error("種目名は60文字以内です。");
+    if (!rows.length) { card.open = true; throw new Error("セットを追加してください。"); }
     for (let i = 0; i < rows.length; i++) {
-      const weight = Number(rows[i].querySelector(".set-weight").value);
-      const reps = Number(rows[i].querySelector(".set-reps").value);
-      if (!Number.isFinite(weight) || weight < 0 || weight > 2000 ||
-          !Number.isInteger(reps) || reps < 0 || reps > 1000) throw new Error("重量・回数を確認してください。");
+      const weightInput = rows[i].querySelector(".set-weight");
+      const repsInput = rows[i].querySelector(".set-reps");
+      const weight = Number(weightInput.value);
+      const reps = Number(repsInput.value);
+      if (!weightInput.value || !repsInput.value ||
+          !Number.isFinite(weight) || weight < 0 || weight > 2000 ||
+          !Number.isInteger(reps) || reps < 0 || reps > 1000 ||
+          !weightInput.validity.valid || !repsInput.validity.valid) {
+        card.open = true;
+        (weightInput.value && weightInput.validity.valid ? repsInput : weightInput).focus();
+        throw new Error("重量・回数を確認してください。");
+      }
       result.push({ exercise_name: name, set_number: i + 1, weight_kg: weight, reps });
     }
   }
@@ -473,33 +570,48 @@ byId("workout-form").addEventListener("submit", async (event) => {
     saveFeedback.textContent = "保存できませんでした。日付・入力内容・接続状態を確認してください。";
   }
 });
-byId("save-calendar-day").addEventListener("click", async () => {
-  if (!authorized || !calendarAvailable) return;
+async function persistDaySwitches() {
+  if (!authorized || !calendarAvailable || calendarSaving) return;
   const date = selectedDate;
-  saveCalendarDay.disabled = true;
-  calendarError.textContent = "保存中…";
+  const planned = dayPlanned.checked;
+  const attended = dayAttended.checked;
+  calendarSaving = true;
+  calendarStatusDate = date;
+  calendarStatusMessage = "保存中…";
+  calendarError.textContent = calendarStatusMessage;
+  dayPlanned.disabled = true;
+  dayAttended.disabled = true;
   try {
     const result = await fetchJSON("/api/calendar/" + encodeURIComponent(date), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ planned: dayPlanned.checked, attended: dayAttended.checked })
+      body: JSON.stringify({ planned, attended })
     });
-    if (result.planned || result.attended) calendarDays.set(date, result);
-    else calendarDays.delete(date);
-    if (selectedDate === date) {
-      renderCalendar();
-      calendarError.textContent = "予定・来館を保存しました。";
+    if (date.slice(0, 7) === currentMonth()) {
+      if (result.planned || result.attended) calendarDays.set(date, result);
+      else calendarDays.delete(date);
     }
-  } catch {
-    calendarError.textContent = "保存できませんでした。接続状態を確認してください。";
+    calendarStatusMessage = "保存しました。";
+  } catch (error) {
+    if (error.status === 401) {
+      setAuthenticated(false);
+      loginFeedback.textContent = "ログインの有効期限が切れました。もう一度ログインしてください。";
+      return;
+    }
+    calendarStatusMessage = "保存できませんでした。変更前の状態に戻しました。";
   } finally {
-    saveCalendarDay.disabled = !calendarAvailable;
+    calendarSaving = false;
+    if (authorized) renderCalendar();
   }
-});
+}
+dayPlanned.addEventListener("change", persistDaySwitches);
+dayAttended.addEventListener("change", persistDaySwitches);
 // 記録の日付を直接変更した場合も予定・来館の表示先を追従させる。
 saveDate.addEventListener("change", () => {
   if (!saveDate.value) return;
   selectedDate = saveDate.value;
+  calendarStatusDate = "";
+  calendarStatusMessage = "";
   if (currentMonth() !== selectedDate.slice(0, 7)) {
     shownYear = Number(selectedDate.slice(0, 4));
     shownMonth = Number(selectedDate.slice(5, 7)) - 1;
@@ -514,6 +626,7 @@ saveDate.addEventListener("change", () => {
   } else {
     renderDayDetail();
   }
+  refreshPreviousReferences();
 });
 
 function changeMonth(offset) {
