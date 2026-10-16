@@ -45,6 +45,15 @@ function pose(mode) {
     }
   } };
 }
+// Key events inside an iframe do not bubble to the parent document.
+// Reuse the parent's verified close handler for keyboard Escape.
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || window.parent === window) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  window.parent.postMessage({ type: "kintore-monogatari-close-request-v1" }, window.location.origin);
+}, true);
+
 function completePrototype() {
   if (window.parent !== window) {
     window.parent.postMessage({ type: "kintore-monogatari-finished-v1" }, window.location.origin);

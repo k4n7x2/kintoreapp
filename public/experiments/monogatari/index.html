@@ -7,6 +7,14 @@
   <title>朝倉栞 | Monogatari演出試作</title>
   <link rel="stylesheet" href="./vendor/monogatari.css">
   <link rel="stylesheet" href="./prototype.css?v=1">
+  <script>
+    // Show a recoverable message if a self-hosted engine script fails to load.
+    window.addEventListener("error", (event) => {
+      if (event.target?.tagName === "SCRIPT") {
+        document.getElementById("prototype-failure")?.removeAttribute("hidden");
+      }
+    }, true);
+  </script>
   <script defer src="./vendor/monogatari.js"></script>
   <script defer src="./prototype.js?v=1"></script>
 </head>

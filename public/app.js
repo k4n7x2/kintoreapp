@@ -1954,7 +1954,9 @@ window.addEventListener("popstate", () => {
 window.addEventListener("message", (event) => {
   if (monogatariTestShell.hidden || event.origin !== window.location.origin ||
       event.source !== monogatariTestFrame.contentWindow) return;
-  if (event.data && event.data.type === "kintore-monogatari-finished-v1") {
+  const type = event.data?.type;
+  if (type === "kintore-monogatari-finished-v1" ||
+      type === "kintore-monogatari-close-request-v1") {
     closeMonogatariTest();
   }
 });
