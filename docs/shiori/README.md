@@ -50,7 +50,7 @@ GitHubは正式画像の管理先。プロジェクトのソースは、画像�
 長編イベントは **原作台本 → ゲーム用演出台本 → 実装用データ** の順で制作する。原作は地の文を保ち、ゲーム用には栞のセリフと必要な選択肢を中心に、背景・表情・間などへ翻案する。詳細ルールは [セリフ・物語制作指示](../dialogue-production-instructions.md) と [dialogue.md](dialogue.md) を参照。
 
 - **第1話「久しぶり、はじめまして。」原作台本 v1**：[stories/episode-01-reunion/original.md](stories/episode-01-reunion/original.md) — 初稿を保管。完成版の採用・全場面の正史化・アプリ実装は未実施。
-- ゲーム用演出台本の予定先：`stories/episode-01-reunion/game-script.md`（未作成）。制作・採用後に別ファイルで保存する。
+- **第1話「久しぶり、はじめまして。」ゲーム用演出台本 v1.1**：[stories/episode-01-reunion/game-script.md](stories/episode-01-reunion/game-script.md) — 再会前は敬語、正体判明後はタメ口に切り替わる制作基準版として登録。素材追加・Monogatari本編実装・イベント進行保存は未実施。原作の最終採用や新しい過去・出来事の正史化とは区別する。
 - 原作台本で創作した台詞や出来事は、[character.md](character.md) の採用済み設定と区別し、採用指示なしに追加の正史として登録しない。
 
 ## 正本の更新と採用物の所在
