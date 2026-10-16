@@ -1,7 +1,7 @@
 {
   "id": "home-portrait-v1",
-  "status": "calibrated",
-  "statusReason": "Nominal source-pixel anchors calibrated from the approved 691x1536 Android screenshot using manually inspected screenshot landmarks and an inverse transform of the verified CSS at a 412px-wide viewport. These are display-calibrated design coordinates, NOT direct mouse-click measurements of the original WebP.",
+  "status": "provisional",
+  "statusReason": "Independent technical audit 2026-10-16 (F05): 11514.jpg matches roomwear-fun, not the formerly attributed roomwear-joy. Screenshot-derived eye/chin landmarks are still design candidates only; direct source pixel verification and provenance review required before formal calibration.",
   "coordinateSystem": "source image pixels; top-left origin, x right, y down",
   "canvas": {
     "width": 941,
@@ -27,10 +27,10 @@
   "reference": {
     "approvedDisplayCommit": "5b8d16ce23eab0ec188d69b2d5e33ea5923a4018",
     "inspectedSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
-    "canonicalImageCandidate": "public/assets/shiori/home/v1/shiori-home-roomwear-joy-r1.webp",
+    "canonicalImageCandidate": "public/assets/shiori/home/v1/shiori-home-roomwear-fun-r1.webp",
     "trainingImage": "public/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp",
     "approvedScreenshotMeasurements": {
-      "basis": "2026-10-16 approved 691x1536 Android captures; detailed roomwear-Joy pixel annotations and CSS inverse projection; measured manually on screenshot",
+      "basis": "Screen coordinate candidates measured against the supplied 691x1536 screenshot. Independent audit matched screenshot 11514.jpg to roomwear-fun, not joy; verification pending.",
       "screenshotSize": [
         691,
         1536
@@ -43,7 +43,7 @@
         ],
         "chinY": 948
       },
-      "roomwearJoy": {
+      "roomwearFun": {
         "headTopY": 567,
         "eyeCenter": [
           341.5,
@@ -52,7 +52,19 @@
         "chinY": 919
       }
     },
-    "privacy": "Screenshot image bytes and Android status bar are not stored in GitHub. Only image coordinates are retained."
+    "privacy": "Screenshot image bytes and Android status bar are not stored in GitHub. Only image coordinates are retained.",
+    "auditEvidence": {
+      "date": "2026-10-16",
+      "screenshotSha256": "a2092c7f7bdfa1b2ce3f2ea32195ea2a141e1b43ec0b7ff143564457c6e71098",
+      "candidateFunSha256": "1e055d3096baf1f0f4514d0219c271a429c265fb8a784ae15867fbe4a506e74a",
+      "excludedJoySha256": "239c2ffb4a2aef7587e014c5da18bcc122b74239830ad623ef5d268695418087",
+      "pixelRegistrationRMSE": {
+        "fun": 4.17,
+        "joy": 15.2
+      },
+      "source": "Independent Work Astra audit report dated 2026-10-16; requires confirmation before final calibration",
+      "note": "Hash-based attribution is evidence of source identity, not a new person design or position approval"
+    }
   },
   "calibration": {
     "method": "screenshot_pixel_annotations_plus_css_inverse_projection",
@@ -111,6 +123,7 @@
     "shoulderStatus": "unmeasured; samePoseAsReference checking requires independent shoulder annotation",
     "referenceSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
     "screenshotPrivacy": "Reference screenshots remain in conversation, not committed to public repository.",
-    "nextStep": "Confirm the first new conforming portrait on Android with unchanged common display CSS; original legacy portraits not changed."
+    "nextStep": "Confirm screenshot source with original roomwear-fun pixel landmarks and browser dimensions; retain all legacy assets and CSS unchanged",
+    "sourceImageReview": "Independent screenshot/source image comparison indicates roomwear-fun. Eye/head design coordinates remain provisional until direct original image landmark inspection."
   }
 }
