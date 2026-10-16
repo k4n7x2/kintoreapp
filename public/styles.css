@@ -2140,12 +2140,6 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   line-height: 1;
   touch-action: manipulation;
 }
-#page-record #record-editor-view .set-inline-stepper .set-step-minus {
-  border-right: 1px solid var(--line);
-}
-#page-record #record-editor-view .set-inline-stepper .set-step-plus {
-  border-left: 1px solid var(--line);
-}
 #page-record #record-editor-view .set-inline-stepper button:disabled {
   opacity: .42;
   cursor: not-allowed;
