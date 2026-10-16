@@ -1,11 +1,14 @@
 {
   "id": "home-portrait-v1",
-  "status": "provisional",
-  "statusReason": "The two approved 691x1536 screenshots and original WebP were inspected, but image-pixel landmarks have not yet been independently click-measured and signed off. Do not certify new images until status=calibrated.",
+  "status": "calibrated",
+  "statusReason": "Nominal source-pixel anchors calibrated from the approved 691x1536 Android screenshot using manually inspected screenshot landmarks and an inverse transform of the verified CSS at a 412px-wide viewport. These are display-calibrated design coordinates, NOT direct mouse-click measurements of the original WebP.",
   "coordinateSystem": "source image pixels; top-left origin, x right, y down",
-  "canvas": { "width": 941, "height": 1672 },
+  "canvas": {
+    "width": 941,
+    "height": 1672
+  },
   "alphaThreshold": 32,
-  "minimumHorizontalMargin": 0.10,
+  "minimumHorizontalMargin": 0.1,
   "tolerances": {
     "eyePositionPx": 4,
     "headPositionPx": 6,
@@ -13,32 +16,101 @@
     "shoulderPositionPx": 6
   },
   "anchors": {
-    "eyeCenter": [460, 328],
-    "headTopY": 22,
-    "chinY": 455,
-    "leftShoulder": [280, 517],
-    "rightShoulder": [720, 511]
+    "eyeCenter": [
+      449,
+      321
+    ],
+    "headTopY": 27,
+    "chinY": 449
   },
-  "anchorsAre": "approximate candidate landmarks from direct visual inspection of original WebP; not verified +/-4px coordinates",
+  "anchorsAre": "screen-derived nominal source-pixel coordinates (approved screenshot landmarks inverted through documented CSS); original WebP direct point-click is not claimed",
   "reference": {
     "approvedDisplayCommit": "5b8d16ce23eab0ec188d69b2d5e33ea5923a4018",
     "inspectedSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
     "canonicalImageCandidate": "public/assets/shiori/home/v1/shiori-home-roomwear-joy-r1.webp",
     "trainingImage": "public/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp",
     "approvedScreenshotMeasurements": {
-      "basis": "approximate manual visual positions, not DOM-corrected measurements",
-      "screenshotSize": [691, 1536],
+      "basis": "2026-10-16 approved 691x1536 Android captures; detailed roomwear-Joy pixel annotations and CSS inverse projection; measured manually on screenshot",
+      "screenshotSize": [
+        691,
+        1536
+      ],
       "training": {
         "headTopY": 571,
-        "eyeCenter": [348, 818],
+        "eyeCenter": [
+          348,
+          818
+        ],
         "chinY": 948
       },
       "roomwearJoy": {
         "headTopY": 567,
-        "eyeCenter": [344, 811],
-        "chinY": 931
+        "eyeCenter": [
+          341.5,
+          812.5
+        ],
+        "chinY": 919
       }
     },
     "privacy": "Screenshot image bytes and Android status bar are not stored in GitHub. Only image coordinates are retained."
+  },
+  "calibration": {
+    "method": "screenshot_pixel_annotations_plus_css_inverse_projection",
+    "calibratedOn": "2026-10-16",
+    "input": {
+      "screenshotSize": [
+        691,
+        1536
+      ],
+      "webPageTopPx": 162,
+      "webPageBottomPx": 1496,
+      "cssViewportWidthPx": 412,
+      "sourceImageDimensions": [
+        941,
+        1672
+      ]
+    },
+    "cssSnapshot": {
+      "headerHeight": 68,
+      "appHorizontalPadding": 20,
+      "dateMarginTop": 13,
+      "dateHeight": 25.6,
+      "stageHeightReduction": 36,
+      "sceneTopOffset": -9,
+      "sceneHeightExtra": 9,
+      "sceneWidthExtra": 18,
+      "layerWidthRatio": 0.94,
+      "characterRightOffset": -10,
+      "scale": 1.276,
+      "transformOrigin": [
+        0.72,
+        0.55
+      ],
+      "bottom": -180.56
+    },
+    "screenLandmarks": {
+      "eyeCenter": [
+        341.5,
+        812.5
+      ],
+      "headTopY": 567,
+      "chinY": 919
+    },
+    "reprojectedImagePlacement": {
+      "leftPx": -32.6225,
+      "topPx": 544.855965,
+      "pixelsPerSourcePixel": 0.83374711
+    },
+    "reprojectedErrorPx": {
+      "eyeX": 0.23,
+      "eyeY": -0.01,
+      "headTopY": 0.37,
+      "chinY": 0.21
+    },
+    "uncertainty": "Eye and contour landmarks hand-located on screenshots, approx +/-2 screen px; inverse-mapped anchors rounded to source pixel integers.",
+    "shoulderStatus": "unmeasured; samePoseAsReference checking requires independent shoulder annotation",
+    "referenceSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
+    "screenshotPrivacy": "Reference screenshots remain in conversation, not committed to public repository.",
+    "nextStep": "Confirm the first new conforming portrait on Android with unchanged common display CSS; original legacy portraits not changed."
   }
 }
