@@ -2203,3 +2203,24 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   #page-record #record-editor-view .set-inline-stepper button { width: 30px; }
   #page-record #record-editor-view .exercise-set .set-metric .set-prev-copy { font-size: 9px; }
 }
+
+/* 3 sets remain fully visible; sets 4–12 scroll inside this list, not below the form.
+   Height is calculated from the actual first 3 rows in app.js. */
+#page-record #record-editor-view .exercise-sets {
+  max-width: 100%;
+  min-height: 0;
+}
+#page-record #record-editor-view .exercise-sets.is-scrollable {
+  max-height: var(--three-sets-height);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--subtle) transparent;
+  scroll-padding-block: 4px;
+  border-bottom: 1px solid var(--line);
+}
+#page-record #record-editor-view .exercise-sets.is-scrollable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}

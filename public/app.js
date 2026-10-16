@@ -378,6 +378,30 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   renumberSets(container);
   return row;
 }
+// 3セット分だけを上限にし、4セット目以降はセット領域内でスクロールさせる。
+// 行の実測値を使うため、画面幅や文字サイズが変わっても3行目を途中で切らない。
+function updateSetScrollLimit(container) {
+  const rows = [...container.querySelectorAll(".exercise-set")];
+  const overflow = rows.length > 3;
+  if (!overflow) {
+    container.classList.remove("is-scrollable");
+    container.style.removeProperty("--three-sets-height");
+    container.removeAttribute("role");
+    container.removeAttribute("aria-label");
+    container.removeAttribute("tabindex");
+    container.scrollTop = 0;
+    return;
+  }
+  // 非表示中の記録は表示時に再計測する（0pxで固定しない）。
+  const visibleHeights = rows.slice(0, 3).map(row => row.getBoundingClientRect().height);
+  if (!visibleHeights.every(height => height > 0)) return;
+  container.style.setProperty("--three-sets-height",
+    Math.ceil(visibleHeights.reduce((sum, height) => sum + height, 0)) + "px");
+  container.classList.add("is-scrollable");
+  container.setAttribute("role", "region");
+  container.setAttribute("aria-label", "セット入力。4セット目以降はスクロールして表示");
+  container.setAttribute("tabindex", "0");
+}
 function renumberSets(container) {
   container.querySelectorAll(".exercise-set").forEach((row, index) => {
     row.querySelector(".set-number").textContent = (index + 1) + "セット";
@@ -391,6 +415,7 @@ function renumberSets(container) {
         (index + 1) + "セット目の" + label + "を増やす");
     }
   });
+  updateSetScrollLimit(container);
   const card = container.exerciseCard;
   if (card?.renderPrevious) card.renderPrevious();
   if (card?.renderSummary) card.renderSummary();
@@ -608,6 +633,7 @@ function openExerciseEditor(card, origin = "record") {
   recordEditor.hidden = false;
   card.editorBody.hidden = false;
   recordEditorHost.appendChild(card.editorBody);
+  updateSetScrollLimit(card.rows);
   byId("record-editor-title").textContent = card.nameInput.value.trim() || "種目を編集";
   saveNote.value = card.noteValue || "";
   recordNoteDetails.open = !!saveNote.value;
@@ -616,6 +642,11 @@ function openExerciseEditor(card, origin = "record") {
   byId("record-scroll").scrollTop = 0;
   byId("record-editor-back").focus();
 }
+window.addEventListener("resize", () => {
+  if (activeExerciseCard && !recordEditor.hidden) {
+    updateSetScrollLimit(activeExerciseCard.rows);
+  }
+});
 byId("record-editor-back").addEventListener("click", returnFromExerciseEditor);
 saveNote.addEventListener("input", () => {
   if (activeExerciseCard) updateDraftIndicators();
@@ -754,7 +785,11 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
       weight_kg: last ? Number(last.querySelector(".set-weight").value) : 0,
       reps: last ? Number(last.querySelector(".set-reps").value) : 10
     });
+    // 新しく追加した4セット目以降が、スクロール領域内で見える位置まで移動。
     row.querySelector(".set-weight").focus();
+    if (rows.classList.contains("is-scrollable")) {
+      row.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
   });
   const recent = document.createElement("button");
   recent.type = "button"; recent.className = "secondary-action";
