@@ -3,6 +3,12 @@
 確認日：2026-10-16 JST。今回の機能拡張の確認元：main `eaecebe692af1607459783c6614e038d36df0bdd`。既存画像や認証方式の変更なし。
 この文書は確認時点の記録。今後は最新mainと再照合する。**以下の「現在の実装」を現行の要約とし、後半の履歴は各変更時点の記録として読む。** 技術・APIの詳細は[README](../README.md)、分担は[共通案内](project-guide.md)。
 
+## 2026-10-18 ホームのジム用通常立ち絵を第1話の採用版へ統一
+
+- 第1話で採用した `public/assets/shiori/gim/v1/shiori-gim-story-normal-alt1-before.webp`（1086×1448、透過WebP）をホームのトレーニングウェア表示にも使用。従来の `shiori-home-training-bust-v1.webp` は保存し、画像そのものは変更しない。
+- `public/app.js` の training 立ち絵定義および `public/index.html` の初期画像を同一パスへ変更し、画像の width / height 属性とCSSのフォールバック aspect-ratio を更新。共通画像に置き換えるだけで、ホーム既存の表示倍率・基準位置・吹き出し・衣装選択・部屋着差分や第1話の表情切替は維持する。
+- 設計上の画像参照と構文の静的確認を実施。本番Workersデプロイ・Android実機での顔位置、見切れ、セリフ吹き出しとの干渉は未確認。後続の検証でのみ表示補正を判断する。
+
 ## 2026-10-17 記録／カレンダー専用セリフ v0.1 試験採用
 
 - 開始時main：`bd7c8fe99002b2c7c4320cbacd2c51e48e8ccf57`。正本 `docs/shiori/dialogues/record-calendar-v0.1.md` の**115本・21条件グループ**を一字も改稿せず `public/data/shiori-record-calendar-v0.1.json` に登録。IDと本文を保持し、ホーム／分析の採用済み本文・イベント台本／立ち絵は不変更。

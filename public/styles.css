@@ -460,7 +460,7 @@ body.is-authenticated .app-page { padding-top: 10px; }
   bottom: var(--home-character-bottom-base, 0px);
   width: 100%;
   height: auto;
-  aspect-ratio: 800 / 1067;
+  aspect-ratio: 1086 / 1448;
   max-height: 100%;
   padding: 0;
   border: 0;

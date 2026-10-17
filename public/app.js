@@ -1677,7 +1677,8 @@ const shioriHomeArt = shioriHomeTouch.querySelector(".character-layer__art");
 // 衣装切り替えの試験用状態。端末やD1へ保存せず、ログイン時は既存衣装に戻す。
 const outfitSelect = byId("shiori-outfit");
 const outfitStatus = byId("shiori-outfit-status");
-// 衣装／表情は固定素材。セリフとの条件付けは将来行うため、今は均等ランダムに表示する。
+// 衣装／表情は固定素材。現行ジム立ち絵は第1話の採用 normal を共用し、
+// ホームでのジム用表情自動切り替えはまだ行わない。部屋着は従来どおり均等抽選。
 // 画像ごとの補正値は CSS 変数へ流し、ホームの承認済み距離感を保つ。
 const trainingLayout = {
   base: { scale: 1.14, origin: "right bottom", bottom: "0px" },
@@ -1707,9 +1708,9 @@ const homePortraits = {
     id: "training-default",
     label: "トレーニングウェア",
     outfit: "training",
-    src: "/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp",
-    width: 800,
-    height: 1067,
+    src: "/assets/shiori/gim/v1/shiori-gim-story-normal-alt1-before.webp",
+    width: 1086,
+    height: 1448,
     layout: trainingLayout
   }],
   roomwear: roomwearVariantDefinitions.map(({ id, label, overrides = {} }) => ({
