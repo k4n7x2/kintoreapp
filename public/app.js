@@ -1284,7 +1284,7 @@ async function fetchJSON(path, options = {}) {
 async function loadWorkouts() {
   const month = currentMonth();
   const requestId = ++recordsRequestId;
-  const dialogueAtStart = sideDialogueRequestId;
+  const calendarTouchAtStart = calendarDialogueInteractionId;
   try {
     const result = await fetchJSON("/api/workouts?month=" + encodeURIComponent(month));
     if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
@@ -1310,7 +1310,7 @@ async function loadWorkouts() {
     renderHistory();
     setReady(true);
     // 月データ到着直後だけ、未操作のカレンダー吹き出しを再評価。
-    if (activePage === "calendar" && dialogueAtStart === sideDialogueRequestId) {
+    if (activePage === "calendar" && calendarTouchAtStart === calendarDialogueInteractionId) {
       showSideDialogue("calendar");
     }
     if (pendingRecordDate && pendingRecordDate.slice(0, 7) === month && activePage === "record") {
@@ -1590,8 +1590,8 @@ function changeMonth(offset) {
   setReady(false);
   renderCalendar();
   list.textContent = "読み込み中…";
-  if (authorized) loadWorkouts();
   if (authorized && activePage === "calendar") showSideDialogue("calendar");
+  if (authorized) loadWorkouts();
 }
 byId("prev-month").addEventListener("click", () => changeMonth(-1));
 byId("next-month").addEventListener("click", () => changeMonth(1));
@@ -1821,6 +1821,7 @@ let greetingLoading = null;
 let screenDialogueData = null;
 let screenDialogueLoading = null;
 let sideDialogueRequestId = 0;
+let calendarDialogueInteractionId = 0;
 let lastSideDialogue = { record: "", calendar: "", analysis: "" };
 const sideDialogueNodes = {
   record: byId("record-sd-line"),
@@ -1917,7 +1918,10 @@ async function showSideDialogue(page, reason = "normal") {
 }
 
 byId("record-sd-talk").addEventListener("click", () => showSideDialogue("record"));
-byId("calendar-sd-talk").addEventListener("click", () => showSideDialogue("calendar"));
+byId("calendar-sd-talk").addEventListener("click", () => {
+  ++calendarDialogueInteractionId;
+  showSideDialogue("calendar");
+});
 byId("analysis-sd-talk").addEventListener("click", () => showSideDialogue("analysis"));
 let lastHomeGreeting = "";
 let greetingRequestId = 0;
@@ -2148,6 +2152,7 @@ function setAuthenticated(next) {
     homeDialogue.textContent = "";
     lastHomeGreeting = "";
     ++sideDialogueRequestId;
+    calendarDialogueInteractionId = 0;
     lastSideDialogue = { record: "", calendar: "", analysis: "" };
     exerciseSavedThisSession.clear();
     sideDialogueNodes.record.textContent = "今日は記録だけでもいいんじゃないかな。";
