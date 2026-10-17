@@ -33,6 +33,33 @@ monogatari.characters({
     }
   }
 });
+// Comparison mode is UI-only and never changes progress, dialogue or personal data.
+// Monogatari produces an img for each sprite; adapt its source in the same microtask
+// after a scene/sprite action so the selected set is used for all future expressions.
+const storySpriteName = /shiori-gim-story-(thinking|surprised|smile|playful)-(r1|alt1)\\.webp(?=$|[?#])/;
+let expressionVariant = "before";
+function applyExpressionVariant() {
+  const wantedSuffix = expressionVariant === "after" ? "alt1" : "r1";
+  document.querySelectorAll('game-screen img[data-character="s"]').forEach((img) => {
+    const src = img.getAttribute("src");
+    if (!src) return;
+    const found = storySpriteName.exec(src);
+    if (!found || found[2] === wantedSuffix) return;
+    img.setAttribute("src", src.replace(found[0],
+      "shiori-gim-story-" + found[1] + "-" + wantedSuffix + ".webp"));
+  });
+}
+const expressionObserver = new MutationObserver(applyExpressionVariant);
+expressionObserver.observe(document.getElementById("monogatari"), {
+  childList: true, subtree: true, attributes: true, attributeFilter: ["src"]
+});
+window.addEventListener("message", (event) => {
+  if (event.source !== window.parent || event.origin !== window.location.origin ||
+      event.data?.type !== "kintore-episode-01-variant-v1") return;
+  if (event.data.variant !== "before" && event.data.variant !== "after") return;
+  expressionVariant = event.data.variant;
+  applyExpressionVariant();
+});
 const say = (speaker, lines) => lines.map((line) => speaker + " " + line);
 function pose(mode) {
   return { Function: {

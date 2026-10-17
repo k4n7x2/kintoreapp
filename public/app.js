@@ -2234,11 +2234,36 @@ const monogatariTestOpen = byId("monogatari-test-open");
 const monogatariTestClose = byId("monogatari-test-close");
 const monogatariTestFrame = byId("monogatari-test-frame");
 const monogatariTestTitle = byId("monogatari-test-title");
+const episode01VariantToggle = byId("episode-01-variant-toggle");
+let episode01Variant = "before";
 let activeMonogatariEntry = monogatariTestOpen;
+function syncEpisode01VariantToggle() {
+  const revised = episode01Variant === "after";
+  episode01VariantToggle.setAttribute("aria-checked", String(revised));
+  episode01VariantToggle.setAttribute("aria-label",
+    revised ? "表情差分：修正後を表示中。修正前に切り替える"
+            : "表情差分：修正前を表示中。修正後に切り替える");
+  episode01VariantToggle.classList.toggle("is-revised", revised);
+}
+function sendEpisode01Variant() {
+  if (monogatariTestShell.hidden || activeMonogatariEntry !== episode01Open) return;
+  monogatariTestFrame.contentWindow?.postMessage(
+    { type: "kintore-episode-01-variant-v1", variant: episode01Variant },
+    window.location.origin
+  );
+}
+episode01VariantToggle.addEventListener("click", () => {
+  if (monogatariTestShell.hidden || activeMonogatariEntry !== episode01Open) return;
+  episode01Variant = episode01Variant === "before" ? "after" : "before";
+  syncEpisode01VariantToggle();
+  sendEpisode01Variant();
+});
+monogatariTestFrame.addEventListener("load", sendEpisode01Variant);
 function closeMonogatariTest(fromPopstate = false) {
   if (monogatariTestShell.hidden) return;
   monogatariTestShell.hidden = true;
   monogatariTestFrame.src = "about:blank";
+  episode01VariantToggle.hidden = true;
   document.body.classList.remove("is-story-test");
   byId("app-screen").inert = false;
   byId("app-header").inert = false;
@@ -2249,6 +2274,8 @@ monogatariTestOpen.addEventListener("click", () => {
   if (!authorized || activePage !== "events" ||
       !storyPlayer.hidden || !monogatariTestShell.hidden) return;
   activeMonogatariEntry = monogatariTestOpen;
+  episode01VariantToggle.hidden = true;
+  monogatariTestTitle.removeAttribute("aria-label");
   monogatariTestTitle.textContent = "Monogatari試作";
   monogatariTestShell.hidden = false;
   document.body.classList.add("is-story-test");
@@ -2283,7 +2310,11 @@ episode01Open.addEventListener("click", () => {
   if (!authorized || activePage !== "events" ||
       !storyPlayer.hidden || !monogatariTestShell.hidden) return;
   activeMonogatariEntry = episode01Open;
-  monogatariTestTitle.textContent = "第1話 久しぶり、はじめまして。｜仮実装";
+  episode01Variant = "before";
+  syncEpisode01VariantToggle();
+  episode01VariantToggle.hidden = false;
+  monogatariTestTitle.textContent = "第1話";
+  monogatariTestTitle.setAttribute("aria-label", "第1話 久しぶり、はじめまして。｜仮実装");
   monogatariTestShell.hidden = false;
   document.body.classList.add("is-story-test");
   byId("app-screen").inert = true;
