@@ -11,7 +11,8 @@
           "versions": {
             "before": "/assets/shiori/gim/v1/shiori-gim-story-normal-alt1-before.webp",
             "after": "/assets/shiori/gim/v1/shiori-gim-story-normal-alt1.webp"
-          }
+          },
+          "adoptedVersion": "before"
         },
         {
           "id": "thinking",
@@ -19,7 +20,8 @@
           "versions": {
             "before": "/assets/shiori/gim/v1/shiori-gim-story-thinking-r1.webp",
             "after": "/assets/shiori/gim/v1/shiori-gim-story-thinking-alt1.webp"
-          }
+          },
+          "adoptedVersion": "after"
         },
         {
           "id": "surprised",
@@ -27,7 +29,8 @@
           "versions": {
             "before": "/assets/shiori/gim/v1/shiori-gim-story-surprised-r1.webp",
             "after": "/assets/shiori/gim/v1/shiori-gim-story-surprised-alt1.webp"
-          }
+          },
+          "adoptedVersion": "after"
         },
         {
           "id": "smile",
@@ -35,7 +38,8 @@
           "versions": {
             "before": "/assets/shiori/gim/v1/shiori-gim-story-smile-r1.webp",
             "after": "/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp"
-          }
+          },
+          "adoptedVersion": "after"
         },
         {
           "id": "playful",
@@ -43,7 +47,8 @@
           "versions": {
             "before": "/assets/shiori/gim/v1/shiori-gim-story-playful-r1.webp",
             "after": "/assets/shiori/gim/v1/shiori-gim-story-playful-alt1.webp"
-          }
+          },
+          "adoptedVersion": "after"
         }
       ]
     },

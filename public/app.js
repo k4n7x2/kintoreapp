@@ -2345,14 +2345,14 @@ const monogatariTestClose = byId("monogatari-test-close");
 const monogatariTestFrame = byId("monogatari-test-frame");
 const monogatariTestTitle = byId("monogatari-test-title");
 const episode01VariantToggle = byId("episode-01-variant-toggle");
-let episode01Variant = "before";
+let episode01Variant = "after";
 let activeMonogatariEntry = monogatariTestOpen;
 function syncEpisode01VariantToggle() {
   const revised = episode01Variant === "after";
   episode01VariantToggle.setAttribute("aria-checked", String(revised));
   episode01VariantToggle.setAttribute("aria-label",
-    revised ? "表情差分：修正後を表示中。修正前に切り替える"
-            : "表情差分：修正前を表示中。修正後に切り替える");
+    revised ? "第1話：採用版を表示中。旧差分に切り替える"
+            : "第1話：旧差分を表示中。採用版に切り替える");
   episode01VariantToggle.classList.toggle("is-revised", revised);
 }
 function sendEpisode01Variant() {
@@ -2420,7 +2420,7 @@ episode01Open.addEventListener("click", () => {
   if (!authorized || activePage !== "events" ||
       !storyPlayer.hidden || !monogatariTestShell.hidden) return;
   activeMonogatariEntry = episode01Open;
-  episode01Variant = "before";
+  episode01Variant = "after";
   syncEpisode01VariantToggle();
   episode01VariantToggle.hidden = false;
   monogatariTestTitle.textContent = "第1話";

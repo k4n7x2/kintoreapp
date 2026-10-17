@@ -75,7 +75,7 @@ function renderGallery() {
     button.setAttribute("aria-label", entry.label + "を表示");
     button.classList.toggle("is-selected", selected);
     const thumb = document.createElement("img");
-    thumb.src = galleryAssetUrl(entry.versions.before || entry.versions.current);
+    thumb.src = galleryAssetUrl(entry.versions[entry.adoptedVersion] || entry.versions.before || entry.versions.current);
     thumb.alt = "";
     thumb.loading = "lazy";
     thumb.decoding = "async";
@@ -85,7 +85,8 @@ function renderGallery() {
   });
   galleryItems.replaceChildren(...itemButtons);
 
-  galleryTitle.textContent = group.label + " · " + item.label;
+  galleryTitle.textContent = group.label + " · " + item.label +
+    (item.adoptedVersion ? "（採用：" + (item.adoptedVersion === "before" ? "修正前" : "修正後") + "）" : "");
   galleryViewModes.hidden = !comparable;
   galleryVersionControls.hidden = !comparable;
   for (const button of galleryModeButtons) {
@@ -152,6 +153,8 @@ galleryItems.addEventListener("click", (event) => {
   const button = event.target.closest("[data-gallery-item]");
   if (!button || !galleryItems.contains(button)) return;
   selectedItemId = button.dataset.galleryItem;
+  const currentGroup = galleryCatalog?.groups.find((group) => group.id === selectedGroupId);
+  selectedVersion = currentGroup?.items.find((item) => item.id === selectedItemId)?.adoptedVersion || "before";
   renderGallery();
 });
 galleryModeButtons.forEach((button) => button.addEventListener("click", () => {

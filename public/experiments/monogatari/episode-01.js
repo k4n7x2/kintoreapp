@@ -25,25 +25,24 @@ monogatari.characters({
   s: {
     name: "朝倉 栞", color: "#e5cffb",
     sprites: {
-      normal: "shiori-home-training-bust-v1.webp",
-      thinking: "shiori-gim-story-thinking-r1.webp",
-      surprised: "shiori-gim-story-surprised-r1.webp",
-      smile: "shiori-gim-story-smile-r1.webp",
-      playful: "shiori-gim-story-playful-r1.webp"
+      normal: "shiori-gim-story-normal-alt1-before.webp",
+      thinking: "shiori-gim-story-thinking-alt1.webp",
+      surprised: "shiori-gim-story-surprised-alt1.webp",
+      smile: "shiori-gim-story-smile-alt1.webp",
+      playful: "shiori-gim-story-playful-alt1.webp"
     }
   }
 });
 // Comparison mode is UI-only and never changes progress, dialogue or personal data.
+// Normal is the confirmed before version in both modes; four other expressions switch.
 // Monogatari produces an img for each sprite; adapt its source in the same microtask
 // after a scene/sprite action so the selected set is used for all future expressions.
 const storySpriteName = /shiori-gim-story-(thinking|surprised|smile|playful)-(r1|alt1)\.webp(?=$|[?#])/;
 const normalSpriteName = /(?:shiori-home-training-bust-v1|shiori-gim-story-normal-alt1(?:-before)?)\.webp(?=$|[?#])/;
-let expressionVariant = "before";
+let expressionVariant = "after";
 function applyExpressionVariant() {
   const wantedSuffix = expressionVariant === "after" ? "alt1" : "r1";
-  const wantedNormal = expressionVariant === "after"
-    ? "shiori-gim-story-normal-alt1.webp"
-    : "shiori-gim-story-normal-alt1-before.webp";
+  const wantedNormal = "shiori-gim-story-normal-alt1-before.webp";
   document.querySelectorAll('game-screen img[data-character="s"]').forEach((img) => {
     const src = img.getAttribute("src");
     if (!src) return;
