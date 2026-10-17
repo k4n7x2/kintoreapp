@@ -1,4 +1,4 @@
-import { classifyRecordChange, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
+import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
 const now = new Date();
 let shownYear = now.getFullYear();
 let shownMonth = now.getMonth();
@@ -1514,8 +1514,9 @@ byId("workout-form").addEventListener("submit", async event => {
     saveFeedback.textContent = "保存しました。続けて編集できます。";
     pendingRecordDate = "";
     if (activePage === "record" && editorUnchanged) {
-      const group = samePersisted || alreadySaved ? "record.saved_general" :
-        classifyRecordChange({ unit, sets, previousSets, performedOn: date });
+      const group = chooseRecordSaveGroup({
+        unit, sets, previousSets, performedOn: date, samePersisted, alreadySaved
+      });
       showSideDialogue("record", group);
     }
     let refreshed = false;

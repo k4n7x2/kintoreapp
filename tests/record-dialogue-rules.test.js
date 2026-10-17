@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { classifyRecordChange as classify, calendarConditionGroups as calendar, savedNumericSnapshot as snapshot } from "../public/record-dialogue-rules.js";
+import { classifyRecordChange as classify, calendarConditionGroups as calendar, savedNumericSnapshot as snapshot, chooseRecordSaveGroup as chooseSave } from "../public/record-dialogue-rules.js";
 
 const kg = (weight, reps, n = 1) => ({ set_number:n, entry_unit:"kg_reps", weight_kg:weight, reps, performed_on:"2026-10-01" });
 const rep = (reps, n=1) => ({ set_number:n, entry_unit:"reps", reps, performed_on:"2026-10-01" });
@@ -63,3 +63,12 @@ test("13 old sets never match a 12-set record", () => {
  const before=Array.from({length:13},(_,i)=>kg(40,10,i+1));
  assert.equal(run("kg_reps",present,before),"record.no_comparison");
 });
+
+test("re-save of same numeric data uses general line", () => assert.equal(chooseSave({
+ unit:"kg_reps", sets:[c(45,10)], previousSets:[kg(40,10)],
+ performedOn:"2026-10-17", samePersisted:true
+}), "record.saved_general"));
+test("repeated save in current session does not re-trigger improvement", () => assert.equal(chooseSave({
+ unit:"kg_reps", sets:[c(45,10)], previousSets:[kg(40,10)],
+ performedOn:"2026-10-17", alreadySaved:true
+}), "record.saved_general"));

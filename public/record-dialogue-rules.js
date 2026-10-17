@@ -61,6 +61,12 @@ export function classifyRecordChange({ unit, sets, previousSets, performedOn }) 
   return "record.weight_" + w + "_reps_" + r;
 }
 
+// 当日の再保存や数値を変えない既存記録の保存は、新規の数値向上としない。
+export function chooseRecordSaveGroup({ samePersisted = false, alreadySaved = false, ...comparison }) {
+  return samePersisted || alreadySaved ? "record.saved_general" :
+    classifyRecordChange(comparison);
+}
+
 export function savedNumericSnapshot(unit, sets) {
   return JSON.stringify((sets || []).map(set => [
     unit === "kg_reps" ? Number(set.weight_kg) : 0,
