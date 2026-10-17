@@ -40,6 +40,7 @@ const statusIndicator = byId("db-indicator");
 const saveDate = byId("workout-date");
 const saveNote = byId("workout-note");
 const saveButton = byId("save-workout");
+const deleteExerciseButton = byId("delete-exercise");
 const saveFeedback = byId("save-feedback");
 const list = byId("record-list");
 const exerciseList = byId("exercise-list");
@@ -224,6 +225,7 @@ function setReady(ready) {
   saveDate.disabled = !ready;
   saveNote.disabled = !ready;
   saveButton.disabled = !ready;
+  deleteExerciseButton.disabled = !ready;
   addExerciseButton.disabled = !ready;
   for (const id of ["record-prev-day", "record-next-day", "record-history-open"]) {
     byId(id).disabled = !ready;
@@ -593,6 +595,11 @@ function updateDraftIndicators() {
   const currentDirty = !!activeExerciseCard &&
     activeExerciseCard.savedSnapshot !== cardDraftSnapshot(activeExerciseCard);
   byId("record-editor-unsaved").hidden = !currentDirty;
+  if (saveButton.getAttribute("aria-label") !== "保存中") {
+    saveButton.setAttribute("aria-label",
+      currentDirty ? "この種目を保存（未保存の変更あり）" : "この種目を保存");
+    saveButton.title = currentDirty ? "未保存の変更を保存" : "この種目を保存";
+  }
   if (currentDirty && saveFeedback.textContent === "保存しました。続けて編集できます。") {
     saveFeedback.textContent = "";
   }
@@ -655,6 +662,58 @@ window.addEventListener("resize", () => {
     updateSetScrollLimit(activeExerciseCard.rows);
   }
 });
+async function deleteSelectedExercise() {
+  const card = activeExerciseCard;
+  if (!authorized || !dbReady || !card) return;
+  const date = saveDate.value;
+  const name = normalizeExerciseName(card.nameInput.value);
+  const isPersisted = !!card.savedOnServer;
+  const backToAnalysis = editorEntry === "analysis";
+  const question = isPersisted
+    ? date + "の「" + name + "」の記録を削除しますか？\n重量・回数とメモは元に戻せません。他の種目・来館記録は残ります。"
+    : "未保存の「" + name + "」を一覧から削除しますか？";
+  if (!confirm(question)) return;
+
+  if (!isPersisted) {
+    closeExerciseEditor();
+    card.remove();
+    updateExerciseEmpty();
+    updateDraftIndicators();
+    overviewFeedback.textContent = "未保存の種目を一覧から削除しました。";
+    if (backToAnalysis) returnToAnalysisDays(name);
+    return;
+  }
+
+  setReady(false);
+  saveFeedback.textContent = "削除中…";
+  try {
+    await fetchJSON("/api/exercises/log", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ performed_on: date, exercise_name: name })
+    });
+    if (!authorized || !card.isConnected) return;
+    closeExerciseEditor();
+    card.remove();
+    updateExerciseEmpty();
+    updateDraftIndicators();
+    overviewFeedback.textContent = "「" + name + "」の記録を削除しました。";
+    if (backToAnalysis) returnToAnalysisDays(name);
+    await loadWorkouts();
+    loadExerciseNames();
+  } catch (error) {
+    if (error.status === 401) {
+      setAuthenticated(false);
+      loginFeedback.textContent = "ログイン期限が切れました。";
+      return;
+    }
+    setReady(true);
+    saveFeedback.textContent = error.status === 404
+      ? "この日の保存済み記録が見つかりません。"
+      : "種目を削除できませんでした。接続状態を確認してください。";
+  }
+}
+deleteExerciseButton.addEventListener("click", deleteSelectedExercise);
 byId("record-editor-back").addEventListener("click", returnFromExerciseEditor);
 saveNote.addEventListener("input", () => {
   if (activeExerciseCard) updateDraftIndicators();
@@ -730,8 +789,8 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   const heading = document.createElement("strong");
   heading.className = "exercise-overview-name";
   const unsaved = document.createElement("span");
-  unsaved.className = "record-unsaved-badge";
-  unsaved.textContent = "未保存";
+  unsaved.className = "record-unsaved-dot record-unsaved-dot--list";
+  unsaved.setAttribute("aria-hidden", "true");
   unsaved.hidden = true;
   nameRow.append(heading, unsaved);
   const current = document.createElement("span");
@@ -743,33 +802,14 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   body.className = "exercise-editor";
   body.hidden = true;
   card.nameInput = null;
-  const head = document.createElement("div");
-  head.className = "exercise-card-head";
-  const label = document.createElement("label");
-  label.textContent = "種目名";
   const nameInput = document.createElement("input");
   nameInput.className = "exercise-name";
-  nameInput.type = "text"; nameInput.maxLength = 60;
+  nameInput.type = "text";
+  nameInput.maxLength = 60;
   nameInput.setAttribute("list", "exercise-suggestions");
   nameInput.placeholder = "例：ラットプルダウン";
   nameInput.value = name;
-  nameInput.readOnly = true; // 種目名をキーにするため、記録済み名称は直接書き換えない。
-  label.appendChild(nameInput);
-  const remove = document.createElement("button");
-  remove.type = "button"; remove.className = "secondary-action";
-  remove.textContent = "種目を削除";
-  remove.addEventListener("click", () => {
-    if (saved || card.savedOnServer) {
-      feedback.textContent = "保存済みの種目は履歴から削除できます。";
-      return;
-    }
-    if (!confirm("この未保存の種目入力を破棄しますか？")) return;
-    closeExerciseEditor();
-    card.remove();
-    updateExerciseEmpty();
-    updateDraftIndicators();
-  });
-  head.append(label, remove);
+  nameInput.readOnly = true; // 種目名で履歴を照合するため、直接変更はしない。
   const rows = document.createElement("div");
   rows.className = "exercise-sets";
   rows.exerciseCard = card;
@@ -896,8 +936,8 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   });
   summary.addEventListener("click", () => openExerciseEditor(card));
   actions.append(addSet, recent);
-  // 編集画面の上部には入力と前回比較だけを表示し、種目削除は下部へ配置。
-  body.append(previousLabel, rows, actions, feedback, head);
+  // 削除は共通エディタ右上のゴミ箱に集約する。
+  body.append(previousLabel, rows, actions, feedback);
   card.append(summary, body);
   exerciseList.appendChild(card);
   for (const set of sets) newSetRow(rows, set);

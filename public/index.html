@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261016-fixed-sd-threepages-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261017-exercise-actions-v1">
   <link rel="stylesheet" href="/story-test.css?v=2">
-  <script type="module" src="/app.js?v=20261017-episode-01-trial-v1"></script>
+  <script type="module" src="/app.js?v=20261017-exercise-actions-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -143,10 +143,17 @@
                     <button type="button" id="record-editor-back" class="secondary-action" aria-label="一覧に戻る" title="一覧に戻る">‹</button>
                     <div class="record-editor-heading">
                       <h2 id="record-editor-title">種目を編集</h2>
-                      <span id="record-editor-unsaved" class="record-unsaved-badge" hidden>未保存</span>
-                      <button id="save-workout" type="submit" class="record-save-icon" aria-label="この種目を保存" title="この種目を保存" disabled>
+                      <span class="record-save-control">
+                        <button id="save-workout" type="submit" class="record-save-icon" aria-label="この種目を保存" title="この種目を保存" disabled>
+                          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 3h13l3 3v15H4z"/><path d="M8 3v6h8V3M7 21v-8h10v8"/>
+                          </svg>
+                        </button>
+                        <span id="record-editor-unsaved" class="record-unsaved-dot" aria-hidden="true" hidden></span>
+                      </span>
+                      <button id="delete-exercise" type="button" class="record-delete-icon" aria-label="この日の種目を削除" title="この日の種目を削除" disabled>
                         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M4 3h13l3 3v15H4z"/><path d="M8 3v6h8V3M7 21v-8h10v8"/>
+                          <path d="M4 7h16M10 3h4l1 4H9l1-4zM6 7l1 14h10l1-14M10 11v6M14 11v6"/>
                         </svg>
                       </button>
                     </div>

@@ -316,6 +316,38 @@ export default {
               sets: body.sets.length, updated: !!existing });
           }
 
+          // 選択日の1種目だけを消す。旧形式の複数種目セッションも他種目は維持する。
+          if (url.pathname === "/api/exercises/log" && method === "DELETE") {
+            const parsed = await readJSON(request, 1024);
+            if (parsed.error) return respond({ error: parsed.error }, parsed.status);
+            const value = parsed.value;
+            const date = value?.performed_on;
+            const name = normalizedExerciseName(value?.exercise_name);
+            if (!value || typeof value !== "object" || Array.isArray(value) ||
+                !validDate(date) || !name) {
+              return respond({ error: "invalid_exercise_log" }, 400);
+            }
+            // 種目名が正規化される前の既存セットも、同じ名前として照合する。
+            const records = await env.DB.prepare(
+              "SELECT DISTINCT ws.session_id, ws.exercise_name FROM workout_sets ws " +
+              "JOIN workout_sessions s ON s.id = ws.session_id WHERE s.performed_on = ?"
+            ).bind(date).all();
+            const targets = (records.results ?? []).filter(row =>
+              normalizedExerciseName(row.exercise_name) === name);
+            if (!targets.length) return respond({ error: "not_found" }, 404);
+            const sessionIds = [...new Set(targets.map(row => row.session_id))];
+            await env.DB.batch([
+              ...targets.map(row => env.DB.prepare(
+                "DELETE FROM workout_sets WHERE session_id = ? AND exercise_name = ?"
+              ).bind(row.session_id, row.exercise_name)),
+              ...sessionIds.map(id => env.DB.prepare(
+                "DELETE FROM workout_sessions WHERE id = ? " +
+                "AND NOT EXISTS (SELECT 1 FROM workout_sets WHERE session_id = ?)"
+              ).bind(id, id))
+            ]);
+            return respond({ deleted: true, performed_on: date, exercise_name: name });
+          }
+
           if (url.pathname === "/api/exercises/history" && method === "GET") {
             const name = normalizedExerciseName(url.searchParams.get("name"));
             if (!name) return respond({ error: "invalid_exercise" }, 400);

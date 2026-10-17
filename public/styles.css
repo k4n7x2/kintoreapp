@@ -1841,21 +1841,24 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
 
 /* Compact exercise editor — approximately three sets visible without scrolling on
    a typical Android portrait viewport. Keep 44px touch inputs and a scroll fallback. */
-#page-record .record-unsaved-badge[hidden],
+#page-record .record-unsaved-dot[hidden],
 #page-record #save-feedback:empty { display: none !important; }
-#page-record .record-unsaved-badge {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 7px;
-  border: 1px solid var(--danger-line);
-  border-radius: 100px;
-  color: var(--danger);
-  font-size: 10px;
-  font-weight: 750;
-  line-height: 1.55;
-  white-space: nowrap;
+#page-record .record-unsaved-dot {
+  display: block;
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--surface);
+  pointer-events: none;
+}
+#page-record .record-unsaved-dot--list {
+  width: 8px;
+  height: 8px;
+  flex-basis: 8px;
 }
 #page-record .exercise-overview-heading {
   display: flex;
@@ -1908,7 +1911,58 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
-#page-record .record-editor-heading .record-unsaved-badge { margin-left: 0; }
+#page-record .record-save-control {
+  display: block;
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  overflow: visible;
+}
+#page-record .record-save-control .record-unsaved-dot {
+  position: absolute;
+  top: 1px;
+  right: -4px;
+  z-index: 2;
+}
+#page-record #record-editor-view #save-workout {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+}
+#page-record #record-editor-view .record-delete-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  margin: 0 0 0 3px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--raised);
+  color: var(--muted);
+  cursor: pointer;
+}
+#page-record #record-editor-view .record-delete-icon svg {
+  width: 21px;
+  height: 21px;
+  display: block;
+}
+#page-record #record-editor-view .record-delete-icon:disabled {
+  opacity: .44;
+  cursor: not-allowed;
+}
+#page-record #record-editor-view .record-delete-icon:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+#page-record .record-editor-heading .record-unsaved-dot[hidden] {
+  display: none !important;
+}
 #page-record .record-panel button[type="submit"].record-save-icon {
   display: grid;
   flex: 0 0 44px;
