@@ -37,13 +37,13 @@ monogatari.characters({
 // Monogatari produces an img for each sprite; adapt its source in the same microtask
 // after a scene/sprite action so the selected set is used for all future expressions.
 const storySpriteName = /shiori-gim-story-(thinking|surprised|smile|playful)-(r1|alt1)\.webp(?=$|[?#])/;
-const normalSpriteName = /(?:shiori-home-training-bust-v1|shiori-gim-story-normal-alt1)\.webp(?=$|[?#])/;
+const normalSpriteName = /(?:shiori-home-training-bust-v1|shiori-gim-story-normal-alt1(?:-before)?)\.webp(?=$|[?#])/;
 let expressionVariant = "before";
 function applyExpressionVariant() {
   const wantedSuffix = expressionVariant === "after" ? "alt1" : "r1";
   const wantedNormal = expressionVariant === "after"
     ? "shiori-gim-story-normal-alt1.webp"
-    : "shiori-home-training-bust-v1.webp";
+    : "shiori-gim-story-normal-alt1-before.webp";
   document.querySelectorAll('game-screen img[data-character="s"]').forEach((img) => {
     const src = img.getAttribute("src");
     if (!src) return;
