@@ -8,7 +8,9 @@
   <title>ログイン</title>
   <link rel="stylesheet" href="/styles.css?v=20261017-exercise-catalog-v1">
   <link rel="stylesheet" href="/story-test.css?v=20261017-episode-variant-v1">
+  <link rel="stylesheet" href="/gallery.css?v=20261017-gallery-v1">
   <script type="module" src="/app.js?v=20261017-episode-variant-v1"></script>
+  <script type="module" src="/gallery.js?v=20261017-gallery-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -360,10 +362,32 @@
 
         <section class="app-page" id="page-gallery" data-page="gallery" aria-labelledby="gallery-heading" hidden>
           <div class="page-heading"><h1 id="gallery-heading">ギャラリー</h1></div>
-          <div class="planned-stage">
-            <div class="planned-character-slot" aria-hidden="true"></div>
-            <div class="panel planned-panel"><p>実装予定</p></div>
+          <p class="gallery-intro">栞の登録済み素材を確認。第1話の表情は修正前後をその場で比較できます。</p>
+          <div id="gallery-groups" class="gallery-group-tabs" role="group" aria-label="素材の分類">
+            <button type="button" data-gallery-group="story" aria-pressed="true">ジム・第1話</button>
+            <button type="button" data-gallery-group="home" aria-pressed="false">部屋着</button>
+            <button type="button" data-gallery-group="sd" aria-pressed="false">SD</button>
           </div>
+          <div id="gallery-asset-list" class="gallery-asset-list" role="group" aria-label="表情を選ぶ"></div>
+          <section class="gallery-viewer" aria-label="素材プレビュー">
+            <div class="gallery-viewer-head">
+              <div>
+                <p class="section-caption">ASSET PREVIEW</p>
+                <h2 id="gallery-image-title">読み込み中…</h2>
+              </div>
+              <div id="gallery-view-modes" class="gallery-view-modes" role="group" aria-label="比較方法">
+                <button type="button" data-gallery-mode="switch" aria-pressed="true">切替</button>
+                <button type="button" data-gallery-mode="side" aria-pressed="false">横並び</button>
+              </div>
+            </div>
+            <div id="gallery-version-controls" class="gallery-version-controls" role="group" aria-label="画像の版">
+              <button type="button" data-gallery-version="before" aria-pressed="true">修正前</button>
+              <button type="button" data-gallery-version="after" aria-pressed="false">修正後</button>
+            </div>
+            <div id="gallery-canvases" class="gallery-canvases" aria-label="選択した画像"></div>
+            <p id="gallery-description" class="gallery-description" role="status" aria-live="polite">ギャラリーを読み込み中…</p>
+          </section>
+          <p class="gallery-intro">ここでの切り替えは閲覧専用です。正式採用画像や物語内の表示には影響しません。</p>
         </section>
 
         <section class="app-page" id="page-settings" data-page="settings" aria-labelledby="settings-heading" hidden>
