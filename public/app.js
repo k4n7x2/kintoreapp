@@ -1,3 +1,4 @@
+import { classifyRecordChange, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
 const now = new Date();
 let shownYear = now.getFullYear();
 let shownMonth = now.getMonth();
@@ -1194,6 +1195,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   if (name && dbReady) card.refreshPrevious();
   if (saved) {
     card.savedSnapshot = cardDraftSnapshot(card);
+    card.savedSetsSnapshot = savedNumericSnapshot(card.unit, sets);
     card.savedOnServer = true;
   }
   updateExerciseEmpty();
@@ -1282,6 +1284,7 @@ async function fetchJSON(path, options = {}) {
 async function loadWorkouts() {
   const month = currentMonth();
   const requestId = ++recordsRequestId;
+  const dialogueAtStart = sideDialogueRequestId;
   try {
     const result = await fetchJSON("/api/workouts?month=" + encodeURIComponent(month));
     if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
@@ -1306,6 +1309,10 @@ async function loadWorkouts() {
     renderCalendar();
     renderHistory();
     setReady(true);
+    // 月データ到着直後だけ、未操作のカレンダー吹き出しを再評価。
+    if (activePage === "calendar" && dialogueAtStart === sideDialogueRequestId) {
+      showSideDialogue("calendar");
+    }
     if (pendingRecordDate && pendingRecordDate.slice(0, 7) === month && activePage === "record") {
       const date = pendingRecordDate;
       pendingRecordDate = "";
@@ -1324,6 +1331,7 @@ async function loadWorkouts() {
       pendingAnalysisRecord = null;
       openSelectedAnalysisCard(target.name, target.date);
     }
+    return true;
   } catch (error) {
     if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
     if (error.status === 401) {
@@ -1347,6 +1355,7 @@ async function loadWorkouts() {
       setScreen("analysis");
       showAnalysisDates(target.name);
     }
+    return false;
   }
 }
 async function removeWorkout(id) {
@@ -1419,58 +1428,108 @@ function collectExerciseSets(card) {
   }
   return sets;
 }
+// 一度成功した日付・種目への繰り返し保存を新しい達成として扱わない（メモリのみ）。
+let exerciseSaveInFlight = false;
+const exerciseSavedThisSession = new Set();
 byId("workout-form").addEventListener("submit", async event => {
   event.preventDefault();
   const card = activeExerciseCard;
-  if (!authorized || !dbReady || !card) return;
+  if (!authorized || !dbReady || !card || exerciseSaveInFlight) return;
   let sets;
   try { sets = collectExerciseSets(card); }
   catch (error) { saveFeedback.textContent = error.message; return; }
   const date = saveDate.value;
   const name = normalizeExerciseName(card.nameInput.value);
+  const unit = card.unit;
   if (!name || name.length > 60) {
     saveFeedback.textContent = "種目名を確認してください。";
     return;
   }
-  card.noteValue = saveNote.value;
-  if (card.noteValue.length > 300) {
+  const note = saveNote.value;
+  if (note.length > 300) {
     saveFeedback.textContent = "メモは300文字以内です。";
     return;
   }
-  setReady(false);
+  card.noteValue = note;
+  const initialSnapshot = cardDraftSnapshot(card);
+  const numericSnapshot = savedNumericSnapshot(unit, sets);
+  const key = date + "|" + name + "|" + unit;
+  const samePersisted = card.savedOnServer && card.savedSetsSnapshot === numericSnapshot;
+  const alreadySaved = exerciseSavedThisSession.has(key);
+  exerciseSaveInFlight = true;
+  saveButton.disabled = true;
   saveButton.setAttribute("aria-label", "保存中");
   saveButton.title = "保存中";
   saveFeedback.textContent = "保存中…";
+  let previousSets = null;
   try {
-    const result = await fetchJSON("/api/exercises/log", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ performed_on: date, exercise_name: name,
-        unit:card.unit, sets, note: card.noteValue })
-    });
-    if (!card.isConnected || !authorized) return;
-    card.nameInput.value = result.exercise_name;
-    card.savedSnapshot = cardDraftSnapshot(card);
-    card.savedOnServer = true;
-    updateDraftIndicators();
-    // 保存後も同じ種目を編集し続けられる。分析から来ても画面遷移しない。
-    saveFeedback.textContent = "保存しました。続けて編集できます。";
-    pendingRecordDate = "";
-    // 認証付きD1から月間一覧だけを再取得。編集DOMと入力フォーカス先は維持。
-    await loadWorkouts();
-    loadExerciseNames();
-    if (activePage === "record") showSideDialogue("record", "saved");
-  } catch (error) {
-    if (error.status === 401) {
-      setAuthenticated(false);
-      loginFeedback.textContent = "ログイン期限が切れました。";
+    // PUT前の厳密に過去の履歴だけを確保する。取得失敗は保存処理へ影響しない。
+    if (!samePersisted && !alreadySaved) {
+      try {
+        const history = await fetchJSON("/api/workouts/recent?name=" +
+          encodeURIComponent(name) + "&before=" + encodeURIComponent(date));
+        previousSets = Array.isArray(history.sets) ? history.sets : null;
+      } catch { previousSets = null; }
+    }
+    // 取得中の画面／日付／種目／数値／メモ変更は、古い結果で保存しない。
+    if (!authorized || activePage !== "record" || !card.isConnected ||
+        activeExerciseCard !== card || saveDate.value !== date ||
+        normalizeExerciseName(card.nameInput.value) !== name || card.unit !== unit ||
+        saveNote.value !== note || cardDraftSnapshot(card) !== initialSnapshot) {
+      if (authorized && activePage === "record") saveFeedback.textContent =
+        "入力内容が変更されたため保存を中止しました。もう一度保存してください。";
       return;
     }
-    setReady(true);
-    saveFeedback.textContent = "保存できませんでした。接続状態を確認してください。";
+    setReady(false);
+    let result;
+    try {
+      result = await fetchJSON("/api/exercises/log", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ performed_on: date, exercise_name: name,
+          unit, sets, note })
+      });
+    } catch (error) {
+      if (error.status === 401) {
+        setAuthenticated(false);
+        loginFeedback.textContent = "ログイン期限が切れました。";
+      } else if (authorized) {
+        setReady(true);
+        saveFeedback.textContent = "保存できませんでした。接続状態を確認してください。";
+      }
+      return;
+    }
+    // PUT成功以降の再取得エラーは保存失敗と混同しない。
+    exerciseSavedThisSession.add(key);
+    if (!authorized) return;
+    const editorUnchanged = card.isConnected && activeExerciseCard === card &&
+      saveDate.value === date && cardDraftSnapshot(card) === initialSnapshot;
+    if (editorUnchanged) {
+      card.nameInput.value = result.exercise_name;
+      card.savedSnapshot = cardDraftSnapshot(card);
+      card.savedSetsSnapshot = numericSnapshot;
+      card.savedOnServer = true;
+      updateDraftIndicators();
+    }
+    saveFeedback.textContent = "保存しました。続けて編集できます。";
+    pendingRecordDate = "";
+    if (activePage === "record" && editorUnchanged) {
+      const group = samePersisted || alreadySaved ? "record.saved_general" :
+        classifyRecordChange({ unit, sets, previousSets, performedOn: date });
+      showSideDialogue("record", group);
+    }
+    let refreshed = false;
+    try { refreshed = await loadWorkouts() === true; } catch { /* 保存は確定済み */ }
+    if (authorized && !refreshed && activePage === "record") {
+      setReady(true);
+      saveFeedback.textContent = "保存しました。ただし月間一覧を更新できませんでした。";
+    }
+    if (authorized) loadExerciseNames();
   } finally {
+    exerciseSaveInFlight = false;
     saveButton.setAttribute("aria-label", "この種目を保存");
     saveButton.title = "この種目を保存";
+    if (authorized && dbReady) saveButton.disabled = false;
   }
 });
 async function persistDaySwitches() {
@@ -1532,6 +1591,7 @@ function changeMonth(offset) {
   renderCalendar();
   list.textContent = "読み込み中…";
   if (authorized) loadWorkouts();
+  if (authorized && activePage === "calendar") showSideDialogue("calendar");
 }
 byId("prev-month").addEventListener("click", () => changeMonth(-1));
 byId("next-month").addEventListener("click", () => changeMonth(1));
@@ -1758,16 +1818,17 @@ byId("dev-settings-reset").addEventListener("click", () => {
 byId("scene-reroll").addEventListener("click", () => { byId("dev-settings-feedback").textContent = ""; });
 let greetingData = null;
 let greetingLoading = null;
+let screenDialogueData = null;
+let screenDialogueLoading = null;
 let sideDialogueRequestId = 0;
-let lastSideDialogue = "";
-
+let lastSideDialogue = { record: "", calendar: "", analysis: "" };
 const sideDialogueNodes = {
   record: byId("record-sd-line"),
   calendar: byId("calendar-sd-line"),
   analysis: byId("analysis-sd-line")
 };
 
-// ホーム用の採用済み文言を共有。セリフ内容とSD画像の有無は独立して扱う。
+// ホームと分析が利用する採用済みの候補は変更しない。
 async function ensureGreetingData() {
   if (greetingData) return greetingData;
   if (!greetingLoading) {
@@ -1782,34 +1843,76 @@ async function ensureGreetingData() {
   return greetingLoading;
 }
 
-// カレンダー・記録・分析の共通下部SD領域に吹き出しを表示する。
-// 正式SD素材が登録されたら、画像だけ独立して配置できる。
+// 記録／カレンダー専用115本は初回のみ読み込み、ユーザーの記録は保持しない。
+async function ensureScreenDialogueData() {
+  if (screenDialogueData) return screenDialogueData;
+  if (!screenDialogueLoading) {
+    screenDialogueLoading = fetch("/data/shiori-record-calendar-v0.1.json", { cache: "force-cache" })
+      .then(response => {
+        if (!response.ok) throw new Error("screen_dialogues_unavailable");
+        return response.json();
+      })
+      .then(data => {
+        if (!data || !data.groups || !Array.isArray(data.groups["record.normal"]) ||
+            !Array.isArray(data.groups["calendar.normal"])) throw new Error("invalid_screen_dialogues");
+        screenDialogueData = data.groups;
+        return screenDialogueData;
+      })
+      .finally(() => { screenDialogueLoading = null; });
+  }
+  return screenDialogueLoading;
+}
+function pickSideLine(page, entries, fallback) {
+  const valid = Array.isArray(entries) ? entries.map(row =>
+    typeof row === "string" ? row : row?.text).filter(line =>
+      typeof line === "string" && line.trim()) : [];
+  const alternatives = valid.filter(line => line !== lastSideDialogue[page]);
+  const pool = alternatives.length ? alternatives : valid;
+  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : fallback;
+}
+function applicableCalendarDialogues() {
+  return calendarConditionGroups({
+    month: currentMonth(), localMonth: todayISO().slice(0, 7),
+    recordsKnown: recordsLoaded, calendarKnown: calendarAvailable,
+    hasPlan: [...calendarDays.values()].some(day => day.planned),
+    hasAttendance: [...calendarDays.values()].some(day => day.attended),
+    hasWorkout: workouts.some(record => Array.isArray(record.sets) && record.sets.length > 0),
+    truncated: monthTruncated
+  });
+}
+
+// 保存成功だけは専用グループを直接要求し、先行する非同期抽選を無効化。
 async function showSideDialogue(page, reason = "normal") {
   const requestId = ++sideDialogueRequestId;
   if (!authorized || activePage !== page || !sideDialogueNodes[page]) return;
   const node = sideDialogueNodes[page];
-  if (reason === "saved") {
-    // dialogue.mdにある確定口調の文言。保存成功時だけ表示。
-    node.textContent = "そっか。頑張ったね。";
-    lastSideDialogue = node.textContent;
-    return;
-  }
-  const fallback = page === "record"
-    ? "今日は記録だけでもいいんじゃないかな。"
-    : page === "analysis" ? "あ、来た。今日はどうする？" : "あ、来た。今日はどうする？";
+  const saved = page === "record" && reason.startsWith("record.") && reason !== "normal";
+  const fallback = saved ? "うん、保存できたね。" :
+    page === "record" ? "今日は記録だけでもいいんじゃないかな。" :
+    "あ、来た。今日はどうする？";
   try {
-    const data = await ensureGreetingData();
+    let chosen;
+    if (page === "analysis") {
+      const data = await ensureGreetingData();
+      chosen = pickSideLine(page, data?.anytime, fallback);
+    } else {
+      const data = await ensureScreenDialogueData();
+      let group = page === "record" ? (saved ? reason : "record.normal") : "calendar.normal";
+      if (page === "calendar") {
+        const conditions = applicableCalendarDialogues().filter(id => data[id]?.length);
+        if (conditions.length && Math.random() < 0.30) {
+          group = conditions[Math.floor(Math.random() * conditions.length)];
+        }
+      }
+      chosen = pickSideLine(page, data[group] || data[page + ".normal"], fallback);
+    }
     if (!authorized || activePage !== page || requestId !== sideDialogueRequestId) return;
-    const candidates = (Array.isArray(data?.anytime) ? data.anytime : [])
-      .filter(line => typeof line === "string" && line.trim());
-    const alternatives = candidates.filter(line => line !== lastSideDialogue);
-    const pool = alternatives.length ? alternatives : candidates;
-    node.textContent = pool.length ? pool[Math.floor(Math.random() * pool.length)] : fallback;
-    lastSideDialogue = node.textContent;
+    node.textContent = chosen;
+    lastSideDialogue[page] = chosen;
   } catch {
     if (!authorized || activePage !== page || requestId !== sideDialogueRequestId) return;
     node.textContent = fallback;
-    lastSideDialogue = fallback;
+    lastSideDialogue[page] = fallback;
   }
 }
 
@@ -2045,7 +2148,8 @@ function setAuthenticated(next) {
     homeDialogue.textContent = "";
     lastHomeGreeting = "";
     ++sideDialogueRequestId;
-    lastSideDialogue = "";
+    lastSideDialogue = { record: "", calendar: "", analysis: "" };
+    exerciseSavedThisSession.clear();
     sideDialogueNodes.record.textContent = "今日は記録だけでもいいんじゃないかな。";
     sideDialogueNodes.calendar.textContent = "あ、来た。今日はどうする？";
     sideDialogueNodes.analysis.textContent = "あ、来た。今日はどうする？";

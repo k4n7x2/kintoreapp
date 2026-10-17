@@ -1,0 +1,508 @@
+{
+  "version": "0.1",
+  "source": "docs/shiori/dialogues/record-calendar-v0.1.md",
+  "groups": {
+    "record.normal": [
+      {
+        "id": "record.normal.01",
+        "text": "どの種目から確認する？"
+      },
+      {
+        "id": "record.normal.02",
+        "text": "あ、記録つけるんだね。"
+      },
+      {
+        "id": "record.normal.03",
+        "text": "前の記録があると、比べるのも面白そう。"
+      },
+      {
+        "id": "record.normal.04",
+        "text": "記録を並べると、違いが見えて面白いね。"
+      },
+      {
+        "id": "record.normal.05",
+        "text": "記録って、後から見ると意外と面白いよね。"
+      },
+      {
+        "id": "record.normal.06",
+        "text": "私、数字を見るとつい比べちゃう。"
+      },
+      {
+        "id": "record.normal.07",
+        "text": "どの種目を見てるの？"
+      },
+      {
+        "id": "record.normal.08",
+        "text": "書き残しておくと、忘れずに済むね。"
+      },
+      {
+        "id": "record.normal.09",
+        "text": "メモも残しておく？"
+      },
+      {
+        "id": "record.normal.10",
+        "text": "同じ種目でも、毎回同じにはならないよね。"
+      },
+      {
+        "id": "record.normal.11",
+        "text": "一つずつ見ていこうか。"
+      },
+      {
+        "id": "record.normal.12",
+        "text": "ん、何か気になるところあった？"
+      },
+      {
+        "id": "record.normal.13",
+        "text": "一回ごとに違いが出ることもあるよね。"
+      },
+      {
+        "id": "record.normal.14",
+        "text": "ここ、前の記録も見られるんだね。"
+      },
+      {
+        "id": "record.normal.15",
+        "text": "数字だけじゃ分からないことも、あるよね。"
+      },
+      {
+        "id": "record.normal.16",
+        "text": "無理に前回を超えなくてもいいと思うよ。"
+      },
+      {
+        "id": "record.normal.17",
+        "text": "休むのも、ちゃんと選択肢の一つだよね。"
+      },
+      {
+        "id": "record.normal.18",
+        "text": "私はこういうの見てると、つい時間を忘れそう。"
+      }
+    ],
+    "record.saved_general": [
+      {
+        "id": "record.saved_general.01",
+        "text": "うん、保存できたね。"
+      },
+      {
+        "id": "record.saved_general.02",
+        "text": "あ、記録できた。"
+      },
+      {
+        "id": "record.saved_general.03",
+        "text": "これで後から見返せるね。"
+      },
+      {
+        "id": "record.saved_general.04",
+        "text": "ひとまず、ひと区切りだね。"
+      },
+      {
+        "id": "record.saved_general.05",
+        "text": "お疲れさま。記録、残せたね。"
+      },
+      {
+        "id": "record.saved_general.06",
+        "text": "こうして一つずつ残していくんだね。"
+      },
+      {
+        "id": "record.saved_general.07",
+        "text": "ちゃんと残ったね。よかった。"
+      },
+      {
+        "id": "record.saved_general.08",
+        "text": "うん、記録しておこう。"
+      }
+    ],
+    "record.weight_up": [
+      {
+        "id": "record.weight_up.01",
+        "text": "あ、前より重くなってるね。"
+      },
+      {
+        "id": "record.weight_up.02",
+        "text": "重量、上げたんだね。"
+      },
+      {
+        "id": "record.weight_up.03",
+        "text": "この種目、前回より重いね。"
+      },
+      {
+        "id": "record.weight_up.04",
+        "text": "ん、重量が増えてる。"
+      },
+      {
+        "id": "record.weight_up.05",
+        "text": "前回と比べると、重さが違うね。"
+      },
+      {
+        "id": "record.weight_up.06",
+        "text": "お、重くしてる。"
+      },
+      {
+        "id": "record.weight_up.07",
+        "text": "ちょっと待って。重量、上がってない？"
+      }
+    ],
+    "record.weight_down": [
+      {
+        "id": "record.weight_down.01",
+        "text": "今回は前より軽めなんだね。"
+      },
+      {
+        "id": "record.weight_down.02",
+        "text": "ん、重量を下げてるんだ。"
+      },
+      {
+        "id": "record.weight_down.03",
+        "text": "前回より軽い重量だね。"
+      },
+      {
+        "id": "record.weight_down.04",
+        "text": "前回とは重さを変えたんだね。"
+      },
+      {
+        "id": "record.weight_down.05",
+        "text": "今回はこっちの重量なんだ。"
+      },
+      {
+        "id": "record.weight_down.06",
+        "text": "軽くしたんだね。何か試してるのかな。"
+      },
+      {
+        "id": "record.weight_down.07",
+        "text": "あ、前回より軽いね。"
+      }
+    ],
+    "record.reps_up": [
+      {
+        "id": "record.reps_up.01",
+        "text": "回数、前より増えてるね。"
+      },
+      {
+        "id": "record.reps_up.02",
+        "text": "あ、今回は回数を増やしたんだ。"
+      },
+      {
+        "id": "record.reps_up.03",
+        "text": "前回より多く記録してるね。"
+      },
+      {
+        "id": "record.reps_up.04",
+        "text": "もう少し回数やってるんだね。"
+      },
+      {
+        "id": "record.reps_up.05",
+        "text": "ん、前回より回数が多い。"
+      },
+      {
+        "id": "record.reps_up.06",
+        "text": "回数が増えたの、記録で分かるね。"
+      },
+      {
+        "id": "record.reps_up.07",
+        "text": "お、回数が伸びてる。"
+      }
+    ],
+    "record.reps_down": [
+      {
+        "id": "record.reps_down.01",
+        "text": "今回は回数を少なめにしたんだね。"
+      },
+      {
+        "id": "record.reps_down.02",
+        "text": "回数は前回より少ないね。"
+      },
+      {
+        "id": "record.reps_down.03",
+        "text": "ん、今回は回数を変えたんだね。"
+      },
+      {
+        "id": "record.reps_down.04",
+        "text": "今回は回数を抑えてるんだ。"
+      },
+      {
+        "id": "record.reps_down.05",
+        "text": "回数を減らしてるね。何か理由があるのかな。"
+      },
+      {
+        "id": "record.reps_down.06",
+        "text": "前回とは違う組み方なんだね。"
+      },
+      {
+        "id": "record.reps_down.07",
+        "text": "ここは回数を抑えてるんだね。"
+      }
+    ],
+    "record.seconds_up": [
+      {
+        "id": "record.seconds_up.01",
+        "text": "秒数、前より長くなってるね。"
+      },
+      {
+        "id": "record.seconds_up.02",
+        "text": "今回は前より長く続けたんだね。"
+      },
+      {
+        "id": "record.seconds_up.03",
+        "text": "ん、時間を延ばしたんだ。"
+      },
+      {
+        "id": "record.seconds_up.04",
+        "text": "記録を比べると、秒数が増えてる。"
+      }
+    ],
+    "record.seconds_down": [
+      {
+        "id": "record.seconds_down.01",
+        "text": "今回は短めなんだね。"
+      },
+      {
+        "id": "record.seconds_down.02",
+        "text": "前回より短い時間になってるね。"
+      },
+      {
+        "id": "record.seconds_down.03",
+        "text": "時間を短くしたんだね。"
+      },
+      {
+        "id": "record.seconds_down.04",
+        "text": "今回はこの長さにしたんだ。"
+      }
+    ],
+    "record.both_up": [
+      {
+        "id": "record.both_up.01",
+        "text": "重さも回数も増えてるね。"
+      },
+      {
+        "id": "record.both_up.02",
+        "text": "あれ、両方上がってる。"
+      },
+      {
+        "id": "record.both_up.03",
+        "text": "ん、前回より重くて、回数も多いんだ。"
+      },
+      {
+        "id": "record.both_up.04",
+        "text": "これは変化が分かりやすいね。両方増えてる。"
+      }
+    ],
+    "record.both_down": [
+      {
+        "id": "record.both_down.01",
+        "text": "重さも回数も、前回とは変えてるんだね。"
+      },
+      {
+        "id": "record.both_down.02",
+        "text": "今回は両方、前回より少ないね。"
+      }
+    ],
+    "record.weight_up_reps_down": [
+      {
+        "id": "record.weight_up_reps_down.01",
+        "text": "今回は重さを上げて、回数を抑えてるんだね。"
+      },
+      {
+        "id": "record.weight_up_reps_down.02",
+        "text": "重さは上がって、回数は少なくなってるね。"
+      }
+    ],
+    "record.weight_down_reps_up": [
+      {
+        "id": "record.weight_down_reps_up.01",
+        "text": "今回は重さを下げて、回数を増やしたんだね。"
+      },
+      {
+        "id": "record.weight_down_reps_up.02",
+        "text": "軽めで、回数は多くなってるね。"
+      }
+    ],
+    "record.unchanged": [
+      {
+        "id": "record.unchanged.01",
+        "text": "前回と同じ組み方だね。"
+      },
+      {
+        "id": "record.unchanged.02",
+        "text": "数字は変えてないんだね。"
+      },
+      {
+        "id": "record.unchanged.03",
+        "text": "こういう記録も、残しておくといいよね。"
+      },
+      {
+        "id": "record.unchanged.04",
+        "text": "うん、前回と同じだね。"
+      }
+    ],
+    "record.no_comparison": [
+      {
+        "id": "record.no_comparison.01",
+        "text": "今回は前回と比べられないみたい。"
+      },
+      {
+        "id": "record.no_comparison.02",
+        "text": "まずは、今回の記録を残しておこう。"
+      },
+      {
+        "id": "record.no_comparison.03",
+        "text": "この種目は、ここから変化を見ていこうか。"
+      },
+      {
+        "id": "record.no_comparison.04",
+        "text": "記録できたね。次に見返すのが楽しみ。"
+      }
+    ],
+    "calendar.normal": [
+      {
+        "id": "calendar.normal.01",
+        "text": "何か予定、確認してる？"
+      },
+      {
+        "id": "calendar.normal.02",
+        "text": "予定を見てたところ？"
+      },
+      {
+        "id": "calendar.normal.03",
+        "text": "カレンダーって、つい先の予定まで見ちゃう。"
+      },
+      {
+        "id": "calendar.normal.04",
+        "text": "私は休みの日を先に探しちゃうかも。"
+      },
+      {
+        "id": "calendar.normal.05",
+        "text": "予定が空いてる日って、ちょっと嬉しいよね。"
+      },
+      {
+        "id": "calendar.normal.06",
+        "text": "詰め込みすぎないのも大事だよね。"
+      },
+      {
+        "id": "calendar.normal.07",
+        "text": "何もない日を作るのも、立派な予定かな。"
+      },
+      {
+        "id": "calendar.normal.08",
+        "text": "私、予定を立てるのは結構好き。"
+      },
+      {
+        "id": "calendar.normal.09",
+        "text": "でも、予定通りに動けるかは別の話なんだよね。"
+      },
+      {
+        "id": "calendar.normal.10",
+        "text": "こうして見ると、一か月って案外短いね。"
+      },
+      {
+        "id": "calendar.normal.11",
+        "text": "少し先のこと、考えてる？"
+      },
+      {
+        "id": "calendar.normal.12",
+        "text": "先に楽しみがあると、嬉しいよね。"
+      },
+      {
+        "id": "calendar.normal.13",
+        "text": "ゲームの発売日だけは、忘れない気がする。"
+      },
+      {
+        "id": "calendar.normal.14",
+        "text": "予定を考えてると、いつの間にか時間が経ってる。"
+      },
+      {
+        "id": "calendar.normal.15",
+        "text": "私は気分で予定を変えたくなることもあるな。"
+      },
+      {
+        "id": "calendar.normal.16",
+        "text": "予定のない日、何しようかな。"
+      },
+      {
+        "id": "calendar.normal.17",
+        "text": "一人でのんびりする日も好き。"
+      },
+      {
+        "id": "calendar.normal.18",
+        "text": "ねえ、空いてる日って何することが多い？"
+      },
+      {
+        "id": "calendar.normal.19",
+        "text": "先の予定って、考えるだけでちょっと楽しいね。"
+      },
+      {
+        "id": "calendar.normal.20",
+        "text": "ん、どの日を見てるの？"
+      }
+    ],
+    "calendar.has_plan": [
+      {
+        "id": "calendar.has_plan.01",
+        "text": "あ、この月はジムの予定が入ってるね。"
+      },
+      {
+        "id": "calendar.has_plan.02",
+        "text": "予定を入れておくと、見返しやすいね。"
+      },
+      {
+        "id": "calendar.has_plan.03",
+        "text": "ジムの予定、ここで確認できるんだね。"
+      }
+    ],
+    "calendar.has_attendance": [
+      {
+        "id": "calendar.has_attendance.01",
+        "text": "この月は、ジムに行った日があるんだね。"
+      },
+      {
+        "id": "calendar.has_attendance.02",
+        "text": "あ、来館の印がついてる。"
+      },
+      {
+        "id": "calendar.has_attendance.03",
+        "text": "こうして見ると、行った日が分かるね。"
+      }
+    ],
+    "calendar.has_workout": [
+      {
+        "id": "calendar.has_workout.01",
+        "text": "あ、この月は記録も残ってるんだ。"
+      },
+      {
+        "id": "calendar.has_workout.02",
+        "text": "記録のある日、ここから見られるんだね。"
+      },
+      {
+        "id": "calendar.has_workout.03",
+        "text": "いつ何をしたか、後からたどれるね。"
+      }
+    ],
+    "calendar.empty_month": [
+      {
+        "id": "calendar.empty_month.01",
+        "text": "この月は、まだ印がないね。"
+      },
+      {
+        "id": "calendar.empty_month.02",
+        "text": "予定が空いてる月って、なんだか静かだね。"
+      }
+    ],
+    "calendar.past_month": [
+      {
+        "id": "calendar.past_month.01",
+        "text": "前の月を見返してるんだね。"
+      },
+      {
+        "id": "calendar.past_month.02",
+        "text": "振り返ると、いろいろ思い出すことあるよね。"
+      }
+    ],
+    "calendar.future_month": [
+      {
+        "id": "calendar.future_month.01",
+        "text": "先の月まで見てるんだ。"
+      },
+      {
+        "id": "calendar.future_month.02",
+        "text": "少し先の予定を考えるのもいいね。"
+      }
+    ]
+  }
+}
