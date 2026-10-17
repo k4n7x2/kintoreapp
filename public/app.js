@@ -1926,6 +1926,8 @@ const monogatariTestShell = byId("monogatari-test-shell");
 const monogatariTestOpen = byId("monogatari-test-open");
 const monogatariTestClose = byId("monogatari-test-close");
 const monogatariTestFrame = byId("monogatari-test-frame");
+const monogatariTestTitle = byId("monogatari-test-title");
+let activeMonogatariEntry = monogatariTestOpen;
 function closeMonogatariTest(fromPopstate = false) {
   if (monogatariTestShell.hidden) return;
   monogatariTestShell.hidden = true;
@@ -1933,12 +1935,14 @@ function closeMonogatariTest(fromPopstate = false) {
   document.body.classList.remove("is-story-test");
   byId("app-screen").inert = false;
   byId("app-header").inert = false;
-  if (authorized && activePage === "events") monogatariTestOpen.focus();
-  if (!fromPopstate && location.hash === "#events-monogatari") history.back();
+  if (authorized && activePage === "events") activeMonogatariEntry.focus();
+  if (!fromPopstate && ["#events-monogatari", "#events-episode-01"].includes(location.hash)) history.back();
 }
 monogatariTestOpen.addEventListener("click", () => {
   if (!authorized || activePage !== "events" ||
       !storyPlayer.hidden || !monogatariTestShell.hidden) return;
+  activeMonogatariEntry = monogatariTestOpen;
+  monogatariTestTitle.textContent = "Monogatari試作";
   monogatariTestShell.hidden = false;
   document.body.classList.add("is-story-test");
   byId("app-screen").inert = true;
@@ -1964,4 +1968,20 @@ document.addEventListener("keydown", (event) => {
   if (monogatariTestShell.hidden || event.key !== "Escape") return;
   event.preventDefault();
   closeMonogatariTest();
+});
+
+/* Episode 01: standalone Monogatari story; uses the same verified iframe shell. */
+const episode01Open = byId("episode-01-open");
+episode01Open.addEventListener("click", () => {
+  if (!authorized || activePage !== "events" ||
+      !storyPlayer.hidden || !monogatariTestShell.hidden) return;
+  activeMonogatariEntry = episode01Open;
+  monogatariTestTitle.textContent = "第1話 久しぶり、はじめまして。｜仮実装";
+  monogatariTestShell.hidden = false;
+  document.body.classList.add("is-story-test");
+  byId("app-screen").inert = true;
+  byId("app-header").inert = true;
+  history.pushState({ screen: "events", episode01: true }, "", "#events-episode-01");
+  monogatariTestFrame.src = "/experiments/monogatari/episode-01.html";
+  monogatariTestClose.focus();
 });

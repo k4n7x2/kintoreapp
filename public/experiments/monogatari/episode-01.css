@@ -1,0 +1,17 @@
+/* Episode 01-specific presentation. Prototype appearance and home CSS stay untouched. */
+body.episode-dialogue-hidden game-screen text-box { display: none !important; }
+#episode-failure:not([hidden]) {
+  position: absolute; inset: 25% 18px auto; z-index: 100;
+  background: #291f39; color: #fff; padding: 22px; border-radius: 12px;
+}
+/* Keep the sprite stage fixed through normal/thinking/surprised/smile/playful swaps.
+   The 800x1067 normal and 941x1672 expression assets have different native bounds;
+   this does not certify matching face anchors, which require Android visual QA. */
+game-screen img[data-character="s"] {
+  left: 50%; bottom: clamp(125px,19svh,185px);
+  transform-origin: 50% 82%;
+  -webkit-user-drag: none;
+}
+@media (max-height: 640px) {
+  game-screen img[data-character="s"] { bottom: 110px; }
+}

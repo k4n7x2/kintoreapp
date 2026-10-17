@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>第1話 久しぶり、はじめまして。｜仮実装</title>
+  <link rel="stylesheet" href="./vendor/monogatari.css">
+  <link rel="stylesheet" href="./prototype.css?v=1">
+  <link rel="stylesheet" href="./episode-01.css?v=1">
+  <script>
+    window.addEventListener("error", (event) => {
+      if (event.target?.tagName === "SCRIPT") {
+        document.getElementById("episode-failure")?.removeAttribute("hidden");
+      }
+    }, true);
+  </script>
+  <script defer src="./vendor/monogatari.js"></script>
+  <script defer src="./episode-01.js?v=1"></script>
+</head>
+<body class="episode-dialogue-hidden">
+  <!-- The header/back button is owned by the parent app. This iframe is disposable. -->
+  <div id="monogatari">
+    <visual-novel>
+      <loading-screen></loading-screen>
+      <game-screen><text-box></text-box></game-screen>
+    </visual-novel>
+  </div>
+  <div id="episode-failure" role="alert" hidden>
+    第1話を開始できませんでした。左上の「戻る」からイベント一覧へ戻れます。
+  </div>
+</body>
+</html>
