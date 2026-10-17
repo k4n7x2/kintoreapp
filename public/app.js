@@ -728,8 +728,10 @@ function showExercisePicker() {
   pickerInput.value = "";
   pickerFeedback.textContent = "";
   renderExerciseChoices();
+  // Android Chromeの自動フォーカスによるキーボード表示と意図しないスクロールを避ける。
+  // フォーカスを戻るボタンへ移し、表示は必ず一覧の先頭から始める。
+  byId("exercise-picker-back").focus({ preventScroll: true });
   byId("record-scroll").scrollTop = 0;
-  pickerInput.focus();
 }
 function closeExercisePicker() {
   exercisePicker.hidden = true;

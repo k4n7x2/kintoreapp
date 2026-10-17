@@ -1658,11 +1658,17 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px;
   background: var(--raised); color: var(--ink);
 }
+/* The picker uses the Record page's one scrollport. A nested overflow:auto
+   traps Android swipe gestures and can leave the heading hidden behind Chrome. */
 #page-record .exercise-picker-list {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px; margin: 18px 0 15px;
-  max-height: min(44dvh, 330px); overflow-y: auto;
-  overscroll-behavior-y: contain; padding: 1px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0 15px;
+  max-height: none;
+  overflow: visible;
+  overscroll-behavior-y: auto;
+  padding: 1px;
 }
 #page-record .exercise-choice {
   min-height: 46px; width: 100%; padding: 10px 8px;
