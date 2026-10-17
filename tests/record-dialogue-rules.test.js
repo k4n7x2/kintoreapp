@@ -52,3 +52,14 @@ test("truncated listing is not empty", () => assert.deepEqual(calendar(state({tr
 test("past month can be selected while data unknown", () => assert.deepEqual(calendar(state({month:"2026-09",calendarKnown:false,recordsKnown:false})), ["calendar.past_month"]));
 test("future month can be selected while data unknown", () => assert.deepEqual(calendar(state({month:"2026-11",calendarKnown:false,recordsKnown:false})), ["calendar.future_month"]));
 test("current month is neither past nor future", () => assert.deepEqual(calendar(state({month:"2026-10",hasPlan:true})), ["calendar.has_plan"]));
+
+test("12 full sets compare when not truncated", () => {
+ const present=Array.from({length:12},()=>c(45,10));
+ const before=Array.from({length:12},(_,i)=>kg(40,10,i+1));
+ assert.equal(run("kg_reps",present,before),"record.weight_up");
+});
+test("13 old sets never match a 12-set record", () => {
+ const present=Array.from({length:12},()=>c(45,10));
+ const before=Array.from({length:13},(_,i)=>kg(40,10,i+1));
+ assert.equal(run("kg_reps",present,before),"record.no_comparison");
+});

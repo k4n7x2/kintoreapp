@@ -1468,7 +1468,7 @@ byId("workout-form").addEventListener("submit", async event => {
       try {
         const history = await fetchJSON("/api/workouts/recent?name=" +
           encodeURIComponent(name) + "&before=" + encodeURIComponent(date));
-        previousSets = Array.isArray(history.sets) ? history.sets : null;
+        previousSets = !history.truncated && Array.isArray(history.sets) ? history.sets : null;
       } catch { previousSets = null; }
     }
     // 取得中の画面／日付／種目／数値／メモ変更は、古い結果で保存しない。

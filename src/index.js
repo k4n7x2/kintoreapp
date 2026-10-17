@@ -500,7 +500,7 @@ export default {
               "JOIN workout_sessions s2 ON s2.id = ws2.session_id " +
               "WHERE ws2.exercise_name = ? " + dateFilter +
               "ORDER BY s2.performed_on DESC, s2.created_at DESC, ws2.id DESC LIMIT 1) " +
-              "ORDER BY ws.set_number, ws.id LIMIT 12";
+              "ORDER BY ws.set_number, ws.id LIMIT 13";
             const params = before ? [name,name,before] : [name,name];
             const recent = await fetchWorkoutSets(
               () => env.DB.prepare("SELECT ws.weight_kg, ws.reps, ws.set_number, s.performed_on, " +
@@ -508,7 +508,9 @@ export default {
               () => env.DB.prepare("SELECT ws.weight_kg, ws.reps, ws.set_number, s.performed_on " +
                 suffix).bind(...params).all()
             );
-            return respond({ sets: recent.results ?? [] });
+            const sets = recent.results ?? [];
+            // 旧セッションの13セット目を検出。既存クライアントには12セットまで返す。
+            return respond({ sets: sets.slice(0, 12), truncated: sets.length > 12 });
           }
 
           if (url.pathname === "/api/workouts" && method === "POST") {

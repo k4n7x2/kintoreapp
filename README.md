@@ -71,7 +71,7 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 | PUT | `/api/exercises/log` | 日付＋種目名＋その種目のセットとメモを独立保存。日付・種目名が一致する単一種目記録は更新 |
 | DELETE | `/api/exercises/log` | JSON `{performed_on, exercise_name}`の指定日・指定種目のセットを削除。複数種目セッションは他種目を保持、空セッションのみ削除。認証・同一Origin・JSON必須 |
 | GET | `/api/exercises/history?name=種目名` | 種目別セット履歴（最大1200セット、`truncated`で表示上限通知、認証必須）。分析の実施日一覧から共通の編集画面へ接続 |
-| GET | `/api/workouts/recent?name=種目名&before=YYYY-MM-DD` | 同名種目の前回セット。`before`指定時はその日より前の最新実績、未指定時は従来どおり最新実績 |
+| GET | `/api/workouts/recent?name=種目名&before=YYYY-MM-DD` | 同名種目の前回セット（最大12セット＋`truncated`）。`before`指定時はその日より前の最新実績、未指定時は従来どおり最新実績 |
 | GET | `/api/calendar?month=YYYY-MM` | 月別の予定・来館フラグ（0002必要） |
 | PUT | `/api/calendar/YYYY-MM-DD` | 予定／来館の独立保存、両方falseなら該当日のフラグを削除 |
 
