@@ -36,7 +36,7 @@ monogatari.characters({
 // Comparison mode is UI-only and never changes progress, dialogue or personal data.
 // Monogatari produces an img for each sprite; adapt its source in the same microtask
 // after a scene/sprite action so the selected set is used for all future expressions.
-const storySpriteName = /shiori-gim-story-(thinking|surprised|smile|playful)-(r1|alt1)\\.webp(?=$|[?#])/;
+const storySpriteName = /shiori-gim-story-(thinking|surprised|smile|playful)-(r1|alt1)\.webp(?=$|[?#])/;
 let expressionVariant = "before";
 function applyExpressionVariant() {
   const wantedSuffix = expressionVariant === "after" ? "alt1" : "r1";
