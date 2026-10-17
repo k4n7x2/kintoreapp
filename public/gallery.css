@@ -1,0 +1,86 @@
+/* Isolated gallery viewer: static image review only, separate from story playback. */
+#page-gallery .gallery-intro { color: var(--muted); font-size: 12px; margin: 3px 0 15px; line-height: 1.65; }
+#page-gallery .gallery-group-tabs { display: flex; gap: 7px; overflow-x: auto; padding: 1px 0 10px; }
+#page-gallery .gallery-group-tabs button,
+#page-gallery .gallery-view-modes button,
+#page-gallery .gallery-version-controls button {
+  min-height: 44px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--ink); padding: 8px 12px;
+  font-weight: 700; font-size: 12px; white-space: nowrap; cursor: pointer;
+}
+#page-gallery [aria-pressed="true"] {
+  border-color: var(--accent) !important; background: var(--raised) !important; color: var(--ink);
+}
+#page-gallery button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+#page-gallery .gallery-asset-list {
+  display: flex; gap: 8px; overflow-x: auto; padding: 4px 1px 11px;
+  scrollbar-width: thin; -webkit-overflow-scrolling: touch;
+}
+#page-gallery .gallery-asset-button {
+  flex: 0 0 82px; min-width: 0; display: grid; justify-items: center; gap: 5px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface); color: var(--ink); padding: 6px 4px 7px;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+}
+#page-gallery .gallery-asset-button img {
+  display: block; width: 64px; height: 67px; object-fit: contain;
+  border-radius: 6px; background: var(--deep);
+}
+#page-gallery .gallery-viewer {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; padding: 13px 11px 14px; min-width: 0;
+}
+#page-gallery .gallery-viewer-head {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; flex-wrap: wrap; margin-bottom: 9px;
+}
+#page-gallery .gallery-viewer-head h2 { font-size: 15px; margin: 4px 0 0; line-height: 1.4; }
+#page-gallery .gallery-view-modes,
+#page-gallery .gallery-version-controls { display: flex; gap: 6px; }
+#page-gallery .gallery-view-modes button,
+#page-gallery .gallery-version-controls button { padding-inline: 13px; }
+#page-gallery .gallery-version-controls { margin-bottom: 9px; }
+#page-gallery .gallery-view-modes[hidden],
+#page-gallery .gallery-version-controls[hidden] { display: none !important; }
+#page-gallery .gallery-canvases { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; }
+#page-gallery .gallery-canvases.is-side-by-side {
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  overflow-x: auto; scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+#page-gallery .gallery-figure { min-width: 0; margin: 0; scroll-snap-align: start; }
+#page-gallery .gallery-portrait-stage {
+  width: 100%; height: clamp(255px, 51dvh, 450px);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background-color: var(--deep);
+  background-image:
+    linear-gradient(45deg, rgba(155,137,163,.13) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(155,137,163,.13) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(155,137,163,.13) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(155,137,163,.13) 75%);
+  background-size: 22px 22px;
+  background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+  border: 1px solid var(--line); border-radius: 11px;
+}
+#page-gallery .gallery-portrait-stage img {
+  display: block; width: 100%; height: 100%; object-fit: contain;
+  object-position: center center;
+}
+#page-gallery .gallery-image-caption {
+  color: var(--muted); text-align: center; font-size: 11px;
+  font-variant-numeric: tabular-nums; padding: 6px 0 1px;
+}
+#page-gallery .gallery-description {
+  min-height: 22px; margin: 7px 0 0; font-size: 11px;
+  line-height: 1.6; color: var(--muted);
+}
+@media (max-width: 370px) {
+  #page-gallery .gallery-viewer { padding-inline: 8px; }
+  #page-gallery .gallery-group-tabs button { padding-inline: 9px; }
+  #page-gallery .gallery-portrait-stage { height: clamp(235px, 46dvh, 390px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #page-gallery .gallery-canvases { scroll-behavior: auto; }
+}

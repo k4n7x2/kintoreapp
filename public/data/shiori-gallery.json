@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "groups": [
+    {
+      "id": "story",
+      "label": "ジム・第1話",
+      "items": [
+        {
+          "id": "normal",
+          "label": "通常",
+          "versions": {
+            "before": "/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp",
+            "after": "/assets/shiori/gim/v1/shiori-gim-story-normal-alt1.webp"
+          }
+        },
+        {
+          "id": "thinking",
+          "label": "考える",
+          "versions": {
+            "before": "/assets/shiori/gim/v1/shiori-gim-story-thinking-r1.webp",
+            "after": "/assets/shiori/gim/v1/shiori-gim-story-thinking-alt1.webp"
+          }
+        },
+        {
+          "id": "surprised",
+          "label": "驚き",
+          "versions": {
+            "before": "/assets/shiori/gim/v1/shiori-gim-story-surprised-r1.webp",
+            "after": "/assets/shiori/gim/v1/shiori-gim-story-surprised-alt1.webp"
+          }
+        },
+        {
+          "id": "smile",
+          "label": "笑顔",
+          "versions": {
+            "before": "/assets/shiori/gim/v1/shiori-gim-story-smile-r1.webp",
+            "after": "/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp"
+          }
+        },
+        {
+          "id": "playful",
+          "label": "いたずら",
+          "versions": {
+            "before": "/assets/shiori/gim/v1/shiori-gim-story-playful-r1.webp",
+            "after": "/assets/shiori/gim/v1/shiori-gim-story-playful-alt1.webp"
+          }
+        }
+      ]
+    },
+    {
+      "id": "home",
+      "label": "部屋着",
+      "items": [
+        {
+          "id": "normal",
+          "label": "通常",
+          "versions": {
+            "current": "/assets/shiori/home/v1/shiori-home-roomwear-normal-r1.webp"
+          }
+        },
+        {
+          "id": "joy",
+          "label": "喜び",
+          "versions": {
+            "current": "/assets/shiori/home/v1/shiori-home-roomwear-joy-r1.webp"
+          }
+        },
+        {
+          "id": "anger",
+          "label": "怒り",
+          "versions": {
+            "current": "/assets/shiori/home/v1/shiori-home-roomwear-anger-r1.webp"
+          }
+        },
+        {
+          "id": "sad",
+          "label": "悲しみ",
+          "versions": {
+            "current": "/assets/shiori/home/v1/shiori-home-roomwear-sad-r1.webp"
+          }
+        },
+        {
+          "id": "fun",
+          "label": "楽しさ",
+          "versions": {
+            "current": "/assets/shiori/home/v1/shiori-home-roomwear-fun-r1.webp"
+          }
+        },
+        {
+          "id": "shy",
+          "label": "照れ",
+          "versions": {
+            "current": "/assets/shiori/home/v1/shiori-home-roomwear-shy-r1.webp"
+          }
+        },
+        {
+          "id": "mischievous",
+          "label": "小悪魔",
+          "versions": {
+            "current": "/assets/shiori/home/v1/shiori-home-roomwear-mischievous-r1.webp"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sd",
+      "label": "SD",
+      "items": [
+        {
+          "id": "training",
+          "label": "ジム用SD",
+          "versions": {
+            "current": "/assets/shiori/gim/v1/shiori-gim-sd-training-test-r1.webp"
+          }
+        }
+      ]
+    }
+  ]
+}
