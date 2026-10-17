@@ -2476,3 +2476,163 @@ body.is-authenticated.is-sd-page #app-screen {
     --sd-fixed-height: clamp(102px, 18dvh, 128px);
   }
 }
+
+/* Exercise catalogue configuration. Settings scroll as one page; calendar, record,
+   and analysis keep their existing fixed SD companion region. */
+#page-exercise-settings {
+  padding-bottom: 40px;
+}
+#page-exercise-settings .page-heading {
+  margin: 10px 0 14px;
+}
+#page-exercise-settings .page-heading h1 { font-size: 23px; }
+#page-exercise-settings #exercise-settings-back {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 8px 4px;
+  min-height: 44px;
+  margin-bottom: 3px;
+}
+#page-exercise-settings .exercise-catalog-panel,
+#page-exercise-settings .exercise-catalog-editor {
+  padding: 15px 13px;
+  margin-bottom: 12px;
+}
+#page-exercise-settings .exercise-catalog-toolbar,
+#page-exercise-settings #exercise-settings-form {
+  display: grid;
+  gap: 7px;
+}
+#page-exercise-settings label {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12px;
+  margin-top: 4px;
+}
+#page-exercise-settings select,
+#page-exercise-settings input,
+#page-record .exercise-part-filter,
+#page-analysis .exercise-part-filter {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 11px;
+  color: var(--ink);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  font: inherit;
+  font-size: 16px;
+}
+#page-exercise-settings .exercise-settings-list {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0 12px;
+}
+#page-exercise-settings .exercise-settings-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  text-align: left;
+  min-height: 48px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+#page-exercise-settings .exercise-settings-item strong { font-size: 13px; overflow-wrap: anywhere; }
+#page-exercise-settings .exercise-settings-item span { font-size: 11px; color: var(--muted); white-space: nowrap; }
+#page-exercise-settings .exercise-settings-item.is-selected {
+  border-color: var(--accent);
+}
+#page-exercise-settings #exercise-settings-new {
+  width: 100%;
+  min-height: 44px;
+}
+#page-exercise-settings .exercise-catalog-editor h2 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+#page-exercise-settings #exercise-settings-save {
+  background: var(--accent);
+  border: 0;
+  border-radius: 12px;
+  color: var(--on-accent);
+  min-height: 48px;
+  font: inherit;
+  font-weight: 750;
+  margin-top: 7px;
+}
+#page-exercise-settings #exercise-settings-save:disabled { opacity: .5; }
+#page-exercise-settings .feedback { min-height: 20px; margin: 2px 0; }
+#page-record .exercise-manage-link,
+#page-analysis .exercise-manage-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  color: var(--ink);
+  min-height: 40px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+#page-record #record-manage-exercises {
+  display: flex;
+  margin: 3px 0 7px auto;
+}
+#page-record .exercise-picker-heading,
+#page-analysis .analysis-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+#page-record .exercise-picker-heading h2,
+#page-analysis .analysis-list-heading h2 {
+  margin: 8px 0;
+}
+#page-record .exercise-picker-list .exercise-choice {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+#page-record .exercise-picker-list .exercise-choice strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+#page-record .exercise-picker-list .exercise-choice small {
+  color: var(--muted);
+  font-size: 10px;
+}
+#page-analysis .analysis-exercises-panel label {
+  display: block;
+  margin: 8px 0 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+#page-analysis #analysis-part-filter { margin-bottom: 13px; }
+#page-record #record-editor-view .exercise-set.is-simple-unit .set-metric:nth-child(2) {
+  display: none !important;
+}
+#page-record #record-editor-view .exercise-set.is-simple-unit .set-metric:nth-child(3) {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+@media (max-width: 360px) {
+  #page-exercise-settings .exercise-settings-item {
+    flex-wrap: wrap;
+  }
+}

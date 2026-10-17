@@ -78,6 +78,33 @@ const pickerFeedback = byId("exercise-picker-feedback");
 const overviewFeedback = byId("record-overview-feedback");
 const starterExercises = [...byId("exercise-suggestions").options].map(option => option.value);
 let knownExerciseNames = starterExercises;
+const exercisePartOptions = ["胸","背中","肩","腕","脚","腹筋","全身","その他"];
+const exerciseUnitLabels = { kg_reps:"kg＋回数", reps:"回数", seconds:"秒" };
+const starterParts = {
+  "ベンチプレス":"胸", "チェストプレス":"胸", "ダンベルプレス":"胸",
+  "ラットプルダウン":"背中", "シーテッドロー":"背中", "ショルダープレス":"肩",
+  "アームカール":"腕", "レッグプレス":"脚", "スクワット":"脚",
+  "レッグカール":"脚", "クランチ":"腹筋"
+};
+let exerciseCatalog = new Map(starterExercises.map(name => [
+  normalizeExerciseName(name), {
+    name:normalizeExerciseName(name), body_part:starterParts[name] || "その他",
+    unit:"kg_reps"
+  }
+]));
+let recordedExerciseNames = new Set();
+let exerciseCatalogReady = false;
+let exerciseSettingsOriginal = "";
+let exerciseSettingsReturnPage = "record";
+let exerciseSettingsReturnPicker = false;
+let exerciseSettingsRequestId = 0;
+const catalogPartFor = name => exerciseCatalog.get(normalizeExerciseName(name))?.body_part || "その他";
+const catalogUnitFor = name => exerciseCatalog.get(normalizeExerciseName(name))?.unit || "kg_reps";
+function formatLoggedSet(set, unit = set?.entry_unit || "kg_reps") {
+  if (unit === "seconds") return Number(set?.duration_seconds ?? 0) + "秒";
+  if (unit === "reps") return Number(set?.reps ?? 0) + "回";
+  return Number(set?.weight_kg ?? 0) + "kg × " + Number(set?.reps ?? 0) + "回";
+}
 let activeExerciseCard = null;
 let recordBaseline = "";
 let pendingRecordDate = "";
@@ -107,6 +134,125 @@ function normalizeExerciseName(value) {
     ? value.normalize("NFKC").replace(/[\s\u3000]+/g, "").toLowerCase()
     : "";
 }
+
+function listExerciseCatalog() {
+  return [...exerciseCatalog.values()].sort((a,b) =>
+    a.name.localeCompare(b.name, "ja"));
+}
+function renderExerciseSettingsList() {
+  const wrap = byId("exercise-settings-list");
+  const part = byId("exercise-settings-filter").value;
+  const query = normalizeExerciseName(byId("exercise-settings-search").value);
+  wrap.replaceChildren();
+  for (const row of listExerciseCatalog().filter(item =>
+    (part === "すべて" || item.body_part === part) &&
+    (!query || item.name.includes(query)))) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "exercise-settings-item";
+    if (row.name === exerciseSettingsOriginal) button.classList.add("is-selected");
+    const title = document.createElement("strong");
+    title.textContent = row.name;
+    const detail = document.createElement("span");
+    detail.textContent = row.body_part + " · " + exerciseUnitLabels[row.unit];
+    button.append(title, detail);
+    button.addEventListener("click", () => editExerciseSettings(row));
+    wrap.appendChild(button);
+  }
+  if (!wrap.children.length) {
+    const empty = document.createElement("p");
+    empty.className = "field-hint";
+    empty.textContent = "該当する種目がありません。";
+    wrap.appendChild(empty);
+  }
+}
+function editExerciseSettings(item = null) {
+  const entry = item || { name:"", body_part:"その他", unit:"kg_reps" };
+  exerciseSettingsOriginal = entry.name;
+  byId("exercise-settings-edit-title").textContent =
+    entry.name ? "種目を編集" : "新しい種目を登録";
+  byId("exercise-settings-name").value = entry.name;
+  byId("exercise-settings-part").value = entry.body_part;
+  byId("exercise-settings-unit").value = entry.unit;
+  byId("exercise-settings-feedback").textContent = "";
+  renderExerciseSettingsList();
+  if (item) byId("exercise-settings-name").scrollIntoView({ block:"nearest" });
+}
+function openExerciseSettings() {
+  if (!authorized) return;
+  exerciseSettingsReturnPage = activePage === "exercise-settings" ? "record" : activePage;
+  exerciseSettingsReturnPicker = activePage === "record" && !exercisePicker.hidden;
+  if (activePage === "record" && activeExerciseCard) closeExerciseEditor();
+  setScreen("exercise-settings");
+}
+function closeExerciseSettings() {
+  if (!authorized) return;
+  const destination = pages.has(exerciseSettingsReturnPage)
+    ? exerciseSettingsReturnPage : "record";
+  setScreen(destination);
+  if (destination === "record" && exerciseSettingsReturnPicker) showExercisePicker();
+}
+async function refreshExerciseSettings() {
+  const requestId = ++exerciseSettingsRequestId;
+  byId("exercise-settings-feedback").textContent = "";
+  await loadExerciseNames();
+  if (requestId !== exerciseSettingsRequestId || !authorized) return;
+  byId("exercise-settings-save").disabled = !exerciseCatalogReady;
+  if (!exerciseCatalogReady) {
+    byId("exercise-settings-feedback").textContent =
+      "種目設定の保存にはD1マイグレーション（0003）の適用が必要です。";
+  }
+  renderExerciseSettingsList();
+}
+byId("exercise-settings-back").addEventListener("click", closeExerciseSettings);
+byId("exercise-settings-new").addEventListener("click", () => editExerciseSettings());
+byId("exercise-settings-filter").addEventListener("change", renderExerciseSettingsList);
+byId("exercise-settings-search").addEventListener("input", renderExerciseSettingsList);
+byId("record-manage-exercises").addEventListener("click", openExerciseSettings);
+byId("exercise-picker-manage").addEventListener("click", openExerciseSettings);
+byId("analysis-manage-exercises").addEventListener("click", openExerciseSettings);
+byId("exercise-settings-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!authorized) return;
+  const name = normalizeExerciseName(byId("exercise-settings-name").value);
+  const previous = normalizeExerciseName(exerciseSettingsOriginal || name);
+  const bodyPart = byId("exercise-settings-part").value;
+  const unit = byId("exercise-settings-unit").value;
+  const feedback = byId("exercise-settings-feedback");
+  if (!name || name.length > 60 || !exercisePartOptions.includes(bodyPart) ||
+      !Object.hasOwn(exerciseUnitLabels, unit)) {
+    feedback.textContent = "種目名・部位・単位を確認してください。";
+    return;
+  }
+  if (name !== previous && hasRecordChanges()) {
+    feedback.textContent = "編集中の記録があります。種目名の変更前に記録を保存してください。";
+    return;
+  }
+  const button = byId("exercise-settings-save");
+  button.disabled = true;
+  feedback.textContent = "保存中…";
+  try {
+    const result = await fetchJSON("/api/exercises/catalog", {
+      method:"PUT", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ name, previous_name:previous, body_part:bodyPart, unit })
+    });
+    exerciseSettingsOriginal = result.name;
+    await loadExerciseNames();
+    if (name !== previous && recordsLoaded) {
+      await loadWorkouts();
+      hydrateStoredRecordForDate(selectedDate);
+    }
+    editExerciseSettings(exerciseCatalog.get(result.name));
+    feedback.textContent = "種目の設定を保存しました。";
+  } catch (error) {
+    if (error.status === 401) { setAuthenticated(false); return; }
+    feedback.textContent = error.status === 409 ? "同じ種目名が既にあります。" :
+      error.status === 503 ? "D1マイグレーション（0003）の適用が必要です。" :
+      "設定を保存できませんでした。";
+  } finally {
+    button.disabled = !exerciseCatalogReady;
+  }
+});
 function hydrateStoredRecordForDate(date) {
   resetWorkoutForm(date);
   // 日別セッションを種目名で横断的に束ねる。日付の最新1件しか表示しない旧制約を撤廃。
@@ -239,14 +385,17 @@ function setReady(ready) {
 }
 
 
-const formatPrevious = set => Number(set.weight_kg).toString() + "kg × " + set.reps + "回";
+const formatPrevious = set => formatLoggedSet(set);
 
 // 各セットの重量・回数それぞれに [−][数値入力][＋] を直接配置する。
 let nextSetInputId = 0;
 function inlineStepSpec(input) {
   if (!input) return null;
   if (input.classList.contains("set-weight")) return { step: 2.5, max: 2000 };
-  if (input.classList.contains("set-reps")) return { step: 1, max: 1000 };
+  if (input.classList.contains("set-reps")) {
+    const card = input.closest(".exercise-sets")?.exerciseCard;
+    return card?.unit === "seconds" ? { step: 5, max: 36000 } : { step: 1, max: 1000 };
+  }
   return null;
 }
 function updateInlineStepButtons(input) {
@@ -290,7 +439,7 @@ function makeInlineStepper(input, typeName) {
   const suffix = document.createElement("span");
   suffix.className = "set-value-unit";
   suffix.setAttribute("aria-hidden", "true");
-  suffix.textContent = typeName === "重量" ? "kg" : "回";
+  suffix.textContent = typeName === "重量" ? "kg" : typeName === "秒数" ? "秒" : "回";
   valueField.append(input, suffix);
   wrapper.append(minus, valueField, plus);
   input.addEventListener("input", () => updateInlineStepButtons(input));
@@ -321,8 +470,10 @@ function refreshPreviousReferences() {
   });
 }
 function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
+  const unit = container.exerciseCard?.unit || "kg_reps";
   const row = document.createElement("div");
   row.className = "exercise-set";
+  if (unit !== "kg_reps") row.classList.add("is-simple-unit");
   const number = document.createElement("span");
   number.className = "set-number";
   const weightLabel = document.createElement("div");
@@ -351,13 +502,18 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   previousReps.disabled = true;
   previousReps.title = "前回の回数をこのセットに入力";
   const reps = document.createElement("input");
-  reps.type = "number"; reps.min = "0"; reps.max = "1000"; reps.step = "1";
+  reps.type = "number"; reps.min = "0";
+  reps.max = unit === "seconds" ? "36000" : "1000";
+  reps.step = "1";
   reps.inputMode = "numeric";
   reps.className = "set-reps";
   reps.id = "set-reps-" + (++nextSetInputId);
-  reps.value = String(set.reps ?? 10);
-  reps.setAttribute("aria-label", "回数");
-  repsLabel.append(previousReps, makeInlineStepper(reps, "回数"));
+  reps.value = String(unit === "seconds"
+    ? (set.duration_seconds ?? 60) : (set.reps ?? 10));
+  reps.setAttribute("aria-label", unit === "seconds" ? "秒数" : "回数");
+  repsLabel.append(previousReps, makeInlineStepper(reps,
+    unit === "seconds" ? "秒数" : "回数"));
+  if (unit !== "kg_reps") weightLabel.hidden = true;
   attachNumericInput(reps);
   previousWeight.addEventListener("click", () => {
     if (!dbReady || !row.previousSet) return;
@@ -366,7 +522,9 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   });
   previousReps.addEventListener("click", () => {
     if (!dbReady || !row.previousSet) return;
-    reps.value = String(Number(row.previousSet.reps));
+    reps.value = String(unit === "seconds"
+      ? Number(row.previousSet.duration_seconds || 0)
+      : Number(row.previousSet.reps));
     reps.dispatchEvent(new Event("input", { bubbles: true }));
   });
   const remove = document.createElement("button");
@@ -412,12 +570,14 @@ function renumberSets(container) {
       const input = row.querySelector(selector);
       const wrapper = input?.closest(".set-inline-stepper");
       if (!wrapper) continue;
+      const actualLabel = label === "回数" && container.exerciseCard?.unit === "seconds"
+        ? "秒数" : label;
       input.setAttribute("aria-label",
-        (index + 1) + "セット目の" + label + (label === "重量" ? "（kg）" : ""));
+        (index + 1) + "セット目の" + actualLabel + (label === "重量" ? "（kg）" : ""));
       wrapper.querySelector(".set-step-minus")?.setAttribute("aria-label",
-        (index + 1) + "セット目の" + label + "を減らす");
+        (index + 1) + "セット目の" + actualLabel + "を減らす");
       wrapper.querySelector(".set-step-plus")?.setAttribute("aria-label",
-        (index + 1) + "セット目の" + label + "を増やす");
+        (index + 1) + "セット目の" + actualLabel + "を増やす");
     }
   });
   updateSetScrollLimit(container);
@@ -429,6 +589,17 @@ function renumberSets(container) {
 
 
 function analysisDateSummary(sets) {
+  if (!sets.length) return "0セット";
+  const unit = sets[0].entry_unit || "kg_reps";
+  if (sets.some(set => (set.entry_unit || "kg_reps") !== unit)) {
+    return "異なる単位の記録 · " + sets.length + "セット";
+  }
+  if (unit === "seconds") return "最大" +
+    Math.max(...sets.map(set => Number(set.duration_seconds || 0))) +
+    "秒 / " + sets.length + "セット";
+  if (unit === "reps") return "最大" +
+    Math.max(...sets.map(set => Number(set.reps))) +
+    "回 / " + sets.length + "セット";
   const max = Math.max(...sets.map(set => Number(set.weight_kg)));
   return Number(max.toFixed(2)) + "kg / " + sets.length + "セット";
 }
@@ -446,18 +617,36 @@ async function loadAnalysisExercises() {
   try {
     const result = await fetchJSON("/api/exercises");
     if (requestId !== analysisListRequestId || !authorized) return;
-    const names = [...new Set((result.exercises || []).map(normalizeExerciseName).filter(Boolean))];
-    analysisExerciseFeedback.textContent = names.length ? "" : "まだ記録した種目がありません。";
-    for (const name of names) {
+    if (result.catalog_ready) {
+      for (const item of result.catalog || []) {
+        const name = normalizeExerciseName(item.name);
+        if (name) exerciseCatalog.set(name, {
+          name, body_part: item.body_part, unit: item.unit
+        });
+      }
+    }
+    const names = [...new Set((result.recorded || result.exercises || [])
+      .map(normalizeExerciseName).filter(Boolean))];
+    const partFilter = byId("analysis-part-filter").value;
+    const filteredNames = names.filter(name =>
+      partFilter === "すべて" || catalogPartFor(name) === partFilter);
+    analysisExerciseFeedback.textContent = filteredNames.length ? "" :
+      names.length ? "この部位の実施記録はありません。" : "まだ記録した種目がありません。";
+    for (const name of filteredNames) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "analysis-link-card";
       const title = document.createElement("strong");
       title.textContent = name;
+      const meta = document.createElement("small");
+      meta.textContent = catalogPartFor(name);
       const chevron = document.createElement("span");
       chevron.setAttribute("aria-hidden", "true");
       chevron.textContent = "›";
-      button.append(title, chevron);
+      const info = document.createElement("span");
+      info.className = "analysis-exercise-info";
+      info.append(title, meta);
+      button.append(info, chevron);
       button.addEventListener("click", () => showAnalysisDates(name));
       analysisExerciseList.appendChild(button);
     }
@@ -555,6 +744,7 @@ function returnFromExerciseEditor() {
     closeExerciseEditor({ focus: true });
   }
 }
+byId("analysis-part-filter").addEventListener("change", loadAnalysisExercises);
 byId("analysis-dates-back").addEventListener("click", () => {
   showAnalysisExerciseList({ reload: false });
   byId("analysis-heading").focus?.();
@@ -577,6 +767,7 @@ byId("record-history-back").addEventListener("click", () => setRecordHistoryVisi
 function cardDraftSnapshot(card) {
   return JSON.stringify({
     name: normalizeExerciseName(card.nameInput.value),
+    unit: card.unit,
     note: card.noteValue || "",
     sets: [...card.rows.querySelectorAll(".exercise-set")].map(row => [
       row.querySelector(".set-weight").value, row.querySelector(".set-reps").value
@@ -726,6 +917,7 @@ function showExercisePicker() {
   recordEditor.hidden = true;
   exercisePicker.hidden = false;
   pickerInput.value = "";
+  byId("exercise-picker-part").value = "すべて";
   pickerFeedback.textContent = "";
   renderExerciseChoices();
   // Android Chromeの自動フォーカスによるキーボード表示と意図しないスクロールを避ける。
@@ -741,23 +933,64 @@ function closeExercisePicker() {
 function renderExerciseChoices() {
   pickerList.replaceChildren();
   const query = normalizeExerciseName(pickerInput.value);
-  for (const name of knownExerciseNames.filter(item => item.includes(query)).slice(0, 50)) {
+  const part = byId("exercise-picker-part").value;
+  const filtered = knownExerciseNames.filter(item => item.includes(query) &&
+    (part === "すべて" || catalogPartFor(item) === part)).slice(0, 100);
+  for (const name of filtered) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "exercise-choice";
-    button.textContent = name;
+    const title = document.createElement("strong");
+    title.textContent = name;
+    const detail = document.createElement("small");
+    detail.textContent = catalogPartFor(name) + " · " + exerciseUnitLabels[catalogUnitFor(name)];
+    button.append(title, detail);
     button.addEventListener("click", () => chooseExercise(name));
     pickerList.appendChild(button);
+  }
+  if (!filtered.length) {
+    const empty = document.createElement("p");
+    empty.className = "field-hint";
+    empty.textContent = "該当する種目はありません。";
+    pickerList.appendChild(empty);
   }
 }
 async function loadExerciseNames() {
   try {
     const data = await fetchJSON("/api/exercises");
     if (!authorized) return;
-    knownExerciseNames = [...new Set([...starterExercises, ...(data.exercises || [])]
-      .map(normalizeExerciseName).filter(Boolean))];
+    exerciseCatalogReady = !!data.catalog_ready;
+    recordedExerciseNames = new Set((data.recorded || []).map(normalizeExerciseName));
+    if (exerciseCatalogReady) {
+      exerciseCatalog = new Map();
+      for (const item of data.catalog || []) {
+        const name = normalizeExerciseName(item.name);
+        if (name) exerciseCatalog.set(name, { name, body_part:item.body_part, unit:item.unit });
+      }
+      for (const name of recordedExerciseNames) {
+        if (!exerciseCatalog.has(name)) exerciseCatalog.set(name, {
+          name, body_part:starterParts[name] || "その他", unit:"kg_reps"
+        });
+      }
+      knownExerciseNames = [...exerciseCatalog.keys()];
+    } else {
+      knownExerciseNames = [...new Set([...starterExercises, ...(data.exercises || [])]
+        .map(normalizeExerciseName).filter(Boolean))];
+      exerciseCatalog = new Map(knownExerciseNames.map(name => [name,{
+        name, body_part:starterParts[name] || "その他",
+        unit:"kg_reps"
+      }]));
+    }
+    const suggestions = byId("exercise-suggestions");
+    suggestions.replaceChildren();
+    for (const name of knownExerciseNames) {
+      const option = document.createElement("option");
+      option.value = name;
+      suggestions.appendChild(option);
+    }
     renderExerciseChoices();
-  } catch { /* 候補取得に失敗しても固定候補と手入力は利用可能 */ }
+    renderExerciseSettingsList();
+  } catch { /* 初期候補と手入力で記録を継続可能 */ }
 }
 function chooseExercise(raw) {
   if (!authorized || !dbReady) return;
@@ -775,6 +1008,7 @@ function chooseExercise(raw) {
 byId("exercise-picker-back").addEventListener("click", closeExercisePicker);
 byId("exercise-picker-confirm").addEventListener("click", () => chooseExercise(pickerInput.value));
 pickerInput.addEventListener("input", renderExerciseChoices);
+byId("exercise-picker-part").addEventListener("change", renderExerciseChoices);
 pickerInput.addEventListener("keydown", event => {
   if (event.key === "Enter") { event.preventDefault(); chooseExercise(pickerInput.value); }
 });
@@ -816,6 +1050,8 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   rows.className = "exercise-sets";
   rows.exerciseCard = card;
   card.rows = rows;
+  card.unit = saved && sets[0]?.entry_unit
+    ? sets[0].entry_unit : catalogUnitFor(name);
   card.nameInput = nameInput;
   card.editorBody = body;
   card.overviewButton = summary;
@@ -832,12 +1068,15 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   addSet.addEventListener("click", () => {
     if (rows.children.length >= 12) return;
     const last = rows.lastElementChild;
+    const lastValue = last ? Number(last.querySelector(".set-reps").value) : 10;
     const row = newSetRow(rows, {
-      weight_kg: last ? Number(last.querySelector(".set-weight").value) : 0,
-      reps: last ? Number(last.querySelector(".set-reps").value) : 10
+      weight_kg: card.unit === "kg_reps" && last
+        ? Number(last.querySelector(".set-weight").value) : 0,
+      reps: card.unit === "seconds" ? 0 : lastValue,
+      duration_seconds: card.unit === "seconds" ? (last ? lastValue : 60) : 0
     });
-    // 新しく追加した4セット目以降が、スクロール領域内で見える位置まで移動。
-    row.querySelector(".set-weight").focus();
+    // 4セット目以降を表示し、新しいセットの使用する値にフォーカス。
+    row.querySelector(card.unit === "kg_reps" ? ".set-weight" : ".set-reps").focus();
     if (rows.classList.contains("is-scrollable")) {
       row.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
@@ -858,8 +1097,10 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     const currentSets = [...rows.querySelectorAll(".exercise-set")];
     const values = currentSets.map(row => {
       const kg = row.querySelector(".set-weight").value;
-      const reps = row.querySelector(".set-reps").value;
-      return (kg || "—") + "kg × " + (reps || "—") + "回";
+      const amount = row.querySelector(".set-reps").value || "—";
+      return card.unit === "seconds" ? amount + "秒" :
+        card.unit === "reps" ? amount + "回" :
+        (kg || "—") + "kg × " + amount + "回";
     });
     const uniform = values.length && values.every(value => value === values[0]);
     current.textContent = !values.length ? "セットなし" :
@@ -867,28 +1108,31 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
       values.join(" / ");
   };
   card.renderPrevious = () => {
-    previousSummary.textContent = previous.length
-      ? "前回 " + previous.map(formatPrevious).join(" / ")
-      : "前回の記録なし";
+    const compatible = previous.filter(set => (set.entry_unit || "kg_reps") === card.unit);
+    previousSummary.textContent = compatible.length
+      ? "前回 " + compatible.map(formatPrevious).join(" / ")
+      : previous.length ? "前回は別の単位で記録されています" : "前回の記録なし";
     const lastDate = previous[0]?.performed_on || "";
     const shortDate = lastDate.slice(0, 4) === saveDate.value.slice(0, 4)
       ? lastDate.slice(5).replace("-", "/")
       : lastDate.replaceAll("-", "/");
     previousLabel.textContent = lastDate ? "前回 " + shortDate : "前回なし";
     rows.querySelectorAll(".exercise-set").forEach((row, i) => {
-      const set = previous.find(p => Number(p.set_number) === i + 1);
+      const set = compatible.find(p => Number(p.set_number) === i + 1);
       row.previousSet = set || null;
       const copyWeight = row.querySelector(".set-prev-weight");
       const copyReps = row.querySelector(".set-prev-reps");
       copyWeight.textContent = set
         ? "前回：" + Number(set.weight_kg).toString() + "kg ↙" : "前回：—";
-      copyReps.textContent = set ? "前回：" + set.reps + "回 ↙" : "前回：—";
+      copyReps.textContent = set
+        ? "前回：" + (card.unit === "seconds" ? set.duration_seconds : set.reps) +
+          (card.unit === "seconds" ? "秒" : "回") + " ↙" : "前回：—";
       copyWeight.disabled = !dbReady || !set;
       copyReps.disabled = !dbReady || !set;
       copyWeight.setAttribute("aria-label", (i + 1) + "セット目の前回重量を入力");
       copyReps.setAttribute("aria-label", (i + 1) + "セット目の前回回数を入力");
     });
-    recent.disabled = !dbReady || !previous.length;
+    recent.disabled = !dbReady || !compatible.length;
   };
   card.refreshPrevious = async () => {
     const chosen = nameInput.value.trim();
@@ -926,11 +1170,12 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     updateDraftIndicators();
   });
   recent.addEventListener("click", () => {
-    if (!previous.length || !dbReady) return;
+    const compatible = previous.filter(set => (set.entry_unit || "kg_reps") === card.unit);
+    if (!compatible.length || !dbReady) return;
     if (rows.querySelector(".exercise-set") &&
         !confirm("入力中のセットを前回の内容に置き換えますか？")) return;
-      rows.replaceChildren();
-    for (const set of previous) newSetRow(rows, set);
+    rows.replaceChildren();
+    for (const set of compatible) newSetRow(rows, set);
     card.renderPrevious();
     card.renderSummary();
     feedback.textContent = "前回のセットを反映しました。";
@@ -1153,16 +1398,24 @@ function collectExerciseSets(card) {
   const sets = [];
   for (const row of rows) {
     const weightInput = row.querySelector(".set-weight");
-    const repsInput = row.querySelector(".set-reps");
-    const weight = Number(weightInput.value), reps = Number(repsInput.value);
-    if (!weightInput.value || !repsInput.value ||
-        !Number.isFinite(weight) || weight < 0 || weight > 2000 ||
-        !Number.isInteger(reps) || reps < 0 || reps > 1000 ||
-        !weightInput.validity.valid || !repsInput.validity.valid) {
-      (weightInput.value && weightInput.validity.valid ? repsInput : weightInput).focus();
-      throw new Error("重量・回数を確認してください。");
+    const valueInput = row.querySelector(".set-reps");
+    const weight = Number(weightInput.value), value = Number(valueInput.value);
+    if (!valueInput.value || !Number.isInteger(value) ||
+        value < (card.unit === "seconds" ? 1 : 0) ||
+        value > (card.unit === "seconds" ? 36000 : 1000) ||
+        !valueInput.validity.valid ||
+        (card.unit === "kg_reps" && (!weightInput.value ||
+          !Number.isFinite(weight) || weight < 0 || weight > 2000 ||
+          !weightInput.validity.valid))) {
+      (card.unit === "kg_reps" && (!weightInput.value || !weightInput.validity.valid)
+        ? weightInput : valueInput).focus();
+      throw new Error("入力した数値を確認してください。");
     }
-    sets.push({ weight_kg: weight, reps });
+    sets.push({
+      weight_kg: card.unit === "kg_reps" ? weight : 0,
+      reps: card.unit === "seconds" ? 0 : value,
+      duration_seconds: card.unit === "seconds" ? value : 0
+    });
   }
   return sets;
 }
@@ -1193,7 +1446,7 @@ byId("workout-form").addEventListener("submit", async event => {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ performed_on: date, exercise_name: name,
-        sets, note: card.noteValue })
+        unit:card.unit, sets, note: card.noteValue })
     });
     if (!card.isConnected || !authorized) return;
     card.nameInput.value = result.exercise_name;
@@ -1290,7 +1543,7 @@ const loginButton = byId("login-button");
 const loginFeedback = byId("login-feedback");
 const loginSuccess = byId("login-success");
 
-const pages = new Set(["home", "calendar", "record", "talk", "notices", "analysis", "events", "gallery", "settings"]);
+const pages = new Set(["home", "calendar", "record", "talk", "notices", "analysis", "exercise-settings", "events", "gallery", "settings"]);
 
 // 背景はGitHubの固定素材。場所はログインのたびにランダム選択し、端末には保存しない。
 const sceneLocations = ["gym", "city", "campus", "room"];
@@ -1684,6 +1937,11 @@ function setScreen(screen, pushHistory = true) {
   // 画面間の非同期応答が別画面の吹き出しへ入り込まないよう破棄する。
   if (screen !== previousPage) ++sideDialogueRequestId;
   if (screen === "analysis" && previousPage !== "analysis") showAnalysisExerciseList();
+  if (screen === "exercise-settings" && previousPage !== "exercise-settings") {
+    exerciseSettingsReturnPage = previousPage;
+    exerciseSettingsReturnPicker = previousPage === "record" && !exercisePicker.hidden;
+    refreshExerciseSettings();
+  }
   if (screen === "record" || screen === "calendar" || screen === "analysis") {
     if (screen !== previousPage) {
       if (screen === "record") byId("record-scroll").scrollTop = 0;
@@ -1814,6 +2072,13 @@ function setAuthenticated(next) {
     analysisDateView.hidden = true;
     analysisExerciseView.hidden = false;
     knownExerciseNames = starterExercises;
+    exerciseCatalogReady = false;
+    recordedExerciseNames = new Set();
+    exerciseCatalog = new Map(starterExercises.map(name => [name, {
+      name, body_part:starterParts[name] || "その他",
+      unit:"kg_reps"
+    }]));
+    ++exerciseSettingsRequestId;
     recordPlanPanel.hidden = true;
     recordPlanToggle.setAttribute("aria-expanded", "false");
     resetWorkoutForm();

@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261017-picker-scroll-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261017-exercise-catalog-v1">
   <link rel="stylesheet" href="/story-test.css?v=2">
-  <script type="module" src="/app.js?v=20261017-picker-scroll-v1"></script>
+  <script type="module" src="/app.js?v=20261017-exercise-catalog-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -35,6 +35,7 @@
       </div>
       <div class="drawer-group"><h2>記録とコンテンツ</h2>
         <button type="button" class="drawer-item" data-screen="analysis"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V12m6 8V5m6 15v-8m4 8V3"/><path d="M2 21h20"/></svg><span>分析</span></button>
+        <button type="button" class="drawer-item" data-screen="exercise-settings"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/><path d="m17 17 2 2 3-4"/></svg><span>種目の設定</span></button>
         <button type="button" class="drawer-item" data-screen="events"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-4.9-8-11a4.5 4.5 0 0 1 8-2.8 4.5 4.5 0 0 1 8 2.8c0 6.1-8 11-8 11Z"/></svg><span>イベント</span></button>
         <button type="button" class="drawer-item" data-screen="gallery"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/></svg><span>ギャラリー</span></button>
       </div>
@@ -115,6 +116,7 @@
                     <h2 id="record-form-title">この日のトレーニング</h2>
                     <button type="button" id="record-history-open" class="record-history-link">履歴を見る</button>
                   </div>
+                  <button type="button" id="record-manage-exercises" class="exercise-manage-link">種目の設定 <span aria-hidden="true">⚙</span></button>
                   <button type="button" id="cancel-workout-edit" class="secondary-action" hidden>新しい記録にする</button>
                   <datalist id="exercise-suggestions">
                     <option value="ベンチプレス"></option><option value="チェストプレス"></option>
@@ -131,7 +133,15 @@
                 </div>
                 <div id="exercise-picker-view" class="record-editor-view" hidden>
                   <button type="button" id="exercise-picker-back" class="secondary-action">‹ 一覧に戻る</button>
-                  <h2>種目を選択</h2>
+                  <div class="exercise-picker-heading"><h2>種目を選択</h2>
+                    <button type="button" id="exercise-picker-manage" class="exercise-manage-link">種目の設定 ⚙</button>
+                  </div>
+                  <label for="exercise-picker-part">部位で絞り込む</label>
+                  <select id="exercise-picker-part" class="exercise-part-filter" aria-label="種目を部位で絞り込む">
+                    <option value="すべて">すべて</option><option value="胸">胸</option><option value="背中">背中</option>
+                    <option value="肩">肩</option><option value="腕">腕</option><option value="脚">脚</option>
+                    <option value="腹筋">腹筋</option><option value="全身">全身</option><option value="その他">その他</option>
+                  </select>
                   <label for="exercise-picker-input">種目名</label>
                   <input id="exercise-picker-input" type="text" maxlength="60" list="exercise-suggestions" autocomplete="off" placeholder="種目を入力・選択">
                   <div id="exercise-picker-list" class="exercise-picker-list" aria-label="種目の候補"></div>
@@ -248,8 +258,16 @@
             <div class="page-heading"><h1 id="analysis-heading">分析</h1></div>
             <div class="panel analysis-exercises-panel">
             <div id="analysis-exercise-view">
-              <h2>実施している種目</h2>
+              <div class="analysis-list-heading"><h2>実施している種目</h2>
+                <button type="button" id="analysis-manage-exercises" class="exercise-manage-link">種目の設定 ⚙</button>
+              </div>
               <p class="analysis-guide">種目を選ぶと、記録した日付を確認できます。</p>
+              <label for="analysis-part-filter">部位で絞り込む</label>
+              <select id="analysis-part-filter" class="exercise-part-filter">
+                <option value="すべて">すべて</option><option value="胸">胸</option><option value="背中">背中</option>
+                <option value="肩">肩</option><option value="腕">腕</option><option value="脚">脚</option>
+                <option value="腹筋">腹筋</option><option value="全身">全身</option><option value="その他">その他</option>
+              </select>
               <div id="analysis-exercise-list" class="analysis-link-list" aria-label="種目一覧"></div>
               <p id="analysis-exercise-feedback" class="feedback" role="status" aria-live="polite">読み込み中…</p>
               <button type="button" id="analysis-exercise-retry" class="secondary-action" hidden>もう一度読み込む</button>
@@ -271,6 +289,50 @@
             <button type="button" id="analysis-sd-talk" class="sd-dialogue" aria-label="栞のセリフを変える">
               <span id="analysis-sd-line" role="status" aria-live="polite" aria-atomic="true">あ、来た。今日はどうする？</span>
             </button>
+          </div>
+        </section>
+
+        <section class="app-page exercise-settings-page" id="page-exercise-settings" data-page="exercise-settings" aria-labelledby="exercise-settings-heading" hidden>
+          <div class="page-heading">
+            <button type="button" id="exercise-settings-back" class="secondary-action">‹ 戻る</button>
+            <h1 id="exercise-settings-heading">種目の設定</h1>
+            <p class="page-description">種目名・部位・記録単位を管理します。</p>
+          </div>
+          <div class="panel exercise-catalog-panel">
+            <div class="exercise-catalog-toolbar">
+              <label for="exercise-settings-filter">部位で絞り込む</label>
+              <select id="exercise-settings-filter" class="exercise-part-filter">
+                <option value="すべて">すべて</option><option value="胸">胸</option><option value="背中">背中</option>
+                <option value="肩">肩</option><option value="腕">腕</option><option value="脚">脚</option>
+                <option value="腹筋">腹筋</option><option value="全身">全身</option><option value="その他">その他</option>
+              </select>
+              <label for="exercise-settings-search">種目を検索</label>
+              <input id="exercise-settings-search" type="search" placeholder="種目名で検索" autocomplete="off">
+            </div>
+            <div id="exercise-settings-list" class="exercise-settings-list" aria-label="登録された種目"></div>
+            <button type="button" id="exercise-settings-new" class="secondary-action">＋ 新しい種目を登録</button>
+          </div>
+          <div class="panel exercise-catalog-editor">
+            <h2 id="exercise-settings-edit-title">種目を登録</h2>
+            <form id="exercise-settings-form">
+              <label for="exercise-settings-name">種目名</label>
+              <input id="exercise-settings-name" type="text" maxlength="60" autocomplete="off" required placeholder="例：プランク">
+              <label for="exercise-settings-part">部位</label>
+              <select id="exercise-settings-part">
+                <option value="胸">胸</option><option value="背中">背中</option><option value="肩">肩</option>
+                <option value="腕">腕</option><option value="脚">脚</option><option value="腹筋">腹筋</option>
+                <option value="全身">全身</option><option value="その他">その他</option>
+              </select>
+              <label for="exercise-settings-unit">記録単位</label>
+              <select id="exercise-settings-unit">
+                <option value="kg_reps">重量（kg）＋回数</option>
+                <option value="reps">回数のみ（回）</option>
+                <option value="seconds">時間（秒）</option>
+              </select>
+              <p class="field-hint">単位の変更は今後の記録に適用します。過去の記録の単位は維持されます。</p>
+              <button type="submit" id="exercise-settings-save">種目の設定を保存</button>
+              <p id="exercise-settings-feedback" class="feedback" role="status" aria-live="polite"></p>
+            </form>
           </div>
         </section>
 

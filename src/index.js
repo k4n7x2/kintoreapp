@@ -126,23 +126,35 @@ function normalizedExerciseName(value) {
   const name = value.normalize("NFKC").replace(/[\s\u3000]+/g, "").toLowerCase();
   return name.length <= 60 ? name : "";
 }
+const bodyParts = new Set(["胸","背中","肩","腕","脚","腹筋","全身","その他"]);
+const exerciseUnits = new Set(["kg_reps","reps","seconds"]);
 function normalizeExerciseLog(body) {
   if (!body || typeof body !== "object" || Array.isArray(body) ||
       !validDate(body.performed_on)) return null;
   const exercise_name = normalizedExerciseName(body.exercise_name);
+  const unit = body.unit ?? "kg_reps";
   const note = body.note ?? "";
   const sets = body.sets;
-  if (!exercise_name || typeof note !== "string" || note.length > 300 ||
+  if (!exercise_name || !exerciseUnits.has(unit) ||
+      typeof note !== "string" || note.length > 300 ||
       !Array.isArray(sets) || sets.length < 1 || sets.length > 12) return null;
   const normalized = [];
   for (const [index, set] of sets.entries()) {
-    const weight = set?.weight_kg, reps = set?.reps;
+    const weight = set?.weight_kg ?? 0;
+    const reps = set?.reps ?? 0;
+    const duration = set?.duration_seconds ?? 0;
     if (typeof weight !== "number" || !Number.isFinite(weight) ||
         weight < 0 || weight > 2000 || !Number.isInteger(reps) ||
-        reps < 0 || reps > 1000) return null;
-    normalized.push({ exercise_name, set_number: index + 1, weight_kg: weight, reps });
+        reps < 0 || reps > 1000 || !Number.isInteger(duration) ||
+        duration < 0 || duration > 36000 ||
+        (unit === "reps" && weight !== 0) ||
+        (unit === "seconds" && (weight !== 0 || reps !== 0 || duration < 1)) ||
+        (unit !== "seconds" && duration !== 0)) return null;
+    normalized.push({ exercise_name, set_number: index + 1,
+      weight_kg: weight, reps, duration_seconds: duration, entry_unit: unit });
   }
-  return { performed_on: body.performed_on, exercise_name, note: note.trim(), sets: normalized };
+  return { performed_on: body.performed_on, exercise_name, note: note.trim(),
+    unit, sets: normalized };
 }
 
 function normalizeWorkout(body) {
@@ -176,9 +188,31 @@ async function readJSON(request, maxLength = 12000) {
 }
 
 function insertSet(db, id, set) {
+  const unit = set.entry_unit ?? "kg_reps";
+  // 0003適用前も従来の重量×回数は書き込めるようにする。
+  if (unit === "kg_reps") {
+    return db.prepare(
+      "INSERT INTO workout_sets (session_id, exercise_name, set_number, weight_kg, reps) VALUES (?, ?, ?, ?, ?)"
+    ).bind(id, set.exercise_name, set.set_number, set.weight_kg, set.reps);
+  }
   return db.prepare(
-    "INSERT INTO workout_sets (session_id, exercise_name, set_number, weight_kg, reps) VALUES (?, ?, ?, ?, ?)"
-  ).bind(id, set.exercise_name, set.set_number, set.weight_kg, set.reps);
+    "INSERT INTO workout_sets (session_id, exercise_name, set_number, weight_kg, reps, entry_unit, duration_seconds) " +
+    "VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).bind(id, set.exercise_name, set.set_number, set.weight_kg, set.reps,
+    unit, set.duration_seconds ?? 0);
+}
+function isMissingCatalog(error) {
+  return /no such table:\s*(?:main\.)?exercise_catalog/i.test(String(error?.message ?? error));
+}
+function isMissingUnitColumns(error) {
+  return /no such column:\s*(?:[a-z_]+\.)?(entry_unit|duration_seconds)/i.test(String(error?.message ?? error));
+}
+async function fetchWorkoutSets(statementNew, statementOld) {
+  try { return await statementNew(); }
+  catch (error) {
+    if (!isMissingUnitColumns(error)) throw error;
+    return statementOld();
+  }
 }
 
 export default {
@@ -274,14 +308,81 @@ export default {
             return respond({ on_date: dayMatch[1], planned, attended });
           }
 
-          // 既存記録から種目候補を取得。固定候補と合わせてUIで選択する。
+          // 初期候補・ユーザー登録済み・実施済み種目の統合。
+          // 0003未適用時は既存の履歴APIを壊さずcatalog_ready:falseを返す。
           if (url.pathname === "/api/exercises" && method === "GET") {
             const rows = await env.DB.prepare(
-              "SELECT DISTINCT exercise_name FROM workout_sets ORDER BY exercise_name COLLATE NOCASE LIMIT 300"
+              "SELECT DISTINCT exercise_name FROM workout_sets ORDER BY exercise_name COLLATE NOCASE LIMIT 500"
             ).all();
-            const names = [...new Set((rows.results ?? []).map(row =>
+            const recorded = [...new Set((rows.results ?? []).map(row =>
               normalizedExerciseName(row.exercise_name)).filter(Boolean))];
-            return respond({ exercises: names });
+            let catalogRows = [], catalogReady = true;
+            try {
+              const result = await env.DB.prepare(
+                "SELECT exercise_name, body_part, unit FROM exercise_catalog ORDER BY created_at, exercise_name"
+              ).all();
+              catalogRows = result.results ?? [];
+            } catch (error) {
+              if (!isMissingCatalog(error)) throw error;
+              catalogReady = false;
+            }
+            const catalog = catalogRows.map(row => ({
+              name: row.exercise_name, body_part: row.body_part, unit: row.unit
+            }));
+            const names = [...new Set([...catalog.map(x => x.name), ...recorded])];
+            return respond({ exercises: names, catalog, recorded, catalog_ready: catalogReady });
+          }
+
+          if (url.pathname === "/api/exercises/catalog" && method === "PUT") {
+            const parsed = await readJSON(request, 1536);
+            if (parsed.error) return respond({ error: parsed.error }, parsed.status);
+            const input = parsed.value;
+            const name = normalizedExerciseName(input?.name);
+            const original = normalizedExerciseName(input?.previous_name ?? input?.name);
+            const bodyPart = input?.body_part, unit = input?.unit;
+            if (!name || !original || !bodyParts.has(bodyPart) || !exerciseUnits.has(unit)) {
+              return respond({ error: "invalid_exercise_settings" }, 400);
+            }
+            if (name === original) {
+              await env.DB.prepare(
+                "INSERT INTO exercise_catalog(exercise_name,body_part,unit) VALUES(?,?,?) " +
+                "ON CONFLICT(exercise_name) DO UPDATE SET body_part=excluded.body_part, " +
+                "unit=excluded.unit,updated_at=CURRENT_TIMESTAMP"
+              ).bind(name, bodyPart, unit).run();
+            } else {
+              const [current, target, stored] = await Promise.all([
+                env.DB.prepare("SELECT exercise_name FROM exercise_catalog WHERE exercise_name=?").bind(original).first(),
+                env.DB.prepare("SELECT exercise_name FROM exercise_catalog WHERE exercise_name=?").bind(name).first(),
+                env.DB.prepare("SELECT DISTINCT exercise_name FROM workout_sets").all()
+              ]);
+              const recordedNames = stored.results ?? [];
+              if (!current && !recordedNames.some(row =>
+                  normalizedExerciseName(row.exercise_name) === original)) {
+                return respond({ error: "not_found" }, 404);
+              }
+              if (target || recordedNames.some(row => normalizedExerciseName(row.exercise_name) === name)) {
+                return respond({ error: "exercise_name_exists" }, 409);
+              }
+              const aliases = recordedNames
+                .filter(row => normalizedExerciseName(row.exercise_name) === original);
+              const actions = [
+                ...aliases.map(row => env.DB.prepare(
+                  "UPDATE workout_sets SET exercise_name=? WHERE exercise_name=?"
+                ).bind(name, row.exercise_name))
+              ];
+              if (current) {
+                actions.push(env.DB.prepare(
+                  "UPDATE exercise_catalog SET exercise_name=?, body_part=?, unit=?, " +
+                  "updated_at=CURRENT_TIMESTAMP WHERE exercise_name=?"
+                ).bind(name, bodyPart, unit, original));
+              } else {
+                actions.push(env.DB.prepare(
+                  "INSERT INTO exercise_catalog(exercise_name,body_part,unit) VALUES(?,?,?)"
+                ).bind(name, bodyPart, unit));
+              }
+              await env.DB.batch(actions);
+            }
+            return respond({ name, body_part: bodyPart, unit, previous_name: original });
           }
 
           // 一覧から開いた種目ページは1種目単位で保存する。既存の単一種目セッションが
@@ -313,7 +414,7 @@ export default {
               ]);
             }
             return respond({ id, performed_on: body.performed_on, exercise_name: body.exercise_name,
-              sets: body.sets.length, updated: !!existing });
+              unit: body.unit, sets: body.sets.length, updated: !!existing });
           }
 
           // 選択日の1種目だけを消す。旧形式の複数種目セッションも他種目は維持する。
@@ -351,11 +452,15 @@ export default {
           if (url.pathname === "/api/exercises/history" && method === "GET") {
             const name = normalizedExerciseName(url.searchParams.get("name"));
             if (!name) return respond({ error: "invalid_exercise" }, 400);
-            const history = await env.DB.prepare(
-              "SELECT s.performed_on, ws.set_number, ws.weight_kg, ws.reps " +
-              "FROM workout_sets ws JOIN workout_sessions s ON s.id=ws.session_id " +
-              "WHERE ws.exercise_name=? ORDER BY s.performed_on DESC, s.created_at DESC, ws.set_number ASC, ws.id ASC LIMIT 1201"
-            ).bind(name).all();
+            const suffix = "FROM workout_sets ws JOIN workout_sessions s ON s.id=ws.session_id " +
+              "WHERE ws.exercise_name=? ORDER BY s.performed_on DESC, s.created_at DESC, " +
+              "ws.set_number ASC, ws.id ASC LIMIT 1201";
+            const history = await fetchWorkoutSets(
+              () => env.DB.prepare("SELECT s.performed_on, ws.set_number, ws.weight_kg, ws.reps, " +
+                "ws.entry_unit, ws.duration_seconds " + suffix).bind(name).all(),
+              () => env.DB.prepare("SELECT s.performed_on, ws.set_number, ws.weight_kg, ws.reps " +
+                suffix).bind(name).all()
+            );
             const sets = history.results ?? [];
             return respond({ exercise_name: name, sets: sets.slice(0, 1200), truncated: sets.length > 1200 });
           }
@@ -369,10 +474,14 @@ export default {
             const workouts = (result.results ?? []).map(record => ({ ...record, sets: [] }));
             if (workouts.length) {
               const placeholders = workouts.map(() => "?").join(", ");
-              const sets = await env.DB.prepare(
-                "SELECT session_id, exercise_name, set_number, weight_kg, reps FROM workout_sets " +
-                "WHERE session_id IN (" + placeholders + ") ORDER BY session_id, id"
-              ).bind(...workouts.map(record => record.id)).all();
+              const suffix = "FROM workout_sets WHERE session_id IN (" + placeholders +
+                ") ORDER BY session_id, id";
+              const sets = await fetchWorkoutSets(
+                () => env.DB.prepare("SELECT session_id, exercise_name, set_number, weight_kg, reps, " +
+                  "entry_unit, duration_seconds " + suffix).bind(...workouts.map(record => record.id)).all(),
+                () => env.DB.prepare("SELECT session_id, exercise_name, set_number, weight_kg, reps " +
+                  suffix).bind(...workouts.map(record => record.id)).all()
+              );
               const bySession = new Map(workouts.map(record => [record.id, record]));
               for (const set of sets.results ?? []) bySession.get(set.session_id)?.sets.push(set);
             }
@@ -380,21 +489,25 @@ export default {
           }
 
           if (url.pathname === "/api/workouts/recent" && method === "GET") {
-            const name = url.searchParams.get("name")?.trim() ?? "";
-            if (!name || name.length > 60) return respond({ error: "invalid_exercise" }, 400);
-            // "前回" は選択した記録日より前の最新実績。未指定なら従来の最新記録を返す。
+            const name = normalizedExerciseName(url.searchParams.get("name"));
+            if (!name) return respond({ error: "invalid_exercise" }, 400);
             const before = url.searchParams.get("before");
             if (before !== null && !validDate(before)) return respond({ error: "invalid_date" }, 400);
             const dateFilter = before ? "AND s2.performed_on < ? " : "";
-            const recent = await env.DB.prepare(
-              "SELECT ws.weight_kg, ws.reps, ws.set_number, s.performed_on FROM workout_sets ws " +
-              "JOIN workout_sessions s ON s.id = ws.session_id WHERE ws.exercise_name = ? " +
-              "AND ws.session_id = (SELECT ws2.session_id FROM workout_sets ws2 " +
-              "JOIN workout_sessions s2 ON s2.id = ws2.session_id WHERE ws2.exercise_name = ? " +
-              dateFilter +
+            const suffix = "FROM workout_sets ws JOIN workout_sessions s ON s.id = ws.session_id " +
+              "WHERE ws.exercise_name = ? AND ws.session_id = " +
+              "(SELECT ws2.session_id FROM workout_sets ws2 " +
+              "JOIN workout_sessions s2 ON s2.id = ws2.session_id " +
+              "WHERE ws2.exercise_name = ? " + dateFilter +
               "ORDER BY s2.performed_on DESC, s2.created_at DESC, ws2.id DESC LIMIT 1) " +
-              "ORDER BY ws.set_number, ws.id LIMIT 12"
-            ).bind(...(before ? [name, name, before] : [name, name])).all();
+              "ORDER BY ws.set_number, ws.id LIMIT 12";
+            const params = before ? [name,name,before] : [name,name];
+            const recent = await fetchWorkoutSets(
+              () => env.DB.prepare("SELECT ws.weight_kg, ws.reps, ws.set_number, s.performed_on, " +
+                "ws.entry_unit, ws.duration_seconds " + suffix).bind(...params).all(),
+              () => env.DB.prepare("SELECT ws.weight_kg, ws.reps, ws.set_number, s.performed_on " +
+                suffix).bind(...params).all()
+            );
             return respond({ sets: recent.results ?? [] });
           }
 
