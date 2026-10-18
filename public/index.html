@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261018-repeat-snap-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261018-repeat-sheet-v1">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261018-repeat-snap-v1"></script>
+  <script type="module" src="/app.js?v=20261018-repeat-sheet-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261017-gallery-v1">
   <script type="module" src="/gallery.js?v=20261018-remove-legacy-r1-v1"></script>
 </head>
@@ -114,38 +114,6 @@
                     <label class="record-switch"><span>休息日にする</span><input type="checkbox" id="day-rest" role="switch" disabled><span class="record-switch-track" aria-hidden="true"></span></label>
                     <p id="rest-migration-hint" class="field-hint" hidden>休息日を保存するにはD1の追加マイグレーション（0004）が必要です。予定・来館は引き続き使えます。</p>
                     <p class="field-hint">休息日は手動で指定します。筋トレをしなかった日を自動登録しません。</p>
-                    <div class="repeat-editor" aria-label="入力内容の繰り返し">
-                      <div class="repeat-editor-heading">
-                        <strong>入力内容を繰り返す</strong>
-                        <span id="repeat-summary" class="field-hint" role="status">読み込み中…</span>
-                      </div>
-                      <div class="repeat-editor-fields">
-                        <label>周期
-                          <select id="repeat-cadence" disabled>
-                            <option value="weekly">毎週</option>
-                            <option value="biweekly">隔週</option>
-                            <option value="daily">毎日</option>
-                            <option value="monthly">毎月</option>
-                          </select>
-                        </label>
-                        <label>終了日（任意）
-                          <input id="repeat-end" type="date" min="2000-01-01" max="2100-12-31" disabled>
-                        </label>
-                      </div>
-                      <label id="repeat-scope-row" class="repeat-scope-label" hidden>編集・削除の対象
-                        <select id="repeat-scope">
-                          <option value="only">この予定のみ</option>
-                          <option value="future">この予定以降</option>
-                          <option value="all">すべての予定</option>
-                        </select>
-                      </label>
-                      <div class="repeat-editor-actions">
-                        <button type="button" id="repeat-save" disabled>この内容を繰り返し登録</button>
-                        <button type="button" id="repeat-delete" disabled hidden>繰り返しを削除</button>
-                      </div>
-                      <p class="field-hint">表示中の種目・重量・回数・セット・メモを複製します。複製先は未実施の予定であり、筋トレ実績にはなりません。</p>
-                      <p id="repeat-feedback" class="field-hint" role="status" aria-live="polite"></p>
-                    </div>
                   </div>
                   <input type="checkbox" id="day-attended" hidden tabindex="-1" aria-hidden="true" disabled>
                   <p id="calendar-error" class="feedback record-calendar-feedback" role="status" aria-live="polite"></p>
@@ -176,6 +144,11 @@
                   <div id="exercise-list" class="exercise-list" aria-label="この日のトレーニング種目"></div>
                   <p id="exercise-empty" class="exercise-empty">この日の種目はまだありません。</p>
                   <button type="button" class="record-add-exercise" id="add-exercise" disabled>＋ 種目を追加</button>
+                  <button type="button" id="repeat-trigger" class="record-repeat-trigger" aria-haspopup="dialog" aria-controls="repeat-sheet" disabled>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/></svg>
+                    <span class="record-repeat-text"><strong>繰り返し</strong><span id="repeat-summary">読み込み中…</span></span>
+                    <svg class="record-repeat-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                  </button>
                   <p id="record-overview-feedback" class="feedback" role="status" aria-live="polite"></p>
                 </div>
                 <div id="exercise-picker-view" class="record-editor-view" hidden>
@@ -247,6 +220,43 @@
             <button type="button" id="record-sd-talk" class="sd-dialogue" aria-label="栞のセリフを変える">
               <span id="record-sd-line" role="status" aria-live="polite" aria-atomic="true">今日は記録だけでもいいんじゃないかな。</span>
             </button>
+          </div>
+          <div id="repeat-sheet" class="repeat-sheet" hidden>
+            <button type="button" id="repeat-sheet-backdrop" class="repeat-sheet-backdrop" aria-label="繰り返し設定を閉じる" tabindex="-1"></button>
+            <section class="repeat-sheet-dialog" role="dialog" aria-modal="true" aria-labelledby="repeat-sheet-title" tabindex="-1">
+              <div class="repeat-sheet-handle" aria-hidden="true"></div>
+              <div class="repeat-sheet-header">
+                <h2 id="repeat-sheet-title">繰り返し設定</h2>
+                <button id="repeat-sheet-close" class="repeat-sheet-close" type="button" aria-label="閉じる">×</button>
+              </div>
+              <p id="repeat-sheet-preview" class="repeat-sheet-preview"></p>
+              <div id="repeat-sheet-form">
+                <label class="repeat-sheet-field" for="repeat-cadence">繰り返す周期
+                  <select id="repeat-cadence" disabled>
+                    <option value="weekly">毎週</option>
+                    <option value="biweekly">隔週</option>
+                    <option value="daily">毎日</option>
+                    <option value="monthly">毎月</option>
+                  </select>
+                </label>
+                <label class="repeat-sheet-end-toggle"><input id="repeat-end-enabled" type="checkbox" disabled><span>終了日を指定する</span></label>
+                <label id="repeat-end-field" class="repeat-sheet-field" for="repeat-end" hidden>終了日
+                  <input id="repeat-end" type="date" min="2000-01-01" max="2100-12-31" disabled>
+                </label>
+                <p class="repeat-sheet-hint">表示中の種目・重量・回数・セット・メモをそのまま複製。実施記録にはなりません。</p>
+                <p id="repeat-feedback" class="repeat-sheet-feedback" role="status" aria-live="polite"></p>
+                <button type="button" id="repeat-save" class="repeat-sheet-primary" disabled>この内容を繰り返し登録</button>
+                <button type="button" id="repeat-delete" class="repeat-sheet-delete" hidden disabled>繰り返しを削除</button>
+              </div>
+              <div id="repeat-scope-panel" class="repeat-scope-panel" hidden>
+                <h3 id="repeat-scope-title">適用する範囲</h3>
+                <p id="repeat-scope-description" class="repeat-sheet-hint"></p>
+                <button type="button" data-repeat-scope="only"><strong>この予定のみ</strong><span>今回の分だけ変更</span></button>
+                <button type="button" data-repeat-scope="future"><strong>この予定以降</strong><span>この日からの繰り返しに適用</span></button>
+                <button type="button" data-repeat-scope="all"><strong>すべての予定</strong><span>同じ繰り返し全体に適用</span></button>
+                <button type="button" id="repeat-scope-back" class="repeat-scope-back">← 設定に戻る</button>
+              </div>
+            </section>
           </div>
         </section>
 
