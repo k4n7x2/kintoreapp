@@ -1,3 +1,4 @@
+import { handleRepeatAPI } from "./workout-repeat.js";
 import { handleCalendarAPI } from "./calendar-api.js";
 // 個人用ログイン。パスワードはCloudflare Secret APP_PASSWORDにのみ保存。
 // パスワードも筋トレ記録もGitHub/ブラウザStorageには保存しない。
@@ -272,6 +273,7 @@ export default {
       }
 
       if (url.pathname === "/api/calendar" || url.pathname.startsWith("/api/calendar/") ||
+          url.pathname === "/api/repeat" || url.pathname.startsWith("/api/repeat/") ||
           url.pathname === "/api/workouts" || url.pathname.startsWith("/api/workouts/") ||
           url.pathname === "/api/exercises" || url.pathname.startsWith("/api/exercises/")) {
         if (!env.DB) return respond({ error: "database_not_configured" }, 503);
@@ -280,6 +282,9 @@ export default {
         }
 
         try {
+          if (url.pathname === "/api/repeat" || url.pathname.startsWith("/api/repeat/")) {
+            return handleRepeatAPI(env.DB,url,request,method,{respond,validDate,monthRange,readJSON});
+          }
           if (url.pathname === "/api/calendar" || url.pathname.startsWith("/api/calendar/")) {
             return handleCalendarAPI(env.DB, url, request, method, { respond, monthRange, validDate, readJSON });
           }

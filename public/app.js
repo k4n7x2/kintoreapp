@@ -71,13 +71,14 @@ const recordEditorHost = byId("record-editor-host");
 const recordAttendance = byId("record-attendance");
 const recordPlanToggle = byId("record-plan-toggle");
 const recordPlanPanel = byId("record-plan-panel");
-const planWeekdayInputs = [...document.querySelectorAll(".plan-weekday")];
-const planWeeklySave = byId("plan-weekly-save");
-const planWeeklyStop = byId("plan-weekly-stop");
-const planRuleStatus = byId("plan-rule-status");
-const planSkip = byId("plan-skip");
-const planMove = byId("plan-move");
-const planMoveDate = byId("plan-move-date");
+const repeatCadence = byId("repeat-cadence");
+const repeatEnd = byId("repeat-end");
+const repeatScope = byId("repeat-scope");
+const repeatScopeRow = byId("repeat-scope-row");
+const repeatSave = byId("repeat-save");
+const repeatDelete = byId("repeat-delete");
+const repeatSummary = byId("repeat-summary");
+const repeatFeedback = byId("repeat-feedback");
 const recordNoteDetails = byId("record-note-details");
 const recordWorkoutPanel = byId("record-workout-panel");
 const recordHistoryView = byId("record-history-view");
@@ -143,6 +144,12 @@ let calendarAvailable = false;
 let calendarRestReady = false;
 let recurrenceReady = false;
 let recurrenceRules = [];
+let repeatOccurrence = null;
+let repeatReady = false;
+let repeatLoading = false;
+let repeatBusy = false;
+let repeatRequestId = 0;
+let repeatEditorSeriesId = null;
 let monthTruncated = false;
 let selectedDate = "";
 let editingWorkoutId = null;
@@ -298,6 +305,7 @@ function hydrateStoredRecordForDate(date) {
   for (const [name, group] of groups) addExercise(name, group.sets, group.note, true);
   updateExerciseEmpty();
   markRecordBaseline();
+  loadRepeatForDate(date);
 }
 function selectRecordDate(date, { navigate = true } = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < "2000-01-01" || date > "2100-12-31") return false;
@@ -408,20 +416,7 @@ function renderDayDetail() {
   recordAttendance.setAttribute("aria-pressed", String(dayAttended.checked));
   recordPlanToggle.disabled = dayPlanned.disabled;
   recordPlanToggle.textContent = dayRest.checked ? "休息日・編集" : dayPlanned.checked ? "予定あり・編集" : "予定を編集";
-  const currentRule = recurrenceRules.filter(rule =>
-    rule.start_on <= selectedDate && (!rule.end_on || rule.end_on >= selectedDate)).at(-1);
-  for (const box of planWeekdayInputs) {
-    box.checked = !!currentRule && (currentRule.weekdays_mask & (1 << (Number(box.value) - 1))) !== 0;
-    box.disabled = !authorized || !recurrenceReady || calendarSaving;
-  }
-  planWeeklySave.disabled = !authorized || !recurrenceReady || calendarSaving;
-  planWeeklyStop.disabled = !authorized || !recurrenceReady || calendarSaving || !currentRule;
-  planSkip.disabled = !authorized || !recurrenceReady || calendarSaving || !dayPlanned.checked;
-  planMoveDate.disabled = !authorized || !recurrenceReady || calendarSaving || !dayPlanned.checked;
-  planMove.disabled = planMoveDate.disabled;
-  planRuleStatus.textContent = !calendarAvailable ? "予定を取得しています。" :
-    !recurrenceReady ? "繰り返しを使うにはD1の0005マイグレーションが必要です。" :
-    currentRule ? "この日を含む毎週の設定を変更できます。" : "この日から新しい毎週の予定を設定できます.";
+  renderRepeatEditor();
   calendarError.textContent = authorized && recordsLoaded && !calendarAvailable
     ? "予定・来館の保存にはD1の追加マイグレーション（0002）が必要です。"
     : calendarStatusDate === selectedDate ? calendarStatusMessage : "";
@@ -443,6 +438,7 @@ function setReady(ready) {
   });
   document.querySelectorAll("#exercise-list .set-weight, #exercise-list .set-reps, #record-editor-host .set-weight, #record-editor-host .set-reps")
     .forEach(updateInlineStepButtons);
+  renderRepeatEditor();
 }
 
 
@@ -1074,7 +1070,7 @@ pickerInput.addEventListener("keydown", event => {
   if (event.key === "Enter") { event.preventDefault(); chooseExercise(pickerInput.value); }
 });
 
-function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", saved = false) {
+function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", saved = false, unitOverride = null) {
   // 一覧のカードと専用編集ビューを分ける。編集中の値は同じDOM上に維持する。
   const card = document.createElement("div");
   card.className = "exercise-card";
@@ -1111,8 +1107,8 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   rows.className = "exercise-sets";
   rows.exerciseCard = card;
   card.rows = rows;
-  card.unit = saved && sets[0]?.entry_unit
-    ? sets[0].entry_unit : catalogUnitFor(name);
+  card.unit = unitOverride || (saved && sets[0]?.entry_unit
+    ? sets[0].entry_unit : catalogUnitFor(name));
   card.nameInput = nameInput;
   card.editorBody = body;
   card.overviewButton = summary;
@@ -1280,6 +1276,16 @@ function resetWorkoutForm(date = todayISO()) {
   updateExerciseEmpty();
   renderDayDetail();
   markRecordBaseline();
+  repeatOccurrence = null;
+  repeatReady = false;
+  repeatLoading = true;
+  ++repeatRequestId;
+  repeatFeedback.textContent = "";
+  repeatEditorSeriesId = null;
+  repeatCadence.value = "weekly";
+  repeatEnd.value = "";
+  repeatScope.value = "only";
+  renderRepeatEditor();
 }
 function workoutSummary(record) {
   const names = [...new Set((record.sets || []).map(x => x.exercise_name))];
@@ -1501,6 +1507,141 @@ function collectExerciseSets(card) {
   }
   return sets;
 }
+function renderRepeatEditor() {
+  const ready = authorized && dbReady && repeatReady && !repeatLoading && !repeatBusy;
+  const existing = !!repeatOccurrence;
+  repeatSummary.textContent = repeatLoading ? "読み込み中…" :
+    !repeatReady ? "利用にはD1の0007マイグレーションが必要です。" :
+    existing ? "入力した内容を繰り返している予定です。" : "今表示している入力内容をそのまま複製します。";
+  repeatScopeRow.hidden = !existing;
+  repeatDelete.hidden = !existing;
+  repeatCadence.disabled = !ready || (existing && repeatScope.value === "only");
+  repeatEnd.disabled = !ready || (existing && repeatScope.value === "only");
+  repeatSave.disabled = !ready;
+  repeatDelete.disabled = !ready || !existing;
+  if (existing) {
+    if (repeatEditorSeriesId !== repeatOccurrence.id) {
+      repeatEditorSeriesId = repeatOccurrence.id;
+      repeatCadence.value = repeatOccurrence.cadence === "weekly" && repeatOccurrence.every_n === 2
+        ? "biweekly" : repeatOccurrence.cadence;
+      repeatEnd.value = repeatOccurrence.ends_on || "";
+    }
+    repeatSave.textContent = "入力内容を選択範囲へ反映";
+  } else {
+    repeatSave.textContent = "この内容を繰り返し登録";
+  }
+  repeatEnd.min = selectedDate;
+}
+
+// Load the plan separately from performed sessions: previews are never marked as saved workouts.
+async function loadRepeatForDate(date) {
+  const requestId = ++repeatRequestId;
+  repeatOccurrence = null;
+  repeatReady = false;
+  repeatLoading = true;
+  renderRepeatEditor();
+  try {
+    const response = await fetchJSON("/api/repeat?date=" + encodeURIComponent(date));
+    if (!authorized || selectedDate !== date || requestId !== repeatRequestId) return;
+    repeatReady = response.ready === true;
+    const occurrences = Array.isArray(response.occurrences) ? response.occurrences : [];
+    repeatOccurrence = occurrences.length === 1 ? occurrences[0] : null;
+    if (occurrences.length > 1) {
+      repeatReady = false; // Do not silently overwrite one of multiple overlapping series.
+      repeatFeedback.textContent = "複数の繰り返し予定が重複しています。編集はできません。";
+    }
+    if (repeatReady && !hasRecordChanges() &&
+        !calendarDays.get(date)?.rest && calendarDays.get(date)?.exception !== 0) {
+      const existingNames = new Set([...exerciseList.querySelectorAll(".exercise-card")]
+        .map(card => normalizeExerciseName(card.nameInput.value)));
+      for (const instance of occurrences) for (const item of instance.exercises || []) {
+        const name = normalizeExerciseName(item.name);
+        if (!name || existingNames.has(name)) continue;
+        existingNames.add(name);
+        addExercise(name,item.sets,item.note,false,item.unit);
+      }
+      markRecordBaseline();
+    }
+  } catch (error) {
+    if (!authorized || selectedDate !== date || requestId !== repeatRequestId) return;
+    if (error.status === 401) { setAuthenticated(false); return; }
+    repeatFeedback.textContent = "繰り返し予定を取得できませんでした。";
+  } finally {
+    if (selectedDate === date && requestId === repeatRequestId) {
+      repeatLoading = false;
+      renderRepeatEditor();
+    }
+  }
+}
+
+function snapshotDisplayedWorkout() {
+  if (activeExerciseCard) closeExerciseEditor();
+  const exercises=[];
+  for (const card of exerciseList.querySelectorAll(".exercise-card")) {
+    const name=normalizeExerciseName(card.nameInput.value);
+    if (!name) throw new Error("種目名を確認してください。");
+    exercises.push({name,unit:card.unit,note:card.noteValue || "",
+      sets:collectExerciseSets(card)});
+  }
+  if (!exercises.length) throw new Error("先に種目を1つ以上入力してください。");
+  return exercises;
+}
+async function submitRepeatChange(method) {
+  if (!authorized || !dbReady || !repeatReady || repeatBusy || repeatLoading) return;
+  let exercises=null;
+  if (method !== "DELETE") {
+    try { exercises=snapshotDisplayedWorkout(); }
+    catch (error) { repeatFeedback.textContent=error.message;return; }
+  }
+  const date=selectedDate, instance=repeatOccurrence;
+  const scope=instance ? repeatScope.value : null;
+  const rawCadence=repeatCadence.value;
+  const cadence=rawCadence==="biweekly" ? "weekly" : rawCadence;
+  const every_n=rawCadence==="biweekly" ? 2 : 1;
+  const end_on=repeatEnd.value || null;
+  if (!instance && dayRest.checked) {
+    repeatFeedback.textContent="休息日を解除してから繰り返しを登録してください。";
+    return;
+  }
+  if (!instance && end_on && end_on < date) {
+    repeatFeedback.textContent="終了日は開始日以降にしてください。";
+    return;
+  }
+  const target = instance ? "/api/repeat/" + instance.id : "/api/repeat";
+  const message = method === "DELETE" ? "繰り返し予定を削除" :
+    instance ? "この入力内容で繰り返し予定を更新" : "入力内容を繰り返し予定として登録";
+  if (!confirm(message + "しますか？ 実施済みの筋トレ記録は変更しません。")) return;
+  repeatBusy=true;
+  repeatFeedback.textContent="保存中…";
+  renderRepeatEditor();
+  try {
+    await fetchJSON(target,{method:instance ? method : "POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(instance ? {date,scope,
+        ...(exercises ? {exercises}: {}),
+        ...(method !== "DELETE" && scope !== "only" ? {cadence,every_n,end_on} : {})} :
+        {start_on:date,cadence,every_n,end_on,exercises})});
+    if (!authorized || selectedDate !== date) return;
+    await loadWorkouts();
+    if (authorized && selectedDate === date) {
+      hydrateStoredRecordForDate(date);
+      repeatFeedback.textContent=method==="DELETE" ? "繰り返し設定を削除しました。" :
+        "入力内容を繰り返し予定に反映しました。";
+    }
+  } catch (error) {
+    if (error.status===401) { setAuthenticated(false); return; }
+    repeatFeedback.textContent=error.status===503 ? "D1の0007マイグレーションが必要です。" :
+      error.status===409 ? "同じ日に他の繰り返し予定があるか、予定が変更されています。" :
+      "繰り返し設定を保存できませんでした。";
+  } finally {
+    repeatBusy=false;
+    if (authorized) renderRepeatEditor();
+  }
+}
+repeatScope.addEventListener("change",renderRepeatEditor);
+repeatSave.addEventListener("click",()=>submitRepeatChange("PATCH"));
+repeatDelete.addEventListener("click",()=>submitRepeatChange("DELETE"));
+
 // 一度成功した日付・種目への繰り返し保存を新しい達成として扱わない（メモリのみ）。
 let exerciseSaveInFlight = false;
 const exerciseSavedThisSession = new Set();
@@ -1677,38 +1818,6 @@ async function savePlanAction(path, body, successText) {
     if (authorized) renderCalendar();
   }
 }
-planWeeklySave.addEventListener("click", async () => {
-  const weekdays = planWeekdayInputs.filter(box => box.checked).map(box => Number(box.value));
-  if (!weekdays.length) {
-    calendarStatusDate = selectedDate;
-    calendarStatusMessage = "繰り返す曜日を1つ以上選んでください。";
-    renderDayDetail();
-    return;
-  }
-  if (!confirm(selectedDate + "以降の毎週の予定を更新しますか？ それより前の予定と個別変更は残ります。")) return;
-  await savePlanAction("/api/calendar/recurrence", { start_on: selectedDate, weekdays }, "毎週の予定を保存しました。");
-});
-planWeeklyStop.addEventListener("click", async () => {
-  if (!confirm(selectedDate + "以降の毎週の予定を終了しますか？ 個別に登録した予定は残ります。")) return;
-  await savePlanAction("/api/calendar/recurrence", { start_on: selectedDate, weekdays: [] }, "この日以降の毎週の予定を終了しました。");
-});
-planSkip.addEventListener("click", async () => {
-  if (!dayPlanned.checked || !recurrenceReady) return;
-  dayPlanned.checked = false;
-  await persistDaySwitches();
-});
-planMove.addEventListener("click", async () => {
-  const destination = planMoveDate.value;
-  if (!destination || destination === selectedDate) {
-    calendarStatusDate = selectedDate;
-    calendarStatusMessage = "別の移動先日付を指定してください。";
-    renderDayDetail();
-    return;
-  }
-  const moved = await savePlanAction("/api/calendar/move",
-    { from_date: selectedDate, to_date: destination }, destination + "へ予定を移動しました。");
-  if (moved) planMoveDate.value = "";
-});
 dayPlanned.addEventListener("change", () => {
   if (dayPlanned.checked) dayRest.checked = false;
   persistDaySwitches();
