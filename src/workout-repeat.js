@@ -62,6 +62,9 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
     const snapshot=validateWorkoutSnapshot(exercises);
     if(!snapshot)return respond({error:"invalid_snapshot"},400);
     try {
+      const currentDay=await db.prepare("SELECT rest FROM gym_calendar_days WHERE on_date=?").bind(start_on).first()
+        .catch(error=>{if(/no such column:\s*rest\b/i.test(String(error?.message??error)))return null;throw error;});
+      if(currentDay?.rest)return respond({error:"rest_day_conflict"},409);
       if((await repeatOnDate(db,start_on)).length)return respond({error:"already_repeating"},409);
       const result=await db.prepare("INSERT INTO workout_repeat_series (group_id,starts_on,ends_on,cadence,every_n,content_json) VALUES (?,?,?,?,?,?)")
         .bind(crypto.randomUUID(),start_on,end_on,cadence,every_n,JSON.stringify(snapshot)).run();
@@ -107,7 +110,8 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
     const cleanup=db.prepare("DELETE FROM workout_repeat_exceptions WHERE series_id IN "+
       "(SELECT id FROM workout_repeat_series WHERE group_id=? AND starts_on>?)").bind(source.group_id,date);
     const deleteFuture=db.prepare("DELETE FROM workout_repeat_series WHERE group_id=? AND starts_on>?").bind(source.group_id,date);
-    const statements=[cleanup,deleteFuture];
+    const statements=[cleanup,deleteFuture,
+      db.prepare("DELETE FROM workout_repeat_exceptions WHERE series_id=? AND on_date>=?").bind(id,date)];
     if(source.starts_on===date){
       if(method==="DELETE"){
         statements.push(db.prepare("DELETE FROM workout_repeat_exceptions WHERE series_id=?").bind(id));
