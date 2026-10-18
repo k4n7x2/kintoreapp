@@ -2556,6 +2556,7 @@ document.addEventListener("keydown", (event) => {
 function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
   if (repeatSheetOpen && screen !== "record") closeRepeatSheet(false);
+  if (screen !== "settings") closeSettingsPlanReset();
   const previousPage = activePage;
   if (screen !== "calendar") setCalendarMonthPicker(false);
   if (drawerOpen) setDrawerOpen(false);
@@ -2635,6 +2636,7 @@ window.addEventListener("popstate", () => {
 });
 
 function setAuthenticated(next) {
+  if (!next) closeSettingsPlanReset();
   if (!next) closeRepeatSheet(false);
   const wasAuthorized = authorized;
   if (!next || !wasAuthorized) {
@@ -2758,6 +2760,103 @@ loginForm.addEventListener("submit", async (event) => {
       : "パスワードを確認してください。";
   } finally {
     loginButton.disabled = false;
+  }
+});
+
+// Plans-only reset: changes in-memory UI only after a confirmed server mutation.
+// Workout sessions, equipment catalog, and attended days are explicitly excluded.
+const settingsPlanResetOpen = byId("settings-plan-reset-open");
+const settingsPlanResetConfirm = byId("settings-plan-reset-confirm");
+const settingsPlanResetPreview = byId("settings-plan-reset-preview");
+const settingsPlanResetCheck = byId("settings-plan-reset-check");
+const settingsPlanResetExecute = byId("settings-plan-reset-execute");
+const settingsPlanResetCancel = byId("settings-plan-reset-cancel");
+const settingsPlanResetFeedback = byId("settings-plan-reset-feedback");
+let settingsPlanResetPending = false;
+let settingsPlanResetReady = false;
+
+function closeSettingsPlanReset() {
+  if (settingsPlanResetPending) return;
+  settingsPlanResetConfirm.hidden = true;
+  settingsPlanResetOpen.disabled = false;
+  settingsPlanResetCheck.checked = false;
+  settingsPlanResetCheck.disabled = true;
+  settingsPlanResetExecute.disabled = true;
+  settingsPlanResetReady = false;
+}
+settingsPlanResetCancel.addEventListener("click",closeSettingsPlanReset);
+settingsPlanResetCheck.addEventListener("change",()=>{
+  settingsPlanResetExecute.disabled = !settingsPlanResetReady ||
+    !settingsPlanResetCheck.checked || settingsPlanResetPending;
+});
+settingsPlanResetOpen.addEventListener("click",async()=>{
+  if (!authorized || settingsPlanResetPending) return;
+  settingsPlanResetOpen.disabled = true;
+  settingsPlanResetConfirm.hidden = false;
+  settingsPlanResetFeedback.textContent = "";
+  settingsPlanResetPreview.textContent = "削除対象を確認中…";
+  settingsPlanResetCheck.checked = false;
+  settingsPlanResetCheck.disabled = true;
+  settingsPlanResetExecute.disabled = true;
+  settingsPlanResetReady = false;
+  try {
+    const result=await fetchJSON("/api/calendar/reset");
+    if (!authorized || settingsPlanResetConfirm.hidden) return;
+    const counts=result.counts||{};
+    const parts=[
+      "単発ジム予定 " + Number(counts.singlePlans||0) + "件",
+      "休息日 " + Number(counts.restDays||0) + "件",
+      "旧毎週ルール " + Number(counts.legacyRules||0) + "件",
+      "繰り返しルール " + Number(counts.repeatSeries||0) + "件",
+      "個別例外 " + (Number(counts.legacyExceptions||0)+
+        Number(counts.repeatExceptions||0)) + "件"
+    ];
+    settingsPlanResetPreview.textContent=parts.join("／");
+    settingsPlanResetReady=true;
+    settingsPlanResetCheck.disabled=false;
+  } catch(error) {
+    if (error.status === 401) {setAuthenticated(false);return;}
+    settingsPlanResetPreview.textContent="削除対象を取得できませんでした。";
+    settingsPlanResetFeedback.textContent="通信・DB接続状態を確認してください。";
+  } finally {
+    if (!settingsPlanResetPending) settingsPlanResetOpen.disabled=false;
+  }
+});
+settingsPlanResetExecute.addEventListener("click",async()=>{
+  if (!authorized || !settingsPlanResetReady || !settingsPlanResetCheck.checked ||
+      settingsPlanResetPending) return;
+  settingsPlanResetPending=true;
+  settingsPlanResetExecute.disabled=true;
+  settingsPlanResetCancel.disabled=true;
+  settingsPlanResetOpen.disabled=true;
+  settingsPlanResetFeedback.textContent="予定を削除中…";
+  let cleared=false;
+  try {
+    await fetchJSON("/api/calendar/reset",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({scope:"plans_only",confirm:"DELETE_ALL_PLANS"})
+    });
+    cleared=true;
+    settingsPlanResetFeedback.textContent="予定と休息日の設定をすべて削除しました。筋トレ記録・来館実績は残っています。";
+    settingsPlanResetConfirm.hidden=true;
+    settingsPlanResetCheck.checked=false;
+    settingsPlanResetReady=false;
+    try {
+      await loadWorkouts();
+      if (authorized && !hasRecordChanges()) hydrateStoredRecordForDate(selectedDate);
+    } catch {
+      settingsPlanResetFeedback.textContent+=" 表示を更新できない場合は画面を開き直してください。";
+    }
+  } catch(error) {
+    if (error.status===401) {setAuthenticated(false);return;}
+    settingsPlanResetFeedback.textContent="削除できませんでした。予定データは変更されていません。";
+  } finally {
+    settingsPlanResetPending=false;
+    settingsPlanResetCancel.disabled=false;
+    settingsPlanResetOpen.disabled=false;
+    if (!cleared) settingsPlanResetExecute.disabled=!settingsPlanResetReady ||
+      !settingsPlanResetCheck.checked;
   }
 });
 
