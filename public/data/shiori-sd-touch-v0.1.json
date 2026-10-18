@@ -1,0 +1,138 @@
+{
+  "version": "0.1",
+  "source": "docs/shiori/dialogues/sd-touch-v0.1.md",
+  "groups": {
+    "touch.normal": [
+      {
+        "id": "touch.normal.01",
+        "text": "ん？ 呼んだ？"
+      },
+      {
+        "id": "touch.normal.02",
+        "text": "あ、どうしたの？"
+      },
+      {
+        "id": "touch.normal.03",
+        "text": "何かあった？"
+      },
+      {
+        "id": "touch.normal.04",
+        "text": "うん、聞いてるよ。"
+      },
+      {
+        "id": "touch.normal.05",
+        "text": "なに？ ちょうど暇してたところ。"
+      },
+      {
+        "id": "touch.normal.06",
+        "text": "あ、こっち見てたんだ。"
+      },
+      {
+        "id": "touch.normal.07",
+        "text": "少し考えごとしてた。どうしたの？"
+      },
+      {
+        "id": "touch.normal.08",
+        "text": "ん、ちょっと待って。……はい、どうぞ。"
+      },
+      {
+        "id": "touch.normal.09",
+        "text": "呼ばれた気がしたんだけど。"
+      },
+      {
+        "id": "touch.normal.10",
+        "text": "なあに？"
+      },
+      {
+        "id": "touch.normal.11",
+        "text": "あ、何か話す？"
+      },
+      {
+        "id": "touch.normal.12",
+        "text": "ごめん、少しぼーっとしてた。"
+      }
+    ],
+    "touch.record": [
+      {
+        "id": "touch.record.01",
+        "text": "入力、ひと段落した？"
+      },
+      {
+        "id": "touch.record.02",
+        "text": "どこか確認したいところ、あった？"
+      },
+      {
+        "id": "touch.record.03",
+        "text": "あ、ごめん。記録、見てた。"
+      },
+      {
+        "id": "touch.record.04",
+        "text": "私も数字を比べると、ついじっくり見ちゃう。"
+      }
+    ],
+    "touch.calendar": [
+      {
+        "id": "touch.calendar.01",
+        "text": "予定、決まった？"
+      },
+      {
+        "id": "touch.calendar.02",
+        "text": "こっちの予定？ まだ考え中。"
+      },
+      {
+        "id": "touch.calendar.03",
+        "text": "私、空いてる日を見つけると嬉しくなるんだよね。"
+      },
+      {
+        "id": "touch.calendar.04",
+        "text": "何か楽しみな予定でもある？"
+      }
+    ],
+    "touch.analysis": [
+      {
+        "id": "touch.analysis.01",
+        "text": "何か面白い変化、見つけた？"
+      },
+      {
+        "id": "touch.analysis.02",
+        "text": "こうやって振り返るの、結構好き。"
+      },
+      {
+        "id": "touch.analysis.03",
+        "text": "ん？ 気になる数字でもあった？"
+      },
+      {
+        "id": "touch.analysis.04",
+        "text": "見返してると、あっという間だね。"
+      }
+    ],
+    "touch.repeat": [
+      {
+        "id": "touch.repeat.01",
+        "text": "あれ、また呼んだ？"
+      },
+      {
+        "id": "touch.repeat.02",
+        "text": "ちょっと、反応見てるでしょ。"
+      },
+      {
+        "id": "touch.repeat.03",
+        "text": "はいはい。ちゃんと聞いてるよ。"
+      },
+      {
+        "id": "touch.repeat.04",
+        "text": "……そんなに気になる？"
+      }
+    ],
+    "touch.rare": [
+      {
+        "id": "touch.rare.01",
+        "text": "……特に用がなくても、呼んでいいよ。"
+      },
+      {
+        "id": "touch.rare.02",
+        "text": "なんだか、こういうのも悪くないね。"
+      }
+    ]
+  }
+}

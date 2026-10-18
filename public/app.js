@@ -1,4 +1,5 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
+import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 const now = new Date();
 let shownYear = now.getFullYear();
 let shownMonth = now.getMonth();
@@ -1310,7 +1311,8 @@ async function loadWorkouts() {
     renderHistory();
     setReady(true);
     // 月データ到着直後だけ、未操作のカレンダー吹き出しを再評価。
-    if (activePage === "calendar" && calendarTouchAtStart === calendarDialogueInteractionId) {
+    if (activePage === "calendar" && !calendarDialogueUserOverride &&
+        calendarTouchAtStart === calendarDialogueInteractionId) {
       showSideDialogue("calendar");
     }
     if (pendingRecordDate && pendingRecordDate.slice(0, 7) === month && activePage === "record") {
@@ -1456,6 +1458,8 @@ byId("workout-form").addEventListener("submit", async event => {
   const key = date + "|" + name + "|" + unit;
   const samePersisted = card.savedOnServer && card.savedSetsSnapshot === numericSnapshot;
   const alreadySaved = exerciseSavedThisSession.has(key);
+  // 開始時より後の本体タップ・吹き出し・画面移動を、保存結果で上書きしない。
+  const dialogueAtSaveStart = sideDialogueRequestId;
   exerciseSaveInFlight = true;
   saveButton.disabled = true;
   saveButton.setAttribute("aria-label", "保存中");
@@ -1513,7 +1517,8 @@ byId("workout-form").addEventListener("submit", async event => {
     }
     saveFeedback.textContent = "保存しました。続けて編集できます。";
     pendingRecordDate = "";
-    if (activePage === "record" && editorUnchanged) {
+    if (activePage === "record" && editorUnchanged &&
+        dialogueAtSaveStart === sideDialogueRequestId) {
       const group = chooseRecordSaveGroup({
         unit, sets, previousSets, performedOn: date, samePersisted, alreadySaved
       });
@@ -1577,6 +1582,7 @@ saveDate.addEventListener("change", () => {
 });
 
 function changeMonth(offset) {
+  calendarDialogueUserOverride = false; // 月移動は新しい明示操作
   const result = new Date(shownYear, shownMonth + offset, 1);
   shownYear = result.getFullYear();
   shownMonth = result.getMonth();
@@ -1822,6 +1828,9 @@ let greetingData = null;
 let greetingLoading = null;
 let screenDialogueData = null;
 let screenDialogueLoading = null;
+let sdTouchDialogueLoading = null; // エラーも保持する（再試行ループを防止）。
+let calendarDialogueUserOverride = false;
+let sdTapHistory = [];
 let sideDialogueRequestId = 0;
 let calendarDialogueInteractionId = 0;
 let lastSideDialogue = { record: "", calendar: "", analysis: "" };
@@ -1865,13 +1874,24 @@ async function ensureScreenDialogueData() {
   }
   return screenDialogueLoading;
 }
+// 30本が揃わない場合は全グループを不採用にして固定セリフへフォールバック。
+async function ensureSdTouchDialogueData() {
+  if (!sdTouchDialogueLoading) {
+    sdTouchDialogueLoading = fetch("/data/shiori-sd-touch-v0.1.json", { cache: "force-cache" })
+      .then(response => {
+        if (!response.ok) throw new Error("sd_touch_unavailable");
+        return response.json();
+      })
+      .then(data => {
+        if (!isValidSdTouchData(data)) throw new Error("invalid_sd_touch_data");
+        return data.groups;
+      })
+      .catch(() => null);
+  }
+  return sdTouchDialogueLoading;
+}
 function pickSideLine(page, entries, fallback) {
-  const valid = Array.isArray(entries) ? entries.map(row =>
-    typeof row === "string" ? row : row?.text).filter(line =>
-      typeof line === "string" && line.trim()) : [];
-  const alternatives = valid.filter(line => line !== lastSideDialogue[page]);
-  const pool = alternatives.length ? alternatives : valid;
-  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : fallback;
+  return chooseLineWithoutRepeat(entries, lastSideDialogue[page], fallback, Math.random());
 }
 function applicableCalendarDialogues() {
   return calendarConditionGroups({
@@ -1889,13 +1909,17 @@ async function showSideDialogue(page, reason = "normal") {
   const requestId = ++sideDialogueRequestId;
   if (!authorized || activePage !== page || !sideDialogueNodes[page]) return;
   const node = sideDialogueNodes[page];
+  const touched = reason.startsWith("touch.");
   const saved = page === "record" && reason.startsWith("record.") && reason !== "normal";
-  const fallback = saved ? "うん、保存できたね。" :
+  const fallback = touched ? "ん？ 呼んだ？" : saved ? "うん、保存できたね。" :
     page === "record" ? "今日は記録だけでもいいんじゃないかな。" :
     "あ、来た。今日はどうする？";
   try {
     let chosen;
-    if (page === "analysis") {
+    if (touched) {
+      const data = await ensureSdTouchDialogueData();
+      chosen = pickSideLine(page, data?.[reason], fallback);
+    } else if (page === "analysis") {
       const data = await ensureGreetingData();
       chosen = pickSideLine(page, data?.anytime, fallback);
     } else {
@@ -1922,9 +1946,66 @@ async function showSideDialogue(page, reason = "normal") {
 byId("record-sd-talk").addEventListener("click", () => showSideDialogue("record"));
 byId("calendar-sd-talk").addEventListener("click", () => {
   ++calendarDialogueInteractionId;
+  calendarDialogueUserOverride = true;
   showSideDialogue("calendar");
 });
 byId("analysis-sd-talk").addEventListener("click", () => showSideDialogue("analysis"));
+// 実画像の不透明ピクセルだけを物理タップ対象として扱う。
+const sdAlphaCache = new WeakMap();
+function hitSdVisiblePixel(event, layer) {
+  if (event.detail === 0) return true; // Enter / Space のネイティブclick
+  const image = layer?.querySelector("img");
+  if (!image?.naturalWidth || !image?.naturalHeight) return false;
+  const rect = layer.getBoundingClientRect();
+  const scale = Math.min(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+  const imageWidth = image.naturalWidth * scale;
+  const imageHeight = image.naturalHeight * scale;
+  const x = (event.clientX - (rect.right - imageWidth)) / imageWidth;
+  const y = (event.clientY - (rect.bottom - imageHeight)) / imageHeight;
+  if (x < 0 || x >= 1 || y < 0 || y >= 1) return false;
+  let pixels = sdAlphaCache.get(image);
+  if (!pixels) {
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 128;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) return true; // CSS polygon is still limited
+      context.drawImage(image, 0, 0, 128, 128);
+      pixels = context.getImageData(0, 0, 128, 128).data;
+      sdAlphaCache.set(image, pixels);
+    } catch { return true; } // canvas非対応時はCSSの輪郭に任せる
+  }
+  const px = Math.floor(x * 128), py = Math.floor(y * 128);
+  return pixels[(py * 128 + px) * 4 + 3] > 24;
+}
+function resetSdTouchState() {
+  sdTapHistory = [];
+  document.querySelectorAll(".record-sd-art-slot.is-poked").forEach(layer =>
+    layer.classList.remove("is-poked"));
+}
+for (const page of ["record", "calendar", "analysis"]) {
+  const button = byId(page + "-sd-touch");
+  const layer = button.previousElementSibling;
+  button.addEventListener("click", event => {
+    if (!authorized || activePage !== page || !hitSdVisiblePixel(event, layer)) return;
+    const state = registerSdTap(sdTapHistory, performance.now());
+    sdTapHistory = state.history;
+    if (page === "calendar") {
+      ++calendarDialogueInteractionId;
+      calendarDialogueUserOverride = true;
+    }
+    // 画像だけを微小に圧縮・反発させる。連打時も毎回先頭から再生する。
+    layer.classList.remove("is-poked");
+    void layer.offsetWidth;
+    layer.classList.add("is-poked");
+    showSideDialogue(page, chooseSdTouchGroup(page, Math.random(), state.repeat));
+  });
+  button.addEventListener("keydown", event => {
+    if (event.repeat && (event.key === "Enter" || event.key === " ")) event.preventDefault();
+  });
+}
+
 let lastHomeGreeting = "";
 let greetingRequestId = 0;
 
@@ -2044,7 +2125,11 @@ function setScreen(screen, pushHistory = true) {
     ++greetingRequestId;
   }
   // 画面間の非同期応答が別画面の吹き出しへ入り込まないよう破棄する。
-  if (screen !== previousPage) ++sideDialogueRequestId;
+  if (screen !== previousPage) {
+    ++sideDialogueRequestId;
+    resetSdTouchState();
+    if (screen === "calendar") calendarDialogueUserOverride = false;
+  }
   if (screen === "analysis" && previousPage !== "analysis") showAnalysisExerciseList();
   if (screen === "exercise-settings" && previousPage !== "exercise-settings") {
     exerciseSettingsReturnPage = previousPage;
@@ -2154,6 +2239,8 @@ function setAuthenticated(next) {
     homeDialogue.textContent = "";
     lastHomeGreeting = "";
     ++sideDialogueRequestId;
+    resetSdTouchState();
+    calendarDialogueUserOverride = false;
     calendarDialogueInteractionId = 0;
     lastSideDialogue = { record: "", calendar: "", analysis: "" };
     exerciseSavedThisSession.clear();
