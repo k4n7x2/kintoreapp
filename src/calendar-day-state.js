@@ -8,6 +8,7 @@ export function resolveDayPlan({manual=null,legacyOverride=null,legacyRecurring=
   if (manual?.planned) return {planned:true,rest:false,source:"manual"};
   if (weekly?.kind === "rest") return {planned:false,rest:true,source:"weekly-template"};
   if (weekly?.kind === "gym") return {planned:true,rest:false,source:"weekly-template"};
+  if (weekly?.kind === "none") return {planned:false,rest:false,source:"weekly-template"};
   if (repeat?.kind === "rest") return {planned:false,rest:true,source:"repeat"};
   if (repeat?.kind === "gym") return {planned:true,rest:false,source:"repeat"};
   if (legacyRecurring) return {planned:true,rest:false,source:"legacy"};
