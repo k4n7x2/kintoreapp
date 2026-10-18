@@ -1535,15 +1535,17 @@ function renderRepeatEditor() {
   const existing = !!repeatOccurrence;
   repeatTrigger.disabled = !authorized || !dbReady;
   repeatSummary.textContent = repeatLoading ? "読み込み中…" :
-    !repeatReady ? "設定を確認" :
+    !repeatReady ? "利用不可・要確認" :
     existing ? describeRepeatCadence(repeatOccurrence.cadence,repeatOccurrence.every_n) +
       (repeatOccurrence.ends_on ? " ・ " + repeatOccurrence.ends_on.replaceAll("-","/") + "まで" : "") :
     "繰り返しなし";
   const cards = [...exerciseList.querySelectorAll(".exercise-card")];
   const totalSets = cards.reduce((sum,card)=>sum + card.rows.querySelectorAll(".exercise-set").length,0);
-  repeatSheetPreview.textContent = cards.length
-    ? selectedDate.replaceAll("-","/") + "の入力内容： " + cards.length + "種目・" + totalSets + "セット"
-    : "先に記録画面で種目を入力してください。";
+  repeatSheetPreview.textContent = !repeatReady
+    ? (repeatLoading ? "設定を読み込み中…" : "繰り返し設定を利用できません。D1の0007適用・接続状態を確認してください。")
+    : cards.length
+      ? selectedDate.replaceAll("-","/") + "の入力内容： " + cards.length + "種目・" + totalSets + "セット"
+      : "先に記録画面で種目を入力してください。";
   repeatDelete.hidden = !existing;
   repeatCadence.disabled = !ready;
   repeatEndEnabled.disabled = !ready;
