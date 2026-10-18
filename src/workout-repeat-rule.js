@@ -40,3 +40,21 @@ export function validateWorkoutSnapshot(value) {
   }
   return normalized;
 }
+
+// 0007 stores JSON, so newer status-aware payloads need no schema migration.
+// Legacy rows are plain exercise arrays and must continue to mean a gym workout.
+export function validateRepeatContent(value) {
+  if (Array.isArray(value)) {
+    const exercises = validateWorkoutSnapshot(value);
+    return exercises ? {kind:"gym",exercises} : null;
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  if (value.kind === "rest") {
+    return Array.isArray(value.exercises) && value.exercises.length === 0
+      ? {kind:"rest",exercises:[]} : null;
+  }
+  if (value.kind !== "gym" || !Array.isArray(value.exercises)) return null;
+  if (value.exercises.length === 0) return {kind:"gym",exercises:[]};
+  const exercises = validateWorkoutSnapshot(value.exercises);
+  return exercises ? {kind:"gym",exercises} : null;
+}
