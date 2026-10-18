@@ -134,7 +134,7 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
     try {
       const [source, target] = await Promise.all([oneDay(db, from_date), oneDay(db, to_date)]);
       if (!source.planned) return respond({ error: "source_not_planned" }, 409);
-      if (source.source === "repeat") return respond({ error: "repeat_move_requires_snapshot", }, 409);
+      if (source.source === "repeat") return respond({ error: "repeat_move_requires_snapshot" }, 409);
       if (target.planned || target.rest) return respond({ error: "target_already_planned_or_rest" }, 409);
       await db.batch([
         db.prepare("INSERT INTO gym_plan_overrides (on_date, planned) VALUES (?, 0) ON CONFLICT(on_date) DO UPDATE SET planned = 0, updated_at = CURRENT_TIMESTAMP").bind(from_date),
@@ -164,6 +164,11 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
       if (!missingPlanTables(error)) throw error;
       // 0005 not applied: keep all 0004 rest-day behaviour, including its fallback.
       const { manual, restReady } = await readManualDay(db, date);
+      // Without 0005 no durable daily cancellation is available for a 0007 repeat.
+      let repeated=[];
+      try { repeated=await repeatOnDate(db,date); }
+      catch(error) { if (!missingWorkoutRepeat(error)) throw error; }
+      if (repeated.length) return respond({error:"weekly_plan_migration_required"},503);
       if (!restReady && rest === true) return respond({ error: "rest_migration_required" }, 503);
       const nextRest = restReady ? (rest === undefined ? !!manual?.rest && !planned : rest) : false;
       if (nextRest && planned) return respond({ error: "invalid_calendar_state" }, 400);
@@ -209,7 +214,11 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
       ).bind(date, oldPlanned, Number(attended)));
     }
     await db.batch(statements);
-    return respond({ on_date: date, planned, attended, rest: nextRest, rest_ready: current.restReady });
+    const effective=await oneDay(db,date);
+    return respond({on_date:date,planned:effective.planned,rest:effective.rest,
+      attended,source:effective.source,exception:effective.exception,
+      repeat_kind:effective.repeat?.kind??null,repeated_workout:!!effective.repeat,
+      rest_ready:current.restReady});
   }
   return respond({ error: "method_not_allowed" }, 405);
 }
