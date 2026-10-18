@@ -37,3 +37,12 @@ test("styles guarantee hidden, touch friendly, reduced motion and safe-area",()=
   assert.match(css,/min-height:56px/);
   assert.match(css,/prefers-reduced-motion:reduce/);
 });
+
+test("the same bottom sheet accepts rest and no-exercise gym planning",()=>{
+  assert.match(js,/function snapshotRepeatDay\(\)/);
+  assert.match(js,/dayRest\.checked\) return \{kind:"rest",exercises:\[\]\}/);
+  assert.match(js,/if \(!exercises\.length && !dayPlanned\.checked\)/);
+  assert.match(js,/return \{kind:"gym",exercises\}/);
+  assert.match(js,/repeatSheetPreview\.textContent[\s\S]*?dayRest\.checked[\s\S]*?dayPlanned\.checked/);
+  assert.match(html,/休息日／ジム予定／入力済み種目/);
+});
