@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261018-home-story-normal-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261018-weekly-plan-v1">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261018-remove-legacy-r1-v1"></script>
+  <script type="module" src="/app.js?v=20261018-weekly-plan-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261017-gallery-v1">
   <script type="module" src="/gallery.js?v=20261018-remove-legacy-r1-v1"></script>
 </head>
@@ -110,7 +110,39 @@
                   </div>
                   <div id="record-plan-panel" class="record-plan-panel" hidden>
                     <label class="record-switch"><span>ジムに行く予定</span><input type="checkbox" id="day-planned" role="switch" disabled><span class="record-switch-track" aria-hidden="true"></span></label>
-                    <p class="field-hint">現在は単発の日付のみ設定できます。</p>
+                    <p class="field-hint">この日だけの予定は上のスイッチで変更できます。</p>
+                    <div class="plan-recurrence-editor" aria-label="毎週の予定">
+                      <p class="plan-editor-title">毎週の予定</p>
+                      <p id="plan-rule-status" class="field-hint" role="status"></p>
+                      <fieldset class="plan-weekdays-fieldset">
+                        <legend>繰り返す曜日</legend>
+                        <div class="plan-weekdays">
+                          <label><input type="checkbox" class="plan-weekday" value="1"><span>月</span></label>
+                          <label><input type="checkbox" class="plan-weekday" value="2"><span>火</span></label>
+                          <label><input type="checkbox" class="plan-weekday" value="3"><span>水</span></label>
+                          <label><input type="checkbox" class="plan-weekday" value="4"><span>木</span></label>
+                          <label><input type="checkbox" class="plan-weekday" value="5"><span>金</span></label>
+                          <label><input type="checkbox" class="plan-weekday" value="6"><span>土</span></label>
+                          <label><input type="checkbox" class="plan-weekday" value="7"><span>日</span></label>
+                        </div>
+                      </fieldset>
+                      <div class="plan-editor-actions">
+                        <button type="button" id="plan-weekly-save" disabled>この日から毎週設定</button>
+                        <button type="button" id="plan-weekly-stop" disabled>この日以降は終了</button>
+                      </div>
+                      <p class="field-hint">選択日より前の予定は変更せず、以降の曜日設定を更新します。個別変更は残ります。</p>
+                    </div>
+                    <div class="plan-occurrence-editor" aria-label="今回だけ変更">
+                      <p class="plan-editor-title">今回だけ変更</p>
+                      <button type="button" id="plan-skip" disabled>今回だけ休みにする</button>
+                      <div class="plan-move-controls">
+                        <label for="plan-move-date">移動先の日付
+                          <input type="date" id="plan-move-date" min="2000-01-01" max="2100-12-31">
+                        </label>
+                        <button type="button" id="plan-move" disabled>この日だけ移動</button>
+                      </div>
+                      <p class="field-hint">来館・筋トレ実績は変更しません。休みを取り消すときは上のスイッチをONにしてください。</p>
+                    </div>
                   </div>
                   <input type="checkbox" id="day-attended" hidden tabindex="-1" aria-hidden="true" disabled>
                   <p id="calendar-error" class="feedback record-calendar-feedback" role="status" aria-live="polite"></p>
