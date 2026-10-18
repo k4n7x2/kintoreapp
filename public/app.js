@@ -1,5 +1,6 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
+import { resolveCalendarIcon } from "./calendar-status.js";
 const now = new Date();
 let shownYear = now.getFullYear();
 let shownMonth = now.getMonth();
@@ -49,6 +50,7 @@ const exerciseList = byId("exercise-list");
 const addExerciseButton = byId("add-exercise");
 const cancelWorkoutEdit = byId("cancel-workout-edit");
 const dayPlanned = byId("day-planned");
+const dayRest = byId("day-rest");
 const dayAttended = byId("day-attended");
 const calendarError = byId("calendar-error");
 const exerciseEmpty = byId("exercise-empty");
@@ -115,6 +117,7 @@ let calendarStatusDate = "";
 let calendarStatusMessage = "";
 const calendarDays = new Map();
 let calendarAvailable = false;
+let calendarRestReady = false;
 let monthTruncated = false;
 let selectedDate = "";
 let editingWorkoutId = null;
@@ -290,6 +293,7 @@ function selectRecordDate(date, { navigate = true } = {}) {
     ++recordsRequestId;
     recordsLoaded = false;
     calendarAvailable = false;
+    calendarRestReady = false;
     calendarDays.clear();
     completeDates.clear();
     workouts = [];
@@ -332,20 +336,34 @@ function renderCalendar() {
     const cell = document.createElement("button");
     cell.type = "button";
     cell.className = "calendar-day";
-    cell.textContent = String(day);
-    if (state?.planned) cell.classList.add("is-planned");
+    const iconState = resolveCalendarIcon({
+      hasWorkout: completeDates.has(dateKey),
+      planned: !!state?.planned,
+      rest: !!state?.rest
+    });
+    const number = document.createElement("span");
+    number.className = "calendar-day__number";
+    number.textContent = String(day);
+    const marker = document.createElement("span");
+    marker.className = "calendar-day__status";
+    marker.setAttribute("aria-hidden", "true");
+    if (iconState !== "none") {
+      marker.classList.add("is-" + iconState);
+      marker.innerHTML = iconState === "rest" ? "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 4v16M2 8h16a4 4 0 0 1 4 4v8M2 17h20M6 8v9\"/></svg>" : "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6.5 6.5 11 11M4 10l6-6M2 8l6-6m12 18 6-6m-2 8 4-4\"/></svg>";
+    }
+    cell.append(number, marker);
     if (state?.attended) cell.classList.add("is-attended");
-    if (completeDates.has(dateKey)) cell.classList.add("has-workout");
-    
+    if (iconState !== "none") cell.classList.add("is-" + iconState);
     if (sameDay(date, new Date())) {
       cell.classList.add("is-today");
       cell.setAttribute("aria-current", "date");
     }
-    
-    cell.setAttribute("aria-label", dateKey + [
-      state?.planned ? "予定あり" : "",
-      state?.attended ? "来館済み" : "",
-      completeDates.has(dateKey) ? "筋トレ記録あり" : ""
+    cell.setAttribute("aria-label", [
+      dateKey,
+      completeDates.has(dateKey) ? "筋トレ実施済み" : "",
+      state?.planned ? "筋トレ予定あり" : "",
+      state?.rest ? "休息日" : "",
+      state?.attended ? "来館済み" : ""
     ].filter(Boolean).join("、"));
     cell.addEventListener("click", () => showDay(dateKey));
     calendarGrid.appendChild(cell);
@@ -355,14 +373,17 @@ function renderCalendar() {
 function renderDayDetail() {
   const state = calendarDays.get(selectedDate);
   dayPlanned.checked = !!state?.planned;
+  dayRest.checked = !!state?.rest;
   dayAttended.checked = !!state?.attended;
   dayPlanned.disabled = !authorized || !calendarAvailable || calendarSaving;
+  dayRest.disabled = !authorized || !calendarAvailable || !calendarRestReady || calendarSaving;
   dayAttended.disabled = !authorized || !calendarAvailable || calendarSaving;
+  byId("rest-migration-hint").hidden = !authorized || !calendarAvailable || calendarRestReady;
   recordAttendance.disabled = dayAttended.disabled;
   recordAttendance.textContent = dayAttended.checked ? "来館済み" : "来館していない";
   recordAttendance.setAttribute("aria-pressed", String(dayAttended.checked));
   recordPlanToggle.disabled = dayPlanned.disabled;
-  recordPlanToggle.textContent = dayPlanned.checked ? "予定あり・編集" : "予定を編集";
+  recordPlanToggle.textContent = dayRest.checked ? "休息日・編集" : dayPlanned.checked ? "予定あり・編集" : "予定を編集";
   calendarError.textContent = authorized && recordsLoaded && !calendarAvailable
     ? "予定・来館の保存にはD1の追加マイグレーション（0002）が必要です。"
     : calendarStatusDate === selectedDate ? calendarStatusMessage : "";
@@ -1293,16 +1314,18 @@ async function loadWorkouts() {
     monthTruncated = !!result.truncated;
     recordsLoaded = true;
     completeDates.clear();
-    workouts.forEach(w => completeDates.add(w.performed_on));
+    workouts.forEach(w => { if (Array.isArray(w.sets) && w.sets.length > 0) completeDates.add(w.performed_on); });
     calendarDays.clear();
     calendarAvailable = false;
+    calendarRestReady = false;
     try {
       const calendar = await fetchJSON("/api/calendar?month=" + encodeURIComponent(month));
       if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
       for (const day of calendar.days || []) {
-        calendarDays.set(day.on_date, { planned: !!day.planned, attended: !!day.attended });
+        calendarDays.set(day.on_date, { planned: !!day.planned, attended: !!day.attended, rest: !!day.rest });
       }
       calendarAvailable = true;
+      calendarRestReady = !!calendar.rest_ready;
     } catch (error) {
       if (error.status === 401) throw error;
       // 0002未適用でも既存の筋トレ記録は表示・編集できるようにする。
@@ -1345,6 +1368,7 @@ async function loadWorkouts() {
     recordsLoaded = false;
     monthTruncated = false;
     calendarAvailable = false;
+    calendarRestReady = false;
     calendarDays.clear();
     completeDates.clear();
     renderCalendar();
@@ -1543,20 +1567,22 @@ async function persistDaySwitches() {
   const date = selectedDate;
   const planned = dayPlanned.checked;
   const attended = dayAttended.checked;
+  const rest = calendarRestReady ? dayRest.checked : undefined;
   calendarSaving = true;
   calendarStatusDate = date;
   calendarStatusMessage = "保存中…";
   calendarError.textContent = calendarStatusMessage;
   dayPlanned.disabled = true;
+  dayRest.disabled = true;
   dayAttended.disabled = true;
   try {
     const result = await fetchJSON("/api/calendar/" + encodeURIComponent(date), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ planned, attended })
+      body: JSON.stringify({ planned, attended, ...(rest === undefined ? {} : { rest }) })
     });
     if (date.slice(0, 7) === currentMonth()) {
-      if (result.planned || result.attended) calendarDays.set(date, result);
+      if (result.planned || result.attended || result.rest) calendarDays.set(date, result);
       else calendarDays.delete(date);
     }
     calendarStatusMessage = "保存しました。";
@@ -1572,7 +1598,14 @@ async function persistDaySwitches() {
     if (authorized) renderCalendar();
   }
 }
-dayPlanned.addEventListener("change", persistDaySwitches);
+dayPlanned.addEventListener("change", () => {
+  if (dayPlanned.checked) dayRest.checked = false;
+  persistDaySwitches();
+});
+dayRest.addEventListener("change", () => {
+  if (dayRest.checked) dayPlanned.checked = false;
+  persistDaySwitches();
+});
 dayAttended.addEventListener("change", persistDaySwitches);
 // Androidのネイティブ日付ピッカーにも同じ日別ナビゲーションを適用する。
 saveDate.addEventListener("change", () => {
@@ -1590,6 +1623,7 @@ function changeMonth(offset) {
   ++recordsRequestId;
   recordsLoaded = false;
   calendarAvailable = false;
+  calendarRestReady = false;
   monthTruncated = false;
   calendarDays.clear();
   completeDates.clear();
@@ -2252,6 +2286,7 @@ function setAuthenticated(next) {
     workouts = [];
     recordsLoaded = false;
     calendarAvailable = false;
+    calendarRestReady = false;
     monthTruncated = false;
     calendarDays.clear();
     completeDates.clear();

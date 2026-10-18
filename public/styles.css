@@ -2679,3 +2679,30 @@ body.is-authenticated.is-sd-page #app-screen {
 @media (prefers-reduced-motion: reduce) {
   .record-sd-art-slot.is-poked img { animation: none; }
 }
+
+/* Calendar markers: workout, plan, rest, and unmarked day share stable heights. */
+#page-calendar .calendar-day {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 44px;
+  justify-content: center;
+  align-items: center;
+  line-height: 1.2;
+}
+#page-calendar .calendar-day__number { display: block; font-variant-numeric: tabular-nums; }
+#page-calendar .calendar-day__status { display: flex; align-items: center; justify-content: center; width: 19px; height: 17px; }
+#page-calendar .calendar-day__status svg { width: 16px; height: 16px; display: block; }
+#page-calendar .calendar-day__status.is-planned, #page-calendar .legend-icon.is-planned { color: var(--accent); opacity: .55; }
+#page-calendar .calendar-day__status.is-workout, #page-calendar .legend-icon.is-workout { color: var(--success); }
+#page-calendar .calendar-day__status.is-rest, #page-calendar .legend-icon.is-rest { color: var(--subtle); }
+#page-calendar .calendar-day.is-workout { background: var(--completed); color: var(--ink); font-weight: 750; }
+#page-calendar .calendar-day.is-rest { color: var(--muted); }
+#page-calendar .calendar-day.is-planned::before { content: none; }
+#page-calendar .calendar-day.has-workout { box-shadow: none; }
+#page-calendar .legend-icon { display: inline-flex; width: 15px; height: 15px; align-items: center; justify-content: center; font-style: normal; }
+#page-calendar .legend-icon svg { width: 15px; height: 15px; display: block; }
+@media (max-width: 360px) {
+  #page-calendar .calendar-day { min-height: 42px; }
+  #page-calendar .legend { gap: 7px 11px; }
+}

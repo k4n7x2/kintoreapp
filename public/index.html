@@ -110,7 +110,9 @@
                   </div>
                   <div id="record-plan-panel" class="record-plan-panel" hidden>
                     <label class="record-switch"><span>ジムに行く予定</span><input type="checkbox" id="day-planned" role="switch" disabled><span class="record-switch-track" aria-hidden="true"></span></label>
-                    <p class="field-hint">現在は単発の日付のみ設定できます。</p>
+                    <label class="record-switch"><span>休息日にする</span><input type="checkbox" id="day-rest" role="switch" disabled><span class="record-switch-track" aria-hidden="true"></span></label>
+                    <p id="rest-migration-hint" class="field-hint" hidden>休息日を保存するにはD1の追加マイグレーション（0004）が必要です。予定・来館は引き続き使えます。</p>
+                    <p class="field-hint">休息日は手動で指定します。筋トレをしなかった日を自動登録しません。</p>
                   </div>
                   <input type="checkbox" id="day-attended" hidden tabindex="-1" aria-hidden="true" disabled>
                   <p id="calendar-error" class="feedback record-calendar-feedback" role="status" aria-live="polite"></p>
@@ -221,9 +223,10 @@
               <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
               <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
               <div class="legend">
-                <span><i class="legend-dot planned"></i>予定</span>
+                <span><i class="legend-icon is-planned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 6.5 11 11M4 10l6-6M2 8l6-6m12 18 6-6m-2 8 4-4"/></svg></i>筋トレ予定</span>
+                <span><i class="legend-icon is-workout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 6.5 11 11M4 10l6-6M2 8l6-6m12 18 6-6m-2 8 4-4"/></svg></i>筋トレ実施</span>
+                <span><i class="legend-icon is-rest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4v16M2 8h16a4 4 0 0 1 4 4v8M2 17h20M6 8v9"/></svg></i>休息日</span>
                 <span><i class="legend-dot visited"></i>来館</span>
-                <span><i class="legend-dot has-workout"></i>筋トレ記録</span>
                 <span><i class="legend-dot today"></i>今日</span>
               </div>
               <p class="calendar-hint">日付をタップすると、その日の記録画面が開きます。</p>
