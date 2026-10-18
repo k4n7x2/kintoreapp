@@ -627,6 +627,57 @@ body.is-authenticated .app-page { padding-top: 10px; }
   .settings-project-link:hover { background: var(--raised); }
 }
 
+/* All-plans reset lives in Settings only; never mixes with workout deletion. */
+#page-settings .settings-plan-reset-panel { display:grid; gap:12px; }
+#page-settings .settings-plan-reset-description {
+  margin:0; color:var(--muted); font-size:12px; line-height:1.75;
+}
+#page-settings .settings-plan-reset-open {
+  min-height:46px; padding:10px 14px;
+  border:1px solid var(--danger-line);border-radius:11px;
+  background:transparent;color:var(--danger);font:inherit;
+  font-size:13px;font-weight:700;cursor:pointer;
+  touch-action:manipulation;
+}
+#page-settings .settings-plan-reset-confirm {
+  display:grid; gap:12px; padding:15px 12px; border:1px solid var(--danger-line);
+  border-radius:12px;background:var(--raised);
+}
+#page-settings .settings-plan-reset-confirm[hidden] {display:none;}
+#page-settings .settings-plan-reset-warning {
+  margin:0;color:var(--danger);font-weight:700;font-size:13px;
+}
+#page-settings .settings-plan-reset-preview {
+  margin:0;color:var(--ink);font-size:12px;line-height:1.8;
+}
+#page-settings .settings-plan-reset-check {
+  display:flex;gap:10px;align-items:flex-start;cursor:pointer;
+  font-size:12px;line-height:1.7;color:var(--ink);
+}
+#page-settings .settings-plan-reset-check input {
+  width:19px;height:19px;flex:none;margin:2px 0 0;accent-color:var(--danger);
+}
+#page-settings .settings-plan-reset-actions {display:grid;gap:8px;}
+#page-settings .settings-plan-reset-actions button {
+  width:100%;min-height:46px;padding:10px 12px;font:inherit;font-size:13px;
+  border:1px solid var(--line);border-radius:11px;
+  background:var(--surface);color:var(--ink);cursor:pointer;
+}
+#page-settings #settings-plan-reset-execute {
+  background:var(--danger);color:var(--deep);border-color:var(--danger);font-weight:800;
+}
+#page-settings .settings-plan-reset-panel button:disabled {opacity:.5;cursor:not-allowed;}
+#page-settings .settings-plan-reset-panel button:not(:disabled):active {transform:translateY(1px);}
+#page-settings .settings-plan-reset-panel button:focus-visible,
+#page-settings .settings-plan-reset-check input:focus-visible {
+  outline:2px solid var(--accent);outline-offset:2px;
+}
+#page-settings .settings-plan-reset-panel .feedback {margin:0;font-size:12px;}
+#page-settings .settings-plan-reset-panel .feedback:empty {display:none;}
+@media (prefers-reduced-motion:reduce) {
+  #page-settings .settings-plan-reset-panel button:not(:disabled):active {transform:none;}
+}
+
 /* ホームは1画面内、他画面は固定ヘッダー下でスクロール可能 */
 body.is-authenticated .app-shell {
   padding-top: calc(var(--topbar-h) + env(safe-area-inset-top));
