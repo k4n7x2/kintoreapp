@@ -88,6 +88,14 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 - 認証済み・同一Origin JSONのみ受付。`GET /api/calendar/reset`で対象の設定レコード数を取得、`POST /api/calendar/reset`は`{scope:"plans_only",confirm:"DELETE_ALL_PLANS"}`を明示した場合だけ実行。旧DBで一部テーブルや休息日列がない場合にも、存在する予定テーブルだけを削除する（追加のDBマイグレーションなし）。
 - 削除成功後は現在のカレンダーを再取得し、記録画面の繰り返し選択をリセット。未保存のトレーニング入力は勝手に破棄しない。ブラウザ側の永続ストレージには記録しない。
 
+### 週間予定と1日メニューの分離（0008・試験実装）
+
+- D1の`migrations/0008_weekly_menu_templates.sql`で`workout_menu_templates`（種目名・単位・セット数・メモ）と`gym_weekly_slots`（曜日・開始日・予定区分・任意のテンプレートID）を独立管理する。テンプレートは重量／回数の実績を保存しない。
+- 記録画面の「この日の種目をテンプレートに保存」で1日分のメニューを1回登録。設定の「週間スケジュール」で各曜日のジム／休息／未設定と任意のメニューを紐づける。その曜日の記録画面でメニューが自動展開され、毎回の選択操作は不要。
+- テンプレート自動展開は未実施の入力下書き。前回重量・回数は既存の前回実績表示から参照し、勝手に実績を保存しない。既に保存した種目や編集中の入力を上書きしない。休息日と日別例外を優先する。
+- 週間予定は`(weekday,starts_on)`で設定履歴を保持する。未設定も明示的な`none`状態として保存し旧週次ルールとの競合を防ぐ。旧0005／0007データは削除せず、以前のスナップショット繰り返しは新規登録UIを終了して既存編集のみ残す。
+- `GET /api/training-setup`で設定、`GET /api/training-setup/day?date=...`で当日リンク、`POST /api/training-setup/templates`でテンプレ登録、`DELETE /api/training-setup/templates/:id`で削除、`PUT /api/training-setup/week`で週間予定を保存。認証と同一Origin制限は既存APIと共通。
+- 予定全削除では`gym_weekly_slots`も削除するが、テンプレート自体・来館・実績は残す。0008未適用時はこの新機能のみ利用できず、従来機能は維持する。公開利用には別途本番D1へ0008の適用が必要。
 ## API（個人用）
 
 | HTTP | エンドポイント | 内容 |
