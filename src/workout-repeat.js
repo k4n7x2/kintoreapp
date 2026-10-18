@@ -32,7 +32,7 @@ export async function repeatMonth(db, range) {
   let rows, exceptions;
   try {
     [rows,exceptions]=await Promise.all([
-      db.prepare("SELECT * FROM workout_repeat_series WHERE starts_on < ? AND (ends_on IS NULL OR ends_on >= ?)")
+      db.prepare("SELECT * FROM workout_repeat_series WHERE starts_on < ? AND (ends_on IS NULL OR ends_on >= ?) ORDER BY id")
         .bind(range[1],range[0]).all(),
       db.prepare("SELECT * FROM workout_repeat_exceptions WHERE on_date >= ? AND on_date < ?")
         .bind(...range).all()
@@ -41,7 +41,7 @@ export async function repeatMonth(db, range) {
     if (missingWorkoutRepeat(error)) return {ready:false,dates:[],days:[]};
     throw error;
   }
-  const rules=rows.results||[], overrides=new Map((exceptions.results||[])
+  const rules=(rows.results||[]).sort((a,b)=>a.id-b.id), overrides=new Map((exceptions.results||[])
     .map(row=>[row.series_id+"|"+row.on_date,row])), days=[];
   const [year,month]=range[0].split("-").map(Number);
   const count=new Date(Date.UTC(year,month,0)).getUTCDate();
@@ -55,7 +55,7 @@ export async function repeatMonth(db, range) {
     const row=active[active.length-1];
     const exception=overrides.get(row.id+"|"+date);
     const content=validateRepeatContent(JSON.parse(exception?.content_json || row.content_json));
-    if (content) days.push({on_date:date,kind:content.kind});
+    if (content) days.push({on_date:date,kind:content.kind,conflict:active.length>1});
   }
   return {ready:true,days,dates:days.map(day=>day.on_date)};
 }
@@ -92,6 +92,22 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
       if(snapshot.kind==="rest" && !restReady) return respond({error:"rest_migration_required"},503);
       if(currentDay?.rest && snapshot.kind !== "rest")return respond({error:"rest_day_conflict"},409);
       if((await repeatOnDate(db,start_on)).length)return respond({error:"already_repeating"},409);
+      // Prevent new overlapping full-series rules (not just a collision on the start date).
+      // Existing conflicting data is never removed automatically.
+      const otherRows=await db.prepare(
+        "SELECT starts_on, ends_on, cadence, every_n FROM workout_repeat_series WHERE (ends_on IS NULL OR ends_on >= ?) AND starts_on <= ?"
+      ).bind(start_on,end_on??"2100-12-31").all();
+      const horizon=end_on??"2100-12-31";
+      const startDay=Date.parse(start_on+"T00:00:00Z");
+      const endDay=Date.parse(horizon+"T00:00:00Z");
+      const candidates=otherRows.results??[];
+      for (let timestamp=startDay;timestamp<=endDay;timestamp+=86400000) {
+        const day=new Date(timestamp).toISOString().slice(0,10);
+        if (!matchesSeries(day,{starts_on:start_on,ends_on:end_on,cadence,every_n})) continue;
+        if (candidates.some(old=>matchesSeries(day,old))) {
+          return respond({error:"overlapping_recurrence"},409);
+        }
+      }
       // Adopt the matching one-off status into the series, otherwise cancelling its
       // first occurrence would expose the original standalone day flag again.
       // Attendance, historical sets, and unrelated status rows are never changed.
@@ -104,6 +120,9 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
         ? "UPDATE gym_calendar_days SET planned=0, rest=0, updated_at=CURRENT_TIMESTAMP WHERE on_date=?"
         : "UPDATE gym_calendar_days SET planned=0, updated_at=CURRENT_TIMESTAMP WHERE on_date=?")
         .bind(start_on));
+      // The user is explicitly turning this date into a repeating entry.
+      // A legacy per-day override would otherwise mask the first occurrence forever.
+      statements.push(db.prepare("DELETE FROM gym_plan_overrides WHERE on_date=?").bind(start_on));
       const results=await db.batch(statements);
       return respond({saved:true,id:results[0]?.meta?.last_row_id??null},201);
     } catch(error){if(missingWorkoutRepeat(error))return respond({error:"repeat_migration_required"},503);throw error;}
