@@ -24,7 +24,8 @@ export function normalizeTemplate(body) {
 }
 
 export function weekSlotOn(date,slots) {
-  return slots.find(slot=>slot.weekday===calendarWeekday(date) && slot.starts_on<=date)??null;
+  return slots.filter(slot=>slot.weekday===calendarWeekday(date) && slot.starts_on<=date)
+    .sort((a,b)=>b.starts_on.localeCompare(a.starts_on))[0]??null;
 }
 const mapTemplate=row=>({
   id:row.id,title:row.title,items:JSON.parse(row.items_json)
@@ -37,7 +38,7 @@ async function listTemplates(db) {
 }
 async function listSlots(db) {
   const rows=await db.prepare(
-    "SELECT weekday,starts_on,kind,template_id FROM gym_weekly_slots ORDER BY weekday"
+    "SELECT weekday,starts_on,kind,template_id FROM gym_weekly_slots ORDER BY weekday,starts_on"
   ).all();
   return rows.results??[];
 }
@@ -101,7 +102,7 @@ export async function handleTrainingSetupAPI(db,url,request,method,{respond,vali
            (kind!=="gym" && template_id!==null))
           return respond({error:"invalid_week_schedule"},400);
         days.add(weekday);
-        if(kind!=="none")filtered.push({weekday,kind,template_id});
+        filtered.push({weekday,kind,template_id});
       }
       if(filtered.some(x=>x.template_id!==null)){
         const templates=await listTemplates(db);
@@ -109,9 +110,11 @@ export async function handleTrainingSetupAPI(db,url,request,method,{respond,vali
         if(filtered.some(x=>x.template_id!==null&&!ids.has(x.template_id)))
           return respond({error:"template_not_found"},409);
       }
-      const statements=[db.prepare("DELETE FROM gym_weekly_slots")];
+      const statements=[];
       for(const row of filtered)statements.push(db.prepare(
-        "INSERT INTO gym_weekly_slots (weekday,starts_on,kind,template_id) VALUES (?,?,?,?)"
+        "INSERT INTO gym_weekly_slots (weekday,starts_on,kind,template_id) VALUES (?,?,?,?) "+
+        "ON CONFLICT(weekday,starts_on) DO UPDATE SET kind=excluded.kind, "+
+        "template_id=excluded.template_id, updated_at=CURRENT_TIMESTAMP"
       ).bind(row.weekday,starts_on,row.kind,row.template_id));
       await db.batch(statements);
       return respond({saved:true,slots:filtered});
