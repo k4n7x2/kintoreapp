@@ -1507,23 +1507,38 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color .14s ease, transform .14s ease;
+  transition: background-color .10s ease-out, border-color .10s ease-out,
+    color .10s ease-out, transform .10s ease-out, box-shadow .10s ease-out;
 }
+#page-record .record-date-field:hover { filter: none; }
 #page-record .record-date-field svg {
   flex: 0 0 20px;
   width: 20px;
   height: 20px;
   color: var(--accent);
   pointer-events: none;
+  transition: color .10s ease-out;
 }
-#page-record .record-date-field:active {
-  background: var(--completed);
-  transform: scale(.98);
+#page-record .record-date-field:active,
+#page-record .record-date-field.is-pressed {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.18);
+  transform: translateY(1px) scale(.985);
+  transition-duration: 0s;
+}
+#page-record .record-date-field:active svg,
+#page-record .record-date-field.is-pressed svg {
+  color: var(--on-accent);
+  transition-duration: 0s;
 }
 #page-record .record-date-field:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
-  #page-record .record-date-field { transition: none; }
-  #page-record .record-date-field:active { transform: none; }
+  #page-record .record-date-field,
+  #page-record .record-date-field svg { transition: none; }
+  #page-record .record-date-field:active,
+  #page-record .record-date-field.is-pressed { transform: none; }
 }
 #page-record .record-quick-actions {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));

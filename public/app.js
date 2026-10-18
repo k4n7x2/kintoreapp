@@ -42,6 +42,16 @@ const statusLabel = byId("db-status");
 const statusIndicator = byId("db-indicator");
 const saveDate = byId("workout-date");
 const recordDateText = byId("record-date-text");
+const recordDateCalendar = byId("record-date-calendar");
+// Native :active に加え、Android のタッチ開始時点で押下色を即時適用する。
+recordDateCalendar.addEventListener("pointerdown", (event) => {
+  if (event.button === 0) recordDateCalendar.classList.add("is-pressed");
+});
+for (const eventName of ["pointerup", "pointercancel", "pointerleave", "blur"]) {
+  recordDateCalendar.addEventListener(eventName, () => {
+    recordDateCalendar.classList.remove("is-pressed");
+  });
+}
 const saveNote = byId("workout-note");
 const saveButton = byId("save-workout");
 const deleteExerciseButton = byId("delete-exercise");
