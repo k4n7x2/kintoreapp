@@ -2636,3 +2636,45 @@ body.is-authenticated.is-sd-page #app-screen {
     flex-wrap: wrap;
   }
 }
+
+
+/* SD栞のタップ面は吹き出し(z=3)と独立。実画像の透明画素もJSで除外する。
+   画像サイズと固定コンパニオン領域は変更しない。 */
+#page-record .sd-character-touch,
+#page-calendar .sd-character-touch,
+#page-analysis .sd-character-touch {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  width: min(54%, 250px);
+  height: 100%;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  clip-path: polygon(36% 0, 100% 0, 100% 100%, 18% 100%, 26% 68%, 25% 39%);
+}
+.sd-character-touch:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -4px;
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+/* 「ぷにっ」→ほんの少しだけ跳ね返り。レイアウト位置を動かさない。 */
+.record-sd-art-slot.is-poked img {
+  transform-origin: 60% 85%;
+  animation: shiori-sd-puni 390ms cubic-bezier(.22,.72,.27,1) both;
+}
+@keyframes shiori-sd-puni {
+  0%, 100% { transform: scale(1,1); }
+  24% { transform: scale(1.055,.925); }
+  53% { transform: scale(.978,1.035); }
+  77% { transform: scale(1.012,.990); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .record-sd-art-slot.is-poked img { animation: none; }
+}
