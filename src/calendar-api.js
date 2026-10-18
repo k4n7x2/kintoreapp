@@ -77,12 +77,14 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
       }
       const repeat = await repeatMonth(db, range);
       const merged = new Map(days.map(day => [day.on_date,day]));
-      for (const date of repeat.dates) {
-        const old = merged.get(date);
-        if (old?.rest || old?.exception === 0) continue;
-        merged.set(date,{on_date:date, planned:true, attended:!!old?.attended,
-          rest:false, recurring:!!old?.recurring, exception:old?.exception??null,
-          repeated_workout:true});
+      for (const occurrence of repeat.days) {
+        const date=occurrence.on_date, old=merged.get(date), manual=manualDays.get(date);
+        if (old?.exception === 0 || (occurrence.kind === "gym" && old?.rest)) continue;
+        if (occurrence.kind === "rest" && (old?.exception === 1 || manual?.planned)) continue;
+        merged.set(date,{on_date:date,planned:occurrence.kind==="gym",
+          attended:!!old?.attended,rest:occurrence.kind==="rest",
+          recurring:!!old?.recurring,exception:old?.exception??null,
+          repeated_workout:true,repeat_kind:occurrence.kind});
       }
       return respond({ days:[...merged.values()].sort((a,b)=>a.on_date.localeCompare(b.on_date)),
         rules, recurrence_ready:true, rest_ready:restReady, repeat_ready:repeat.ready });
@@ -90,11 +92,13 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
       if (!missingPlanTables(error)) throw error;
       const repeat = await repeatMonth(db, range);
       const merged = new Map(oldDays.map(day=>[day.on_date,day]));
-      for (const date of repeat.dates) {
-        const old=merged.get(date);
-        if(old?.rest)continue;
-        merged.set(date,{...old,on_date:date, planned:true,
-          attended:!!old?.attended, rest:false, repeated_workout:true});
+      for (const occurrence of repeat.days) {
+        const date=occurrence.on_date, old=merged.get(date);
+        if (occurrence.kind==="gym" && old?.rest) continue;
+        if (occurrence.kind==="rest" && old?.planned) continue;
+        merged.set(date,{...old,on_date:date,planned:occurrence.kind==="gym",
+          attended:!!old?.attended,rest:occurrence.kind==="rest",
+          repeated_workout:true,repeat_kind:occurrence.kind});
       }
       return respond({days:[...merged.values()].sort((a,b)=>a.on_date.localeCompare(b.on_date)),
         rules:[],recurrence_ready:false,rest_ready:restReady,repeat_ready:repeat.ready});

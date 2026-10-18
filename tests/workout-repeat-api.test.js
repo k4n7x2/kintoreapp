@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { handleRepeatAPI } from "../src/workout-repeat.js";
 
 class FakeDB {
-  constructor() { this.series=[]; this.exceptions=[]; this.next=1; this.sqlLog=[]; }
+  constructor() { this.series=[]; this.exceptions=[]; this.next=1; this.sqlLog=[]; this.restDays=new Set();this.plannedDays=new Set(); }
   prepare(sql) {
     const db=this;
     return {bind(...args) {return {
@@ -12,9 +12,11 @@ class FakeDB {
       run:async()=>db.write(sql,args)
     }}};
   }
-  async batch(statements) { for(const statement of statements) await statement.run(); }
+  async batch(statements) { const results=[];for(const statement of statements) results.push(await statement.run()); return results; }
   read(sql,a) {
-    if(sql.startsWith("SELECT rest FROM gym_calendar_days"))return [{rest:0}];
+    if(sql.startsWith("SELECT planned, rest FROM gym_calendar_days"))return [{
+      planned:this.plannedDays.has(a[0])?1:0,rest:this.restDays.has(a[0])?1:0}];
+    if(sql.startsWith("SELECT planned FROM gym_calendar_days"))return [{planned:this.plannedDays.has(a[0])?1:0}];
     if(sql.startsWith("SELECT ends_on FROM workout_repeat_series WHERE group_id"))return this.series
       .filter(x=>x.group_id===a[0]).sort((x,y)=>y.starts_on.localeCompare(x.starts_on))
       .slice(0,1).map(x=>({ends_on:x.ends_on}));
@@ -30,6 +32,11 @@ class FakeDB {
   }
   write(sql,a) {
     this.sqlLog.push(sql);
+    if(sql.startsWith("UPDATE gym_calendar_days SET planned=0")) {
+      this.plannedDays.delete(a[0]);
+      if(sql.includes("rest=0"))this.restDays.delete(a[0]);
+      return {success:true};
+    }
     if(sql.startsWith("INSERT INTO workout_repeat_series")) {
       const row={id:this.next++,group_id:a[0],starts_on:a[1],ends_on:a[2],cadence:a[3],
         every_n:a[4],content_json:a[5]};
@@ -122,4 +129,66 @@ test("bad snapshots or invalid dates do not write",async()=>{
     {start_on:"2026-10-20",cadence:"weekly",exercises:[]});
   assert.equal(bad.status,400);
   assert.equal(db.sqlLog.length,0);
+});
+
+test("rest schedule repeats without any exercise, and can be scoped to empty gym",async()=>{
+  const db=new FakeDB();
+  db.restDays.add("2026-10-19");
+  const created=await api(db,"/api/repeat","POST",
+    {start_on:"2026-10-19",cadence:"weekly",every_n:1,kind:"rest",exercises:[]});
+  assert.equal(created.status,201);
+  assert.equal(db.restDays.has("2026-10-19"),false);
+  let first=(await api(db,"/api/repeat?date=2026-10-26")).body.occurrences[0];
+  assert.equal(first.kind,"rest");
+  assert.deepEqual(first.exercises,[]);
+  assert.equal((await api(db,"/api/repeat/"+created.body.id,"PATCH",
+    {date:"2026-10-26",scope:"only",kind:"gym",exercises:[]})).status,200);
+  first=(await api(db,"/api/repeat?date=2026-10-26")).body.occurrences[0];
+  assert.deepEqual({kind:first.kind,exercises:first.exercises},{kind:"gym",exercises:[]});
+  assert.equal((await api(db,"/api/repeat?date=2026-11-02")).body.occurrences[0].kind,"rest");
+});
+test("empty gym schedule updates future and all, preserving previous occurrences",async()=>{
+  const db=new FakeDB();
+  db.plannedDays.add("2026-10-20");
+  const created=await api(db,"/api/repeat","POST",
+    {start_on:"2026-10-20",cadence:"weekly",kind:"gym",exercises:[]});
+  assert.equal(created.status,201);
+  assert.equal(db.plannedDays.has("2026-10-20"),false);
+  assert.deepEqual((await api(db,"/api/repeat?date=2026-10-27")).body.occurrences[0].exercises,[]);
+  const changed=await api(db,"/api/repeat/"+created.body.id,"PATCH",
+    {date:"2026-10-27",scope:"future",kind:"rest",exercises:[],
+     cadence:"weekly",every_n:1,end_on:null});
+  assert.equal(changed.status,200);
+  assert.equal((await api(db,"/api/repeat?date=2026-10-20")).body.occurrences[0].kind,"gym");
+  const future=(await api(db,"/api/repeat?date=2026-11-03")).body.occurrences[0];
+  assert.equal(future.kind,"rest");
+  await api(db,"/api/repeat/"+future.id,"DELETE",{date:"2026-11-03",scope:"only"});
+  assert.deepEqual((await api(db,"/api/repeat?date=2026-11-03")).body.occurrences,[]);
+  assert.equal((await api(db,"/api/repeat?date=2026-11-10")).body.occurrences[0].kind,"rest");
+  const all=await api(db,"/api/repeat/"+future.id,"PATCH",
+    {date:"2026-11-10",scope:"all",kind:"gym",exercises:[],
+     cadence:"weekly",every_n:1,end_on:null});
+  assert.equal(all.status,200);
+  assert.equal((await api(db,"/api/repeat?date=2026-10-20")).body.occurrences[0].kind,"gym");
+});
+test("rest-plan mismatch is rejected without writing",async()=>{
+  const db=new FakeDB();db.restDays.add("2026-10-20");
+  const blocked=await api(db,"/api/repeat","POST",
+    {start_on:"2026-10-20",cadence:"weekly",kind:"gym",exercises:[]});
+  assert.equal(blocked.status,409);
+  assert.equal(db.series.length,0);
+});
+
+test("cancel first rest occurrence does not resurrect its original manual status",async()=>{
+  const db=new FakeDB();db.restDays.add("2026-10-19");
+  const created=await api(db,"/api/repeat","POST",
+    {start_on:"2026-10-19",kind:"rest",cadence:"weekly",exercises:[]});
+  assert.equal(created.status,201);
+  assert.equal(db.restDays.has("2026-10-19"),false);
+  const del=await api(db,"/api/repeat/"+created.body.id,"DELETE",
+    {date:"2026-10-19",scope:"only"});
+  assert.equal(del.status,200);
+  assert.equal((await api(db,"/api/repeat?date=2026-10-19")).body.occurrences.length,0);
+  assert.equal((await api(db,"/api/repeat?date=2026-10-26")).body.occurrences[0].kind,"rest");
+  assert.equal(db.sqlLog.some(sql=>sql.includes("workout_sets")||sql.includes("attended=")),false);
 });

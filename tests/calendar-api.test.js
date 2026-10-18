@@ -10,6 +10,8 @@ class FakeD1 {
     this.rules = [];
     this.overrides = new Map();
     this.nextId = 1;
+    this.repeatSeries = null;
+    this.repeatExceptions = [];
   }
   prepare(sql) {
     const db = this;
@@ -28,6 +30,15 @@ class FakeD1 {
     for (const stmt of statements) await stmt.run();
   }
   read(sql, args) {
+    if (sql.startsWith("SELECT * FROM workout_repeat_series")) {
+      if (this.repeatSeries === null) throw Error("no such table: workout_repeat_series");
+      return this.repeatSeries.filter(row => row.starts_on < args[0] &&
+        (!row.ends_on || row.ends_on >= args[1]));
+    }
+    if (sql.startsWith("SELECT * FROM workout_repeat_exceptions")) {
+      if (this.repeatSeries === null) throw Error("no such table: workout_repeat_exceptions");
+      return this.repeatExceptions.filter(row=>row.on_date>=args[0]&&row.on_date<args[1]);
+    }
     if (sql.includes("gym_plan_") && !this.recurring) {
       throw Error("D1_ERROR: no such table: gym_plan_rules");
     }
@@ -183,4 +194,39 @@ test("fallback when rest column is missing, with 0005 ready", async () => {
   assert.equal(response.body.recurrence_ready, true);
   assert.equal((await api(db, "/api/calendar/2026-10-20", "PUT",
     {planned:false, attended:false, rest:true})).status, 503);
+});
+
+test("recurring rest displays a bed status; an empty gym workout shows a planned status",async()=>{
+  const db=new FakeD1();
+  db.repeatSeries=[
+    {id:1,group_id:"a",starts_on:"2026-10-19",ends_on:null,cadence:"weekly",every_n:1,
+     content_json:JSON.stringify({kind:"rest",exercises:[]})},
+    {id:2,group_id:"b",starts_on:"2026-10-20",ends_on:null,cadence:"weekly",every_n:1,
+     content_json:JSON.stringify({kind:"gym",exercises:[]})}
+  ];
+  const month=(await api(db,"/api/calendar?month=2026-10")).body;
+  const monday=month.days.find(row=>row.on_date==="2026-10-26");
+  const tuesday=month.days.find(row=>row.on_date==="2026-10-27");
+  assert.deepEqual([monday.planned,monday.rest,monday.repeat_kind],[false,true,"rest"]);
+  assert.deepEqual([tuesday.planned,tuesday.rest,tuesday.repeat_kind],[true,false,"gym"]);
+  assert.equal(monday.attended,false);
+  assert.equal(tuesday.attended,false);
+  db.manual.set("2026-10-26",{planned:1,attended:1,rest:0});
+  const override=(await api(db,"/api/calendar?month=2026-10")).body.days
+    .find(row=>row.on_date==="2026-10-26");
+  assert.deepEqual([override.planned,override.rest,override.attended],[true,false,true]);
+});
+test("one-day cancellations of rest and empty gym rules keep prior manual data intact",async()=>{
+  const db=new FakeD1();
+  db.repeatSeries=[
+    {id:1,group_id:"a",starts_on:"2026-10-19",ends_on:null,cadence:"weekly",every_n:1,
+     content_json:JSON.stringify({kind:"rest",exercises:[]})},
+    {id:2,group_id:"b",starts_on:"2026-10-20",ends_on:null,cadence:"weekly",every_n:1,
+     content_json:JSON.stringify({kind:"gym",exercises:[]})}
+  ];
+  db.repeatExceptions=[{series_id:1,on_date:"2026-10-26",cancelled:1,content_json:null},
+    {series_id:2,on_date:"2026-10-27",cancelled:1,content_json:null}];
+  const month=(await api(db,"/api/calendar?month=2026-10")).body;
+  assert.equal(month.days.some(x=>x.on_date==="2026-10-26"),false);
+  assert.equal(month.days.some(x=>x.on_date==="2026-10-27"),false);
 });
