@@ -1,3 +1,4 @@
+import { handleCalendarAPI } from "./calendar-api.js";
 // 個人用ログイン。パスワードはCloudflare Secret APP_PASSWORDにのみ保存。
 // パスワードも筋トレ記録もGitHub/ブラウザStorageには保存しない。
 const encoder = new TextEncoder();
@@ -279,33 +280,8 @@ export default {
         }
 
         try {
-          if (url.pathname === "/api/calendar" && method === "GET") {
-            const range = monthRange(url.searchParams.get("month"));
-            if (!range) return respond({ error: "invalid_month" }, 400);
-            const result = await env.DB.prepare(
-              "SELECT on_date, planned, attended FROM gym_calendar_days WHERE on_date >= ? AND on_date < ? ORDER BY on_date"
-            ).bind(...range).all();
-            return respond({ days: result.results ?? [] });
-          }
-
-          const dayMatch = /^\/api\/calendar\/(\d{4}-\d{2}-\d{2})$/.exec(url.pathname);
-          if (dayMatch && method === "PUT") {
-            if (!validDate(dayMatch[1])) return respond({ error: "invalid_date" }, 400);
-            const parsed = await readJSON(request, 256);
-            if (parsed.error) return respond({ error: parsed.error }, parsed.status);
-            const { planned, attended } = parsed.value ?? {};
-            if (typeof planned !== "boolean" || typeof attended !== "boolean") {
-              return respond({ error: "invalid_calendar_state" }, 400);
-            }
-            if (!planned && !attended) {
-              await env.DB.prepare("DELETE FROM gym_calendar_days WHERE on_date = ?").bind(dayMatch[1]).run();
-            } else {
-              await env.DB.prepare(
-                "INSERT INTO gym_calendar_days (on_date, planned, attended) VALUES (?, ?, ?) " +
-                "ON CONFLICT(on_date) DO UPDATE SET planned = excluded.planned, attended = excluded.attended, updated_at = CURRENT_TIMESTAMP"
-              ).bind(dayMatch[1], Number(planned), Number(attended)).run();
-            }
-            return respond({ on_date: dayMatch[1], planned, attended });
+          if (url.pathname === "/api/calendar" || url.pathname.startsWith("/api/calendar/")) {
+            return handleCalendarAPI(env.DB, url, request, method, { respond, monthRange, validDate, readJSON });
           }
 
           // 初期候補・ユーザー登録済み・実施済み種目の統合。
