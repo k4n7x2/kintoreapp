@@ -41,6 +41,7 @@ const authStatus = byId("auth-status");
 const statusLabel = byId("db-status");
 const statusIndicator = byId("db-indicator");
 const saveDate = byId("workout-date");
+const recordDateText = byId("record-date-text");
 const saveNote = byId("workout-note");
 const saveButton = byId("save-workout");
 const deleteExerciseButton = byId("delete-exercise");
@@ -1261,6 +1262,7 @@ function resetWorkoutForm(date = todayISO()) {
   saveButton.setAttribute("aria-label", "この種目を保存");
   saveButton.title = "この種目を保存";
   saveDate.value = date;
+  recordDateText.textContent = date.replaceAll("-", "/");
   selectedDate = date;
   saveNote.value = "";
   recordNoteDetails.open = false;
@@ -1706,13 +1708,6 @@ dayRest.addEventListener("change", () => {
   persistDaySwitches();
 });
 dayAttended.addEventListener("change", persistDaySwitches);
-// Androidのネイティブ日付ピッカーにも同じ日別ナビゲーションを適用する。
-saveDate.addEventListener("change", () => {
-  const date = saveDate.value;
-  saveDate.value = selectedDate;
-  if (date) selectRecordDate(date);
-});
-
 function changeMonth(offset) {
   calendarDialogueUserOverride = false; // 月移動は新しい明示操作
   const result = new Date(shownYear, shownMonth + offset, 1);

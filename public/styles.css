@@ -1287,13 +1287,6 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   padding: 4px 0 7px;
 }
 #page-record .record-date-field { min-width: 0; }
-#page-record .record-date-field input {
-  display: block;
-  width: 100%;
-  max-width: 220px;
-  font-size: 13px;
-  padding: 7px 6px;
-}
 #page-record .record-status-switches {
   display: flex;
   flex-wrap: nowrap;
@@ -1454,7 +1447,6 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
 @media (max-width: 360px) {
   #page-record .record-date-bar { gap: 5px; }
   #page-record .record-status-switches { gap: 5px; }
-  #page-record .record-date-field input { font-size: 12px; }
   #page-record .exercise-overview { padding-inline: 9px; padding-right: 27px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1494,17 +1486,33 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   cursor: pointer;
 }
 #page-record .record-date-arrow:focus-visible { outline: 2px solid var(--accent); }
-#page-record .record-date-field { display: block; margin: 0; }
-#page-record .record-date-field input {
-  display: block; width: 100%; max-width: none;
-  min-height: 46px; margin: 0;
-  padding: 9px 5px;
-  text-align: center; text-align-last: center;
-  border: 0; background: transparent;
-  font-weight: 750; font-size: 17px;
-  color: var(--ink); font-family: inherit;
-  color-scheme: light dark;
+#page-record .record-date-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 46px;
+  margin: 0;
+  padding: 9px 36px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 750;
+  font-size: 17px;
+  white-space: nowrap;
+  cursor: pointer;
 }
+#page-record .record-date-field svg {
+  position: absolute;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+#page-record .record-date-field:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #page-record .record-quick-actions {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px; margin: 0 0 14px;
@@ -1724,7 +1732,7 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   #page-record .record-panel { padding-inline: 10px; }
   #page-record .record-quick-actions { gap: 7px; }
   #page-record .record-status-action { padding-inline: 4px; font-size: 12px; }
-  #page-record .record-date-field input { font-size: 15px; }
+  #page-record .record-date-field { font-size: 15px; }
   #page-record .record-title-row h2 { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
