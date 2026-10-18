@@ -18,7 +18,12 @@ class FakeDB {
       planned:this.plannedDays.has(a[0])?1:0,rest:this.restDays.has(a[0])?1:0}];
     if(sql.startsWith("SELECT planned FROM gym_calendar_days"))return [{planned:this.plannedDays.has(a[0])?1:0}];
     if(sql.startsWith("SELECT starts_on, ends_on, cadence, every_n FROM workout_repeat_series"))
-      return this.series.filter(x=>(!x.ends_on||x.ends_on>=a[0])&&x.starts_on<=a[1]);
+      return this.series.filter(x=>(!x.ends_on||x.ends_on>=a[0])&&x.starts_on<=a[1]&&
+        (a.length<3||x.group_id!==a[2]));
+    if(sql.startsWith("SELECT starts_on, ends_on FROM workout_repeat_series WHERE group_id"))
+      return this.series.filter(x=>x.group_id===a[0])
+        .sort((x,y)=>y.starts_on.localeCompare(x.starts_on))
+        .map(x=>({starts_on:x.starts_on,ends_on:x.ends_on}));
     if(sql.startsWith("SELECT ends_on FROM workout_repeat_series WHERE group_id"))return this.series
       .filter(x=>x.group_id===a[0]).sort((x,y)=>y.starts_on.localeCompare(x.starts_on))
       .slice(0,1).map(x=>({ends_on:x.ends_on}));
@@ -223,4 +228,26 @@ test("overlap between repeat series cannot be created from another start date",a
     {start_on:"2026-10-22",cadence:"weekly",every_n:1,kind:"rest",exercises:[]});
   assert.equal(different.status,201);
   assert.equal(db.series.length,2);
+});
+
+test("changing a weekly series to daily cannot overlap another weekly series",async()=>{
+  const db=new FakeDB();
+  const a=await api(db,"/api/repeat","POST",
+    {start_on:"2026-10-20",cadence:"weekly",every_n:1,kind:"gym",exercises:[]});
+  const b=await api(db,"/api/repeat","POST",
+    {start_on:"2026-10-21",cadence:"weekly",every_n:1,kind:"rest",exercises:[]});
+  assert.equal(a.status,201);
+  assert.equal(b.status,201);
+  const blocked=await api(db,"/api/repeat/"+a.body.id,"PATCH",
+    {date:"2026-10-20",scope:"future",cadence:"daily",every_n:1,end_on:null,
+      kind:"gym",exercises:[]});
+  assert.equal(blocked.status,409);
+  assert.equal(blocked.body.error,"overlapping_recurrence");
+  const existing=(await api(db,"/api/repeat?date=2026-10-27")).body.occurrences;
+  assert.equal(existing.length,1);
+  assert.equal(existing[0].cadence,"weekly");
+  const blockedAll=await api(db,"/api/repeat/"+a.body.id,"PATCH",
+    {date:"2026-10-20",scope:"all",cadence:"daily",every_n:1,end_on:null,
+      kind:"gym",exercises:[]});
+  assert.equal(blockedAll.status,409);
 });
