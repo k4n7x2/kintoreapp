@@ -158,11 +158,11 @@
                   <button type="button" class="record-add-exercise" id="add-exercise" disabled>＋ 種目を追加</button>
                   <div class="record-template-save">
                     <button type="button" id="record-template-open" class="record-template-open" disabled>この日の種目をテンプレートに保存</button>
-                    <form id="record-template-form" hidden>
+                    <div id="record-template-form" hidden>
                       <label for="record-template-title">テンプレート名</label>
                       <div class="record-template-form-actions">
                         <input type="text" id="record-template-title" maxlength="60" placeholder="例：胸・腕の日" autocomplete="off" required>
-                        <button type="submit" id="record-template-submit">登録</button>
+                        <button type="button" id="record-template-submit">登録</button>
                       </div>
                       <p id="record-template-feedback" class="feedback" role="status" aria-live="polite"></p>
                     </form>
