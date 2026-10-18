@@ -227,7 +227,6 @@ byId("exercise-settings-back").addEventListener("click", closeExerciseSettings);
 byId("exercise-settings-new").addEventListener("click", () => editExerciseSettings());
 byId("exercise-settings-filter").addEventListener("change", renderExerciseSettingsList);
 byId("exercise-settings-search").addEventListener("input", renderExerciseSettingsList);
-byId("record-manage-exercises").addEventListener("click", openExerciseSettings);
 byId("exercise-picker-manage").addEventListener("click", openExerciseSettings);
 byId("analysis-manage-exercises").addEventListener("click", openExerciseSettings);
 byId("exercise-settings-form").addEventListener("submit", async event => {
