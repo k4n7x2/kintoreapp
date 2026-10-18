@@ -405,7 +405,8 @@ function renderCalendar() {
       completeDates.has(dateKey) ? "筋トレ実施済み" : "",
       state?.planned ? "筋トレ予定あり" : "",
       state?.rest ? "休息日" : "",
-      state?.attended ? "来館済み" : ""
+      state?.attended ? "来館済み" : "",
+      state?.repeat_conflict ? "繰り返し予定が重複しています" : ""
     ].filter(Boolean).join("、"));
     cell.addEventListener("click", () => showDay(dateKey));
     calendarGrid.appendChild(cell);
@@ -431,7 +432,9 @@ function renderDayDetail() {
   renderRepeatEditor();
   calendarError.textContent = authorized && recordsLoaded && !calendarAvailable
     ? "予定・来館の保存にはD1の追加マイグレーション（0002）が必要です。"
-    : calendarStatusDate === selectedDate ? calendarStatusMessage : "";
+    : calendarDays.get(selectedDate)?.repeat_conflict
+      ? "複数の繰り返し予定が重複しています。内容の確認が必要です。"
+      : calendarStatusDate === selectedDate ? calendarStatusMessage : "";
 }
 
 function setReady(ready) {
