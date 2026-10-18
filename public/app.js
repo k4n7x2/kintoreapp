@@ -444,6 +444,7 @@ function setReady(ready) {
   saveButton.disabled = !ready;
   deleteExerciseButton.disabled = !ready;
   addExerciseButton.disabled = !ready;
+  byId("record-template-open").disabled = !ready;
   for (const id of ["record-prev-day", "record-next-day", "record-history-open"]) {
     byId(id).disabled = !ready;
   }
@@ -1291,6 +1292,8 @@ function resetWorkoutForm(date = todayISO()) {
   updateExerciseEmpty();
   renderDayDetail();
   markRecordBaseline();
+  byId("record-linked-template").hidden=true;
+  byId("record-template-form").hidden=true;
   repeatOccurrence = null;
   repeatReady = false;
   repeatLoading = true;
@@ -1386,7 +1389,9 @@ async function loadWorkouts() {
       if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
       for (const day of calendar.days || []) {
         calendarDays.set(day.on_date, { planned: !!day.planned, attended: !!day.attended, rest: !!day.rest,
-          recurring: !!day.recurring, exception: day.exception ?? null });
+          recurring: !!day.recurring, exception: day.exception ?? null,
+          source:day.source??null,template_id:day.template_id??null,
+          repeated_workout:!!day.repeated_workout,repeat_conflict:!!day.repeat_conflict });
       }
       recurrenceReady = calendar.recurrence_ready === true;
       recurrenceRules = Array.isArray(calendar.rules) ? calendar.rules : [];
@@ -1656,6 +1661,43 @@ document.addEventListener("keydown",event=>{
 // Load the plan separately from performed sessions: previews are never marked as saved workouts.
 async function loadRepeatForDate(date) {
   const requestId = ++repeatRequestId;
+  const currentState=calendarDays.get(date);
+  // A linked weekly plan supplies an unsaved daily draft, not a repeated snapshot.
+  repeatTrigger.hidden=currentState?.source==="weekly-template";
+  if(currentState?.source==="weekly-template"){
+    repeatOccurrence=null;repeatReady=false;repeatLoading=false;
+    renderRepeatEditor();
+    const label=byId("record-linked-template");
+    label.hidden=true;
+    if(currentState.planned && currentState.template_id){
+      try {
+        const data=await fetchJSON("/api/training-setup/day?date="+encodeURIComponent(date));
+        if(!authorized||selectedDate!==date||requestId!==repeatRequestId||
+           hasRecordChanges()||calendarDays.get(date)?.source!=="weekly-template")return;
+        const template=data.template;
+        if(!template || template.id!==currentState.template_id)return;
+        const existing=new Set([...exerciseList.querySelectorAll(".exercise-card")]
+          .map(card=>normalizeExerciseName(card.nameInput.value)));
+        for(const item of template.items||[]){
+          const name=normalizeExerciseName(item.name);
+          if(!name||existing.has(name))continue;
+          existing.add(name);
+          const rows=Array.from({length:item.sets},()=>({
+            weight_kg:0,reps:item.unit==="seconds"?0:10,
+            duration_seconds:item.unit==="seconds"?30:0
+          }));
+          addExercise(name,rows,item.note||"",false,item.unit);
+        }
+        label.textContent="自動適用： "+template.title+"（重量・回数は前回値を参照）";
+        label.hidden=false;
+        markRecordBaseline();
+      }catch(error){
+        if(error.status===401)setAuthenticated(false);
+      }
+    }
+    return;
+  }
+  byId("record-linked-template").hidden=true;
   repeatOccurrence = null;
   repeatReady = false;
   repeatLoading = true;
