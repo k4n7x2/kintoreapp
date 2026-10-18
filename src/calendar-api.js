@@ -1,3 +1,4 @@
+import { repeatMonth } from "./workout-repeat.js";
 import { weekdaysToMask, effectivePlan, previousISODate } from "./calendar-plan.js";
 
 function missingPlanTables(error) {
@@ -74,10 +75,29 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
             recurring: effectivePlan(date, false, rules), exception: exceptions.get(date) ?? null });
         }
       }
-      return respond({ days, rules, recurrence_ready: true, rest_ready: restReady });
+      const repeat = await repeatMonth(db, range);
+      const merged = new Map(days.map(day => [day.on_date,day]));
+      for (const date of repeat.dates) {
+        const old = merged.get(date);
+        if (old?.rest || old?.exception === 0) continue;
+        merged.set(date,{on_date:date, planned:true, attended:!!old?.attended,
+          rest:false, recurring:!!old?.recurring, exception:old?.exception??null,
+          repeated_workout:true});
+      }
+      return respond({ days:[...merged.values()].sort((a,b)=>a.on_date.localeCompare(b.on_date)),
+        rules, recurrence_ready:true, rest_ready:restReady, repeat_ready:repeat.ready });
     } catch (error) {
       if (!missingPlanTables(error)) throw error;
-      return respond({ days: oldDays, rules: [], recurrence_ready: false, rest_ready: restReady });
+      const repeat = await repeatMonth(db, range);
+      const merged = new Map(oldDays.map(day=>[day.on_date,day]));
+      for (const date of repeat.dates) {
+        const old=merged.get(date);
+        if(old?.rest)continue;
+        merged.set(date,{...old,on_date:date, planned:true,
+          attended:!!old?.attended, rest:false, repeated_workout:true});
+      }
+      return respond({days:[...merged.values()].sort((a,b)=>a.on_date.localeCompare(b.on_date)),
+        rules:[],recurrence_ready:false,rest_ready:restReady,repeat_ready:repeat.ready});
     }
   }
 
