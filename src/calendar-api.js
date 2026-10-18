@@ -194,9 +194,7 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
     // "none" on a recurring rest day is an explicit cancellation too.
     const desiredKind=nextRest?"rest":planned?"gym":"none";
     const currentKind=dayPlanKind(current);
-    const needsException=(currentKind!==desiredKind) && (
-      !!current.repeat || current.legacyRecurring || current.exception!==null ||
-      !!current.manual?.planned || !!current.manual?.rest);
+    const needsException=currentKind!==desiredKind;
     if (needsException) statements.push(db.prepare(
       "INSERT INTO gym_plan_overrides (on_date, planned) VALUES (?, ?) " +
       "ON CONFLICT(on_date) DO UPDATE SET planned = excluded.planned, updated_at = CURRENT_TIMESTAMP"
