@@ -2622,6 +2622,7 @@ function setScreen(screen, pushHistory = true) {
     if (screen === "calendar") calendarDialogueUserOverride = false;
   }
   if (screen === "analysis" && previousPage !== "analysis") showAnalysisExerciseList();
+  if (screen === "settings" && previousPage !== "settings") loadTrainingSetup();
   if (screen === "exercise-settings" && previousPage !== "exercise-settings") {
     exerciseSettingsReturnPage = previousPage;
     exerciseSettingsReturnPicker = previousPage === "record" && !exercisePicker.hidden;
@@ -2803,6 +2804,174 @@ loginForm.addEventListener("submit", async (event) => {
   } finally {
     loginButton.disabled = false;
   }
+});
+
+// One-time template registration from the visible draft; linking is configured weekly.
+const recordTemplateOpen=byId("record-template-open");
+const recordTemplatePanel=byId("record-template-form");
+const recordTemplateTitle=byId("record-template-title");
+const recordTemplateFeedback=byId("record-template-feedback");
+recordTemplateOpen.addEventListener("click",()=>{
+  if(!authorized||!dbReady)return;
+  recordTemplatePanel.hidden=!recordTemplatePanel.hidden;
+  recordTemplateFeedback.textContent="";
+  if(!recordTemplatePanel.hidden)recordTemplateTitle.focus();
+});
+byId("record-template-submit").addEventListener("click",async()=>{
+  if(!authorized||!dbReady)return;
+  const title=recordTemplateTitle.value.trim();
+  const items=[...exerciseList.querySelectorAll(".exercise-card")].map(card=>({
+    name:card.nameInput.value.trim(),unit:card.unit,
+    sets:card.rows.querySelectorAll(".exercise-set").length,
+    note:card.noteValue||""
+  }));
+  if(!title||title.length>60||!items.length||items.some(x=>!x.name||!x.sets)){
+    recordTemplateFeedback.textContent="テンプレート名と種目を確認してください。";
+    return;
+  }
+  const button=byId("record-template-submit");
+  button.disabled=true;
+  recordTemplateFeedback.textContent="登録中…";
+  try{
+    await fetchJSON("/api/training-setup/templates",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({title,items})
+    });
+    recordTemplateFeedback.textContent="登録しました。設定の週間スケジュールから曜日に紐づけられます。";
+    recordTemplateTitle.value="";
+  }catch(error){
+    if(error.status===401){setAuthenticated(false);return;}
+    recordTemplateFeedback.textContent=error.status===503
+      ? "テンプレートにはD1の0008マイグレーションが必要です。"
+      : "登録できませんでした。種目名・セット数・接続を確認してください。";
+  }finally{button.disabled=false;}
+});
+
+const weekDays=["月","火","水","木","金","土","日"];
+const weekContainer=byId("weekly-setup-days");
+const weekFeedback=byId("weekly-setup-feedback");
+const weekSave=byId("weekly-setup-save");
+const menuList=byId("weekly-templates-list");
+const menuFeedback=byId("weekly-templates-feedback");
+let weeklySetupReady=false,weeklySetupBusy=false,weeklyMenus=[],weeklySlotVersions=[];
+function weeklySlotForEditor(weekday) {
+  return weeklySlotVersions.filter(x=>x.weekday===weekday && x.starts_on<=todayISO())
+    .sort((a,b)=>b.starts_on.localeCompare(a.starts_on))[0]??null;
+}
+function renderTrainingSetup() {
+  weekContainer.replaceChildren();
+  menuList.replaceChildren();
+  weekSave.disabled=!weeklySetupReady||weeklySetupBusy;
+  if(!weeklySetupReady){
+    weekFeedback.textContent="週間メニューにはD1の0008マイグレーションが必要です。";
+    return;
+  }
+  for(let day=1;day<=7;day++){
+    const row=document.createElement("div");
+    row.className="weekly-setup-day";
+    row.dataset.weekday=String(day);
+    const dayLabel=document.createElement("strong");
+    dayLabel.textContent=weekDays[day-1]+"曜";
+    const kind=document.createElement("select");
+    kind.className="weekly-setup-kind";
+    kind.setAttribute("aria-label",weekDays[day-1]+"曜日の予定");
+    for(const [value,label] of [["none","未設定"],["gym","ジム"],["rest","休息"]]){
+      const opt=document.createElement("option");
+      opt.value=value;opt.textContent=label;kind.append(opt);
+    }
+    const menu=document.createElement("select");
+    menu.className="weekly-setup-template";
+    menu.setAttribute("aria-label",weekDays[day-1]+"曜日のメニュー");
+    const empty=document.createElement("option");
+    empty.value="";empty.textContent="メニューなし";menu.append(empty);
+    for(const template of weeklyMenus){
+      const opt=document.createElement("option");
+      opt.value=String(template.id);opt.textContent=template.title;menu.append(opt);
+    }
+    const slot=weeklySlotForEditor(day);
+    kind.value=slot?.kind??"none";
+    menu.value=slot?.template_id==null?"":String(slot.template_id);
+    const sync=()=>{menu.disabled=kind.value!=="gym";if(menu.disabled)menu.value="";};
+    kind.addEventListener("change",sync);
+    sync();
+    row.append(dayLabel,kind,menu);
+    weekContainer.append(row);
+  }
+  if(!weeklyMenus.length){
+    const empty=document.createElement("p");
+    empty.className="field-hint";
+    empty.textContent="テンプレートは未登録です。記録画面で種目を追加し、テンプレート保存してください。";
+    menuList.append(empty);
+  }
+  for(const template of weeklyMenus){
+    const row=document.createElement("div");
+    row.className="weekly-template-item";
+    const detail=document.createElement("div");
+    const name=document.createElement("strong");
+    name.textContent=template.title;
+    const summary=document.createElement("small");
+    summary.textContent=template.items.map(x=>x.name+" "+x.sets+"セット").join("・");
+    detail.append(name,summary);
+    const remove=document.createElement("button");
+    remove.type="button";remove.textContent="削除";remove.className="secondary-action";
+    remove.setAttribute("aria-label",template.title+"を削除");
+    remove.disabled=weeklySetupBusy;
+    remove.addEventListener("click",async()=>{
+      if(!confirm("「"+template.title+"」を削除しますか？曜日の紐づけは解除されますが、筋トレ実績は残ります。"))return;
+      weeklySetupBusy=true;remove.disabled=true;
+      try{
+        await fetchJSON("/api/training-setup/templates/"+template.id,{
+          method:"DELETE",headers:{"Content-Type":"application/json"}
+        });
+        menuFeedback.textContent="テンプレートを削除しました。筋トレ記録は残っています。";
+        await loadTrainingSetup();
+        if(authorized)await loadWorkouts();
+      }catch(error){
+        if(error.status===401){setAuthenticated(false);return;}
+        menuFeedback.textContent="削除できませんでした。";
+      }finally{weeklySetupBusy=false;}
+    });
+    row.append(detail,remove);menuList.append(row);
+  }
+}
+async function loadTrainingSetup(){
+  if(!authorized)return;
+  try{
+    const data=await fetchJSON("/api/training-setup");
+    if(!authorized)return;
+    weeklySetupReady=data.ready===true;
+    weeklyMenus=data.templates||[];
+    weeklySlotVersions=data.slots||[];
+    weekFeedback.textContent="";
+    renderTrainingSetup();
+  }catch(error){
+    if(error.status===401){setAuthenticated(false);return;}
+    weeklySetupReady=false;weeklyMenus=[];weeklySlotVersions=[];
+    renderTrainingSetup();
+  }
+}
+weekSave.addEventListener("click",async()=>{
+  if(!authorized||!weeklySetupReady||weeklySetupBusy)return;
+  const slots=[...weekContainer.querySelectorAll(".weekly-setup-day")].map(row=>({
+    weekday:Number(row.dataset.weekday),
+    kind:row.querySelector(".weekly-setup-kind").value,
+    template_id:row.querySelector(".weekly-setup-template").value
+      ?Number(row.querySelector(".weekly-setup-template").value):null
+  }));
+  weeklySetupBusy=true;weekSave.disabled=true;
+  weekFeedback.textContent="保存中…";
+  try{
+    await fetchJSON("/api/training-setup/week",{
+      method:"PUT",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({starts_on:todayISO(),slots})
+    });
+    weekFeedback.textContent="週間予定を保存しました。今日以降の該当曜日に自動反映します。";
+    await loadWorkouts();
+    await loadTrainingSetup();
+  }catch(error){
+    if(error.status===401){setAuthenticated(false);return;}
+    weekFeedback.textContent="週間予定を保存できませんでした。入力と接続を確認してください。";
+  }finally{weeklySetupBusy=false;weekSave.disabled=!weeklySetupReady;}
 });
 
 // Plans-only reset: changes in-memory UI only after a confirmed server mutation.
