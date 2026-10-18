@@ -1,5 +1,6 @@
-import { repeatMonth } from "./workout-repeat.js";
-import { weekdaysToMask, effectivePlan, previousISODate } from "./calendar-plan.js";
+import { repeatMonth, repeatOnDate, missingWorkoutRepeat } from "./workout-repeat.js";
+import { resolveDayPlan, dayPlanKind } from "./calendar-day-state.js";
+import { weekdaysToMask, recurringOn, previousISODate } from "./calendar-plan.js";
 
 function missingPlanTables(error) {
   return /no such table:\s*(?:main\.)?gym_plan_(?:rules|overrides)/i.test(String(error?.message ?? error));
@@ -25,16 +26,29 @@ async function readManualDay(db, date) {
 }
 
 async function oneDay(db, date) {
-  const [info, rules, exception] = await Promise.all([
-    readManualDay(db, date),
-    db.prepare("SELECT id, start_on, end_on, weekdays_mask FROM gym_plan_rules WHERE start_on <= ? AND (end_on IS NULL OR end_on >= ?)").bind(date, date).all(),
-    db.prepare("SELECT planned FROM gym_plan_overrides WHERE on_date = ?").bind(date).first()
-  ]);
-  const manual = info.manual;
-  const rest = !!manual?.rest;
-  return { manual, rest, restReady: info.restReady,
-    rules: rules.results ?? [], exception: exception?.planned ?? null,
-    planned: !rest && effectivePlan(date, !!manual?.planned, rules.results ?? [], exception?.planned ?? null) };
+  const info = await readManualDay(db, date);
+  let rules=[], exception=null, recurrenceReady=true;
+  try {
+    const [ruleRows, override] = await Promise.all([
+      db.prepare("SELECT id, start_on, end_on, weekdays_mask FROM gym_plan_rules WHERE start_on <= ? AND (end_on IS NULL OR end_on >= ?)").bind(date,date).all(),
+      db.prepare("SELECT planned FROM gym_plan_overrides WHERE on_date = ?").bind(date).first()
+    ]);
+    rules=ruleRows.results??[];
+    exception=override?.planned??null;
+  } catch(error) {
+    if (!missingPlanTables(error)) throw error;
+    recurrenceReady=false;
+  }
+  let repeats=[];
+  try { repeats=await repeatOnDate(db,date); }
+  catch(error) { if (!missingWorkoutRepeat(error)) throw error; }
+  const repeat=repeats.at(-1)??null;
+  const legacyRecurring=recurringOn(date,rules);
+  const state=resolveDayPlan({manual:info.manual,legacyOverride:exception,
+    legacyRecurring,repeat});
+  return {...state,manual:info.manual,restReady:info.restReady,
+    rules,exception,legacyRecurring,repeat,repeatConflict:repeats.length>1,
+    recurrenceReady};
 }
 
 export async function handleCalendarAPI(db, url, request, method, { respond, monthRange, validDate, readJSON }) {
@@ -46,63 +60,49 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
       rows = await db.prepare(
         "SELECT on_date, planned, attended, rest FROM gym_calendar_days WHERE on_date >= ? AND on_date < ? ORDER BY on_date"
       ).bind(...range).all();
-    } catch (error) {
+    } catch(error) {
       if (!missingRestColumn(error)) throw error;
       restReady = false;
       rows = await db.prepare(
         "SELECT on_date, planned, attended FROM gym_calendar_days WHERE on_date >= ? AND on_date < ? ORDER BY on_date"
       ).bind(...range).all();
     }
-    const oldDays = rows.results ?? [];
+    const manualDays = new Map((rows.results??[]).map(day=>[day.on_date,day]));
+    let rules=[], exceptions=new Map(), recurrenceReady=true;
     try {
       const [ruleRows, overrideRows] = await Promise.all([
-        db.prepare("SELECT id, start_on, end_on, weekdays_mask FROM gym_plan_rules WHERE start_on < ? AND (end_on IS NULL OR end_on >= ?) ORDER BY start_on, id").bind(range[1], range[0]).all(),
+        db.prepare("SELECT id, start_on, end_on, weekdays_mask FROM gym_plan_rules WHERE start_on < ? AND (end_on IS NULL OR end_on >= ?) ORDER BY start_on, id").bind(range[1],range[0]).all(),
         db.prepare("SELECT on_date, planned FROM gym_plan_overrides WHERE on_date >= ? AND on_date < ?").bind(...range).all()
       ]);
-      const rules = ruleRows.results ?? [];
-      const manualDays = new Map(oldDays.map(day => [day.on_date, day]));
-      const exceptions = new Map((overrideRows.results ?? []).map(day => [day.on_date, Number(day.planned)]));
-      const [year, month] = range[0].split("-").map(Number);
-      const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
-      const days = [];
-      for (let day = 1; day <= lastDay; day++) {
-        const date = range[0].slice(0, 8) + String(day).padStart(2, "0");
-        const old = manualDays.get(date);
-        const rest = !!old?.rest;
-        const planned = !rest && effectivePlan(date, !!old?.planned, rules, exceptions.get(date));
-        if (planned || rest || old?.attended || old?.planned || exceptions.has(date)) {
-          days.push({ on_date: date, planned, attended: !!old?.attended, rest,
-            recurring: effectivePlan(date, false, rules), exception: exceptions.get(date) ?? null });
-        }
-      }
-      const repeat = await repeatMonth(db, range);
-      const merged = new Map(days.map(day => [day.on_date,day]));
-      for (const occurrence of repeat.days) {
-        const date=occurrence.on_date, old=merged.get(date), manual=manualDays.get(date);
-        if (old?.exception === 0 || (occurrence.kind === "gym" && old?.rest)) continue;
-        if (occurrence.kind === "rest" && (old?.exception === 1 || manual?.planned)) continue;
-        merged.set(date,{on_date:date,planned:occurrence.kind==="gym",
-          attended:!!old?.attended,rest:occurrence.kind==="rest",
-          recurring:!!old?.recurring,exception:old?.exception??null,
-          repeated_workout:true,repeat_kind:occurrence.kind});
-      }
-      return respond({ days:[...merged.values()].sort((a,b)=>a.on_date.localeCompare(b.on_date)),
-        rules, recurrence_ready:true, rest_ready:restReady, repeat_ready:repeat.ready });
-    } catch (error) {
+      rules=ruleRows.results??[];
+      exceptions=new Map((overrideRows.results??[]).map(row=>[row.on_date,Number(row.planned)]));
+    } catch(error) {
       if (!missingPlanTables(error)) throw error;
-      const repeat = await repeatMonth(db, range);
-      const merged = new Map(oldDays.map(day=>[day.on_date,day]));
-      for (const occurrence of repeat.days) {
-        const date=occurrence.on_date, old=merged.get(date);
-        if (occurrence.kind==="gym" && old?.rest) continue;
-        if (occurrence.kind==="rest" && old?.planned) continue;
-        merged.set(date,{...old,on_date:date,planned:occurrence.kind==="gym",
-          attended:!!old?.attended,rest:occurrence.kind==="rest",
-          repeated_workout:true,repeat_kind:occurrence.kind});
-      }
-      return respond({days:[...merged.values()].sort((a,b)=>a.on_date.localeCompare(b.on_date)),
-        rules:[],recurrence_ready:false,rest_ready:restReady,repeat_ready:repeat.ready});
+      recurrenceReady=false;
     }
+    const repeat=await repeatMonth(db,range);
+    const repeating=new Map(repeat.days.map(item=>[item.on_date,item]));
+    const [year,month]=range[0].split("-").map(Number);
+    const lastDay=new Date(Date.UTC(year,month,0)).getUTCDate();
+    const days=[];
+    for(let day=1;day<=lastDay;day++){
+      const date=range[0].slice(0,8)+String(day).padStart(2,"0");
+      const manual=manualDays.get(date);
+      const occurrence=repeating.get(date);
+      const exception=exceptions.get(date)??null;
+      const legacyRecurring=recurringOn(date,rules);
+      const status=resolveDayPlan({manual,legacyOverride:exception,
+        legacyRecurring,repeat:occurrence});
+      if (status.planned || status.rest || manual?.attended || manual?.planned ||
+          exceptions.has(date) || occurrence) {
+        days.push({on_date:date,planned:status.planned,rest:status.rest,
+          attended:!!manual?.attended,source:status.source,
+          recurring:legacyRecurring,exception,repeat_kind:occurrence?.kind??null,
+          repeated_workout:!!occurrence,repeat_conflict:!!occurrence?.conflict});
+      }
+    }
+    return respond({days,rules,recurrence_ready:recurrenceReady,
+      rest_ready:restReady,repeat_ready:repeat.ready});
   }
 
   if (url.pathname === "/api/calendar/recurrence" && method === "PUT") {
@@ -134,6 +134,7 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
     try {
       const [source, target] = await Promise.all([oneDay(db, from_date), oneDay(db, to_date)]);
       if (!source.planned) return respond({ error: "source_not_planned" }, 409);
+      if (source.source === "repeat") return respond({ error: "repeat_move_requires_snapshot", }, 409);
       if (target.planned || target.rest) return respond({ error: "target_already_planned_or_rest" }, 409);
       await db.batch([
         db.prepare("INSERT INTO gym_plan_overrides (on_date, planned) VALUES (?, 0) ON CONFLICT(on_date) DO UPDATE SET planned = 0, updated_at = CURRENT_TIMESTAMP").bind(from_date),
@@ -184,7 +185,14 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
     const nextRest = current.restReady ? (rest === undefined ? current.rest && !planned : rest) : false;
     if (planned && nextRest) return respond({ error: "invalid_calendar_state" }, 400);
     const statements = [];
-    if (current.planned !== planned) statements.push(db.prepare(
+    // A one-off choice must hide both weekly tables and snapshot-based recurrence.
+    // "none" on a recurring rest day is an explicit cancellation too.
+    const desiredKind=nextRest?"rest":planned?"gym":"none";
+    const currentKind=dayPlanKind(current);
+    const needsException=(currentKind!==desiredKind) && (
+      !!current.repeat || current.legacyRecurring || current.exception!==null ||
+      !!current.manual?.planned || !!current.manual?.rest);
+    if (needsException) statements.push(db.prepare(
       "INSERT INTO gym_plan_overrides (on_date, planned) VALUES (?, ?) " +
       "ON CONFLICT(on_date) DO UPDATE SET planned = excluded.planned, updated_at = CURRENT_TIMESTAMP"
     ).bind(date, Number(planned)));
