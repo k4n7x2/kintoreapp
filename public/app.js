@@ -1708,7 +1708,85 @@ dayRest.addEventListener("change", () => {
   persistDaySwitches();
 });
 dayAttended.addEventListener("change", persistDaySwitches);
+// 年月表示を押すと年と月を直接選べる。年のプレビューだけではDBの取得を行わない。
+const calendarMonthTrigger = byId("calendar-month-trigger");
+const calendarMonthPicker = byId("calendar-month-picker");
+const calendarYearSelect = byId("calendar-year-select");
+const calendarYearPrev = byId("calendar-year-prev");
+const calendarYearNext = byId("calendar-year-next");
+const calendarMonthOptions = byId("calendar-month-options");
+let pickerYear = shownYear;
+for (let year = 2000; year <= 2100; year++) {
+  const option = document.createElement("option");
+  option.value = String(year);
+  option.textContent = year + "年";
+  calendarYearSelect.appendChild(option);
+}
+const calendarMonthButtons = [];
+for (let month = 0; month < 12; month++) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "calendar-month-option";
+  button.textContent = month + 1 + "月";
+  button.setAttribute("aria-label", month + 1 + "月を表示");
+  button.addEventListener("click", () => {
+    const offset = (pickerYear - shownYear) * 12 + month - shownMonth;
+    setCalendarMonthPicker(false, true);
+    if (offset !== 0) changeMonth(offset);
+  });
+  calendarMonthOptions.appendChild(button);
+  calendarMonthButtons.push(button);
+}
+function renderCalendarMonthPicker() {
+  calendarYearSelect.value = String(pickerYear);
+  calendarYearPrev.disabled = pickerYear <= 2000;
+  calendarYearNext.disabled = pickerYear >= 2100;
+  calendarMonthButtons.forEach((button, month) => {
+    const selected = pickerYear === shownYear && month === shownMonth;
+    button.setAttribute("aria-pressed", String(selected));
+  });
+}
+function setCalendarMonthPicker(open, restoreFocus = false) {
+  if (open && !authorized) return;
+  if (open) {
+    pickerYear = shownYear;
+    renderCalendarMonthPicker();
+  }
+  calendarMonthPicker.hidden = !open;
+  calendarMonthTrigger.setAttribute("aria-expanded", String(open));
+  if (open) calendarYearSelect.focus();
+  else if (restoreFocus && activePage === "calendar") calendarMonthTrigger.focus();
+}
+calendarMonthTrigger.addEventListener("click", () => setCalendarMonthPicker(calendarMonthPicker.hidden));
+calendarYearSelect.addEventListener("change", () => {
+  pickerYear = Number(calendarYearSelect.value);
+  renderCalendarMonthPicker();
+});
+for (const [button, delta] of [[calendarYearPrev, -1], [calendarYearNext, 1]]) {
+  button.addEventListener("click", () => {
+    pickerYear = Math.max(2000, Math.min(2100, pickerYear + delta));
+    renderCalendarMonthPicker();
+  });
+}
+byId("calendar-month-current").addEventListener("click", () => {
+  const today = new Date();
+  const offset = (today.getFullYear() - shownYear) * 12 + today.getMonth() - shownMonth;
+  setCalendarMonthPicker(false, true);
+  if (offset !== 0) changeMonth(offset);
+});
+document.addEventListener("click", (event) => {
+  if (!calendarMonthPicker.hidden &&
+      !calendarMonthPicker.contains(event.target) &&
+      !calendarMonthTrigger.contains(event.target)) setCalendarMonthPicker(false);
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || calendarMonthPicker.hidden) return;
+  event.preventDefault();
+  setCalendarMonthPicker(false, true);
+});
+
 function changeMonth(offset) {
+  setCalendarMonthPicker(false);
   calendarDialogueUserOverride = false; // 月移動は新しい明示操作
   const result = new Date(shownYear, shownMonth + offset, 1);
   shownYear = result.getFullYear();
@@ -2240,6 +2318,7 @@ document.addEventListener("keydown", (event) => {
 function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
   const previousPage = activePage;
+  if (screen !== "calendar") setCalendarMonthPicker(false);
   if (drawerOpen) setDrawerOpen(false);
   if (screen !== "home") setDevPanelOpen(false, false);
   activePage = screen;
@@ -2329,6 +2408,7 @@ function setAuthenticated(next) {
   byId("auth-screen").hidden = next;
   byId("app-screen").hidden = !next;
   if (!next) {
+    setCalendarMonthPicker(false);
     setDrawerOpen(false, false);
     setDevPanelOpen(false, false);
   }

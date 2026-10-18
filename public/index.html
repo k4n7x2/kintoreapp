@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261018-calendar-return-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261018-month-picker-v1">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261018-calendar-return-v1"></script>
+  <script type="module" src="/app.js?v=20261018-month-picker-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261017-gallery-v1">
   <script type="module" src="/gallery.js?v=20261018-remove-legacy-r1-v1"></script>
 </head>
@@ -258,11 +258,26 @@
             <span id="month-count" class="visually-hidden" role="status" aria-live="polite">読み込み中</span>
             <div class="panel calendar-panel">
               <div class="calendar-topbar">
-                <h3 id="month-title" aria-live="polite"></h3>
+                <h3 class="calendar-month-heading">
+                  <button type="button" id="calendar-month-trigger" class="calendar-month-trigger" aria-label="表示する年と月を選択" aria-controls="calendar-month-picker" aria-expanded="false">
+                    <span id="month-title" aria-live="polite"></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                </h3>
                 <div class="month-controls">
                   <button type="button" id="prev-month" aria-label="前の月">‹</button>
                   <button type="button" id="next-month" aria-label="次の月">›</button>
                 </div>
+              </div>
+              <div id="calendar-month-picker" class="calendar-month-picker" hidden>
+                <div class="calendar-year-controls">
+                  <button type="button" id="calendar-year-prev" aria-label="前年">‹</button>
+                  <label class="visually-hidden" for="calendar-year-select">年を選択</label>
+                  <select id="calendar-year-select" aria-label="年を選択"></select>
+                  <button type="button" id="calendar-year-next" aria-label="翌年">›</button>
+                </div>
+                <div id="calendar-month-options" class="calendar-month-options" role="group" aria-label="月を選択"></div>
+                <button type="button" id="calendar-month-current" class="calendar-month-current">今月に戻る</button>
               </div>
               <div class="weekday-row" aria-hidden="true"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
               <div class="calendar-grid" id="calendar-grid" aria-label="月間カレンダー"></div>
