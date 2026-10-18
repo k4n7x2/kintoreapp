@@ -149,6 +149,7 @@ let repeatReady = false;
 let repeatLoading = false;
 let repeatBusy = false;
 let repeatRequestId = 0;
+let repeatEditorSeriesId = null;
 let monthTruncated = false;
 let selectedDate = "";
 let editingWorkoutId = null;
@@ -1280,6 +1281,10 @@ function resetWorkoutForm(date = todayISO()) {
   repeatLoading = true;
   ++repeatRequestId;
   repeatFeedback.textContent = "";
+  repeatEditorSeriesId = null;
+  repeatCadence.value = "weekly";
+  repeatEnd.value = "";
+  repeatScope.value = "only";
   renderRepeatEditor();
 }
 function workoutSummary(record) {
@@ -1510,14 +1515,17 @@ function renderRepeatEditor() {
     existing ? "入力した内容を繰り返している予定です。" : "今表示している入力内容をそのまま複製します。";
   repeatScopeRow.hidden = !existing;
   repeatDelete.hidden = !existing;
-  repeatCadence.disabled = !ready || existing;
-  repeatEnd.disabled = !ready || existing;
+  repeatCadence.disabled = !ready || (existing && repeatScope.value === "only");
+  repeatEnd.disabled = !ready || (existing && repeatScope.value === "only");
   repeatSave.disabled = !ready;
   repeatDelete.disabled = !ready || !existing;
   if (existing) {
-    repeatCadence.value = repeatOccurrence.cadence === "weekly" && repeatOccurrence.every_n === 2
-      ? "biweekly" : repeatOccurrence.cadence;
-    repeatEnd.value = repeatOccurrence.ends_on || "";
+    if (repeatEditorSeriesId !== repeatOccurrence.id) {
+      repeatEditorSeriesId = repeatOccurrence.id;
+      repeatCadence.value = repeatOccurrence.cadence === "weekly" && repeatOccurrence.every_n === 2
+        ? "biweekly" : repeatOccurrence.cadence;
+      repeatEnd.value = repeatOccurrence.ends_on || "";
+    }
     repeatSave.textContent = "入力内容を選択範囲へ反映";
   } else {
     repeatSave.textContent = "この内容を繰り返し登録";
@@ -1609,7 +1617,9 @@ async function submitRepeatChange(method) {
   try {
     await fetchJSON(target,{method:instance ? method : "POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(instance ? {date,scope,...(exercises ? {exercises}: {})} :
+      body:JSON.stringify(instance ? {date,scope,
+        ...(exercises ? {exercises}: {}),
+        ...(method !== "DELETE" && scope !== "only" ? {cadence,every_n,end_on} : {})} :
         {start_on:date,cadence,every_n,end_on,exercises})});
     if (!authorized || selectedDate !== date) return;
     await loadWorkouts();
@@ -1628,6 +1638,7 @@ async function submitRepeatChange(method) {
     if (authorized) renderRepeatEditor();
   }
 }
+repeatScope.addEventListener("change",renderRepeatEditor);
 repeatSave.addEventListener("click",()=>submitRepeatChange("PATCH"));
 repeatDelete.addEventListener("click",()=>submitRepeatChange("DELETE"));
 
