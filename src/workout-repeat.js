@@ -77,11 +77,17 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
   if(!Number.isSafeInteger(id)||id<=0)return respond({error:"invalid_id"},400);
   const parsed=await readJSON(request,24000);
   if(parsed.error)return respond({error:parsed.error},parsed.status);
-  const {date,scope,exercises}=parsed.value||{};
+  const {date,scope,exercises,cadence:requestedCadence,every_n:requestedEvery,
+    end_on:requestedEnd}=parsed.value||{};
   if(!validDate(date)||!["only","future","all"].includes(scope))
     return respond({error:"invalid_scope"},400);
   const snapshot=method==="PATCH"?validateWorkoutSnapshot(exercises):null;
   if(method==="PATCH"&&!snapshot)return respond({error:"invalid_snapshot"},400);
+  if(method==="PATCH"&&scope!=="only"&&(
+      !["daily","weekly","monthly"].includes(requestedCadence)||
+      !Number.isInteger(requestedEvery)||requestedEvery<1||requestedEvery>12||
+      !(requestedEnd===null||validDate(requestedEnd))))
+    return respond({error:"invalid_recurrence"},400);
   try {
     const source=await db.prepare("SELECT * FROM workout_repeat_series WHERE id = ?").bind(id).first();
     if(!source)return respond({error:"not_found"},404);
@@ -96,8 +102,17 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
     }
     if(scope==="all"){
       if(method==="PATCH"){
-        await db.prepare("UPDATE workout_repeat_series SET content_json=? WHERE group_id=?")
-          .bind(payload,source.group_id).run();
+        const parts=await db.prepare("SELECT id, starts_on FROM workout_repeat_series WHERE group_id=? ORDER BY starts_on DESC")
+          .bind(source.group_id).all();
+        const latest=parts.results?.[0];
+        if(requestedEnd!==null&&latest&&requestedEnd<latest.starts_on)
+          return respond({error:"end_before_latest_segment"},409);
+        await db.batch([
+          db.prepare("UPDATE workout_repeat_series SET content_json=?,cadence=?,every_n=? WHERE group_id=?")
+            .bind(payload,requestedCadence,requestedEvery,source.group_id),
+          db.prepare("UPDATE workout_repeat_series SET ends_on=? WHERE id=?")
+            .bind(requestedEnd,latest?.id??id)
+        ]);
       }else{
         await db.batch([
           db.prepare("DELETE FROM workout_repeat_exceptions WHERE series_id IN (SELECT id FROM workout_repeat_series WHERE group_id=?)").bind(source.group_id),
@@ -107,6 +122,8 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
       return respond({saved:true,scope});
     }
     // 'future': retain every previous occurrence; supersede future segments, including their exceptions.
+    if(method==="PATCH"&&requestedEnd!==null&&requestedEnd<date)
+      return respond({error:"invalid_end_on"},400);
     const cleanup=db.prepare("DELETE FROM workout_repeat_exceptions WHERE series_id IN "+
       "(SELECT id FROM workout_repeat_series WHERE group_id=? AND starts_on>?)").bind(source.group_id,date);
     const deleteFuture=db.prepare("DELETE FROM workout_repeat_series WHERE group_id=? AND starts_on>?").bind(source.group_id,date);
@@ -117,14 +134,15 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
         statements.push(db.prepare("DELETE FROM workout_repeat_exceptions WHERE series_id=?").bind(id));
         statements.push(db.prepare("DELETE FROM workout_repeat_series WHERE id=?").bind(id));
       }else{
-        statements.push(db.prepare("UPDATE workout_repeat_series SET content_json=? WHERE id=?").bind(payload,id));
+        statements.push(db.prepare("UPDATE workout_repeat_series SET content_json=?,cadence=?,every_n=?,ends_on=? WHERE id=?")
+          .bind(payload,requestedCadence,requestedEvery,requestedEnd,id));
       }
     }else {
       statements.push(db.prepare("UPDATE workout_repeat_series SET ends_on=? WHERE id=?")
         .bind(previousISODate(date),id));
       if(method==="PATCH")statements.push(db.prepare(
         "INSERT INTO workout_repeat_series (group_id,starts_on,ends_on,cadence,every_n,content_json) VALUES (?,?,?,?,?,?)")
-        .bind(source.group_id,date,source.ends_on,source.cadence,source.every_n,payload));
+        .bind(source.group_id,date,requestedEnd,requestedCadence,requestedEvery,payload));
     }
     await db.batch(statements);
     return respond({saved:true,scope});
