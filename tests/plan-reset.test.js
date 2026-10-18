@@ -5,7 +5,7 @@ import {handlePlanResetAPI} from "../src/plan-reset.js";
 class FakeD1 {
   constructor({tables="all",rest=true}={}) {
     const all=["gym_calendar_days","gym_plan_rules","gym_plan_overrides",
-      "workout_repeat_series","workout_repeat_exceptions"];
+      "workout_repeat_series","workout_repeat_exceptions","gym_weekly_slots"];
     this.existing=new Set(tables==="all"?all:tables);
     this.hasRest=rest;
     this.days=[
@@ -16,6 +16,8 @@ class FakeD1 {
     ];
     this.legacyRules=[{id:1}];this.legacyExceptions=[{on_date:"2026-10-27"}];
     this.repeatSeries=[{id:1}];this.repeatExceptions=[{series_id:1}];
+    this.weeklySlots=[{weekday:2,kind:"gym",template_id:4}];
+    this.templates=[{id:4,title:"胸・腕の日"}];
     this.workout_sessions=[{id:1,performed_on:"2026-10-20"}];
     this.workout_sets=[{session_id:1,weight_kg:30,reps:10}];
     this.exercise_catalog=[{name:"チェストプレス"}];
@@ -45,7 +47,8 @@ class FakeD1 {
     if(sql.startsWith("SELECT COUNT(*) AS total FROM ")){
       const table=sql.replace("SELECT COUNT(*) AS total FROM ","");
       const k={"gym_plan_rules":"legacyRules","gym_plan_overrides":"legacyExceptions",
-        "workout_repeat_series":"repeatSeries","workout_repeat_exceptions":"repeatExceptions"}[table];
+        "workout_repeat_series":"repeatSeries","workout_repeat_exceptions":"repeatExceptions",
+        "gym_weekly_slots":"weeklySlots"}[table];
       if(!k)throw Error("unknown count table "+table);
       return [{total:this[k].length}];
     }
@@ -55,7 +58,7 @@ class FakeD1 {
     this.executed.push(sql);
     const tables={"workout_repeat_exceptions":"repeatExceptions",
       "workout_repeat_series":"repeatSeries","gym_plan_overrides":"legacyExceptions",
-      "gym_plan_rules":"legacyRules"};
+      "gym_plan_rules":"legacyRules","gym_weekly_slots":"weeklySlots"};
     for(const [name,key] of Object.entries(tables))
       if(sql==="DELETE FROM "+name){this[key]=[];return {success:true}};
     if(sql==="DELETE FROM gym_calendar_days WHERE attended = 0") {
@@ -84,7 +87,7 @@ test("preview counts all plan sources without changes",async()=>{
   assert.equal(result.status,200);
   assert.deepEqual(result.body.counts,{
     singlePlans:2,restDays:1,legacyRules:1,
-    legacyExceptions:1,repeatSeries:1,repeatExceptions:1
+    legacyExceptions:1,repeatSeries:1,repeatExceptions:1,weeklySlots:1
   });
   assert.deepEqual(db.executed,[]);
 });
@@ -106,11 +109,12 @@ test("clears all plans, rest and overrides, but preserves workout, attendance, c
   assert.equal(db.days.length,2);
   assert.deepEqual(db.days.map(day=>[day.attended,day.planned,day.rest]),
     [[1,0,0],[1,0,0]]);
-  for(const key of ["legacyRules","legacyExceptions","repeatSeries","repeatExceptions"])
+  for(const key of ["legacyRules","legacyExceptions","repeatSeries","repeatExceptions","weeklySlots"])
     assert.deepEqual(db[key],[]);
   assert.equal(JSON.stringify(db.workout_sessions),workouts);
   assert.equal(JSON.stringify(db.workout_sets),sets);
   assert.equal(JSON.stringify(db.exercise_catalog),catalog);
+  assert.equal(db.templates.length,1); // Reusable menus survive plan-only reset.
   assert.equal(db.executed.some(sql=>/DELETE FROM workout_(?:sessions|sets)|exercise_catalog/.test(sql)),false);
 });
 test("legacy schema without rest or 0007 is supported and attendance remains",async()=>{
