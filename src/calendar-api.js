@@ -5,7 +5,7 @@ function missingPlanTables(error) {
 }
 
 function missingRestColumn(error) {
-  return /no such column:\\s*rest\\b/i.test(String(error?.message ?? error));
+  return /no such column:\s*rest\b/i.test(String(error?.message ?? error));
 }
 
 async function readManualDay(db, date) {
