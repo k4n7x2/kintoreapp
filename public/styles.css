@@ -2655,6 +2655,7 @@ body.is-authenticated.is-sd-page #app-screen {
   background: transparent;
   color: var(--ink);
   cursor: pointer;
+  pointer-events: auto; /* 親のcharacter-sceneはpointer-events:none */
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   clip-path: polygon(36% 0, 100% 0, 100% 100%, 18% 100%, 26% 68%, 25% 39%);
