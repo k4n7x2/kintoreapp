@@ -76,13 +76,36 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
     const snapshot=validateRepeatContent(kind === undefined ? exercises : {kind,exercises});
     if(!snapshot)return respond({error:"invalid_snapshot"},400);
     try {
-      const currentDay=await db.prepare("SELECT rest FROM gym_calendar_days WHERE on_date=?").bind(start_on).first()
-        .catch(error=>{if(/no such column:\s*rest\b/i.test(String(error?.message??error)))return null;throw error;});
+      let currentDay=null, restReady=true;
+      try {
+        currentDay=await db.prepare("SELECT planned, rest FROM gym_calendar_days WHERE on_date=?")
+          .bind(start_on).first();
+      } catch(error) {
+        if (/no such column:\s*rest\b/i.test(String(error?.message??error))) {
+          restReady=false;
+          currentDay=await db.prepare("SELECT planned FROM gym_calendar_days WHERE on_date=?")
+            .bind(start_on).first();
+        } else if (!/no such table:\s*(?:main\.)?gym_calendar_days/i.test(String(error?.message??error))) {
+          throw error;
+        }
+      }
+      if(snapshot.kind==="rest" && !restReady) return respond({error:"rest_migration_required"},503);
       if(currentDay?.rest && snapshot.kind !== "rest")return respond({error:"rest_day_conflict"},409);
       if((await repeatOnDate(db,start_on)).length)return respond({error:"already_repeating"},409);
-      const result=await db.prepare("INSERT INTO workout_repeat_series (group_id,starts_on,ends_on,cadence,every_n,content_json) VALUES (?,?,?,?,?,?)")
-        .bind(crypto.randomUUID(),start_on,end_on,cadence,every_n,JSON.stringify(snapshot)).run();
-      return respond({saved:true,id:result.meta?.last_row_id??null},201);
+      // Adopt the matching one-off status into the series, otherwise cancelling its
+      // first occurrence would expose the original standalone day flag again.
+      // Attendance, historical sets, and unrelated status rows are never changed.
+      const adopt = snapshot.kind==="rest" ? !!currentDay?.rest : !!currentDay?.planned;
+      const statements=[
+        db.prepare("INSERT INTO workout_repeat_series (group_id,starts_on,ends_on,cadence,every_n,content_json) VALUES (?,?,?,?,?,?)")
+          .bind(crypto.randomUUID(),start_on,end_on,cadence,every_n,JSON.stringify(snapshot))
+      ];
+      if(adopt) statements.push(db.prepare(restReady
+        ? "UPDATE gym_calendar_days SET planned=0, rest=0, updated_at=CURRENT_TIMESTAMP WHERE on_date=?"
+        : "UPDATE gym_calendar_days SET planned=0, updated_at=CURRENT_TIMESTAMP WHERE on_date=?")
+        .bind(start_on));
+      const results=await db.batch(statements);
+      return respond({saved:true,id:results[0]?.meta?.last_row_id??null},201);
     } catch(error){if(missingWorkoutRepeat(error))return respond({error:"repeat_migration_required"},503);throw error;}
   }
   const hit=/^\/api\/repeat\/(\d+)$/.exec(url.pathname);
