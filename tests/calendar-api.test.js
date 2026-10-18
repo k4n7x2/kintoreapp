@@ -17,6 +17,8 @@ class FakeD1 {
   prepare(sql) {
     const db = this;
     return {
+      all:async()=>({results:db.read(sql,[])}),
+      first:async()=>db.read(sql,[])[0]??null,
       bind(...args) {
         return {
           _sql: sql, _args: args,
