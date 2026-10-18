@@ -15,6 +15,12 @@ class FakeDB {
   async batch(statements) { for(const statement of statements) await statement.run(); }
   read(sql,a) {
     if(sql.startsWith("SELECT rest FROM gym_calendar_days"))return [{rest:0}];
+    if(sql.startsWith("SELECT ends_on FROM workout_repeat_series WHERE group_id"))return this.series
+      .filter(x=>x.group_id===a[0]).sort((x,y)=>y.starts_on.localeCompare(x.starts_on))
+      .slice(0,1).map(x=>({ends_on:x.ends_on}));
+    if(sql.startsWith("SELECT id, starts_on FROM workout_repeat_series WHERE group_id"))return this.series
+      .filter(x=>x.group_id===a[0]).sort((x,y)=>y.starts_on.localeCompare(x.starts_on))
+      .map(x=>({id:x.id,starts_on:x.starts_on}));
     if(sql.startsWith("SELECT * FROM workout_repeat_series WHERE id"))return this.series.filter(x=>x.id===a[0]);
     if(sql.startsWith("SELECT * FROM workout_repeat_series")) {
       if(a.length===2) return this.series.filter(x=>x.starts_on<=a[0]&&(!x.ends_on||x.ends_on>=a[1]));
@@ -34,7 +40,15 @@ class FakeDB {
       this.exceptions=this.exceptions.filter(x=>x.series_id!==a[0]||x.on_date!==a[1]);
       this.exceptions.push({series_id:a[0],on_date:a[1],cancelled:a[2],content_json:a[3]});
     } else if(sql.startsWith("UPDATE workout_repeat_series SET content_json")) {
-      this.series.forEach(row=>{if(row.group_id===a[1])row.content_json=a[0]});
+      if(sql.includes("WHERE group_id")) {
+        this.series.forEach(row=>{if(row.group_id===a[3]) {
+          row.content_json=a[0];row.cadence=a[1];row.every_n=a[2];
+        }});
+      } else {
+        this.series.forEach(row=>{if(row.id===a[4]){
+          row.content_json=a[0];row.cadence=a[1];row.every_n=a[2];row.ends_on=a[3];
+        }});
+      }
     } else if(sql.startsWith("UPDATE workout_repeat_series SET ends_on")) {
       this.series.forEach(row=>{if(row.id===a[1])row.ends_on=a[0]});
     } else if(sql.startsWith("DELETE FROM workout_repeat_exceptions")) {
@@ -86,10 +100,14 @@ test("only, future, all edit scope and deletion",async()=>{
   assert.deepEqual((await api(db,"/api/repeat?date=2026-10-27")).body.occurrences[0].exercises,newer);
   assert.deepEqual((await api(db,"/api/repeat?date=2026-11-03")).body.occurrences[0].exercises,sample);
   assert.equal((await api(db,"/api/repeat/"+id,"PATCH",
-    {date:"2026-11-03",scope:"future",exercises:newer})).status,200);
+    {date:"2026-11-03",scope:"future",exercises:newer,cadence:"weekly",every_n:1,end_on:null})).status,200);
   assert.deepEqual((await api(db,"/api/repeat?date=2026-10-20")).body.occurrences[0].exercises,sample);
   const future=(await api(db,"/api/repeat?date=2026-11-10")).body.occurrences[0];
   assert.deepEqual(future.exercises,newer);
+  const allContent=await api(db,"/api/repeat/"+future.id,"PATCH",
+    {date:"2026-11-10",scope:"all",exercises:sample,cadence:"weekly",every_n:1,end_on:null});
+  assert.equal(allContent.status,200);
+  assert.deepEqual((await api(db,"/api/repeat?date=2026-10-20")).body.occurrences[0].exercises,sample);
   await api(db,"/api/repeat/"+future.id,"DELETE",{date:"2026-11-10",scope:"only"});
   assert.deepEqual((await api(db,"/api/repeat?date=2026-11-10")).body.occurrences,[]);
   assert.equal((await api(db,"/api/repeat?date=2026-11-17")).body.occurrences.length,1);
