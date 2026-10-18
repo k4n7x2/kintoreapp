@@ -12,6 +12,7 @@ class FakeD1 {
     this.nextId = 1;
     this.repeatSeries = null;
     this.repeatExceptions = [];
+    this.weeklySlots = null;
   }
   prepare(sql) {
     const db = this;
@@ -30,6 +31,10 @@ class FakeD1 {
     for (const stmt of statements) await stmt.run();
   }
   read(sql, args) {
+    if (sql.startsWith("SELECT weekday,starts_on,kind,template_id FROM gym_weekly_slots")) {
+      if (this.weeklySlots === null) throw Error("no such table: gym_weekly_slots");
+      return this.weeklySlots;
+    }
     if (sql.startsWith("SELECT * FROM workout_repeat_series")) {
       if (this.repeatSeries === null) throw Error("no such table: workout_repeat_series");
       return this.repeatSeries.filter(row =>
@@ -291,4 +296,36 @@ test("snapshot recurrence cannot move without moving its exercise snapshot",asyn
     {from_date:"2026-10-20",to_date:"2026-10-21"});
   assert.equal(result.status,409);
   assert.equal(result.body.error,"repeat_move_requires_snapshot");
+});
+
+test("weekly schedule shows gym/rest with a linked menu, independent of repeated snapshots",async()=>{
+  const db=new FakeD1();
+  db.weeklySlots=[
+    {weekday:2,starts_on:"2026-10-19",kind:"gym",template_id:12},
+    {weekday:4,starts_on:"2026-10-19",kind:"rest",template_id:null},
+    {weekday:1,starts_on:"2026-10-19",kind:"none",template_id:null}
+  ];
+  db.repeatSeries=[{id:1,group_id:"g",starts_on:"2026-10-20",ends_on:null,
+    cadence:"weekly",every_n:1,content_json:JSON.stringify({kind:"rest",exercises:[]})}];
+  db.rules=[{id:1,start_on:"2026-10-19",end_on:null,weekdays_mask:1}];
+  const month=(await api(db,"/api/calendar?month=2026-10")).body;
+  assert.equal(month.weekly_setup_ready,true);
+  const tue=month.days.find(x=>x.on_date==="2026-10-20");
+  const thu=month.days.find(x=>x.on_date==="2026-10-22");
+  assert.deepEqual([tue.planned,tue.rest,tue.template_id,tue.source],
+    [true,false,12,"weekly-template"]);
+  assert.deepEqual([thu.planned,thu.rest,thu.template_id,thu.source],
+    [false,true,null,"weekly-template"]);
+  assert.equal(month.days.some(x=>x.on_date==="2026-10-26"&&x.planned),false);
+});
+test("manual one-day exception wins over linked menu, then next week restores schedule",async()=>{
+  const db=new FakeD1();
+  db.weeklySlots=[{weekday:2,starts_on:"2026-10-19",kind:"gym",template_id:12}];
+  let response=await api(db,"/api/calendar/2026-10-27","PUT",
+    {planned:false,attended:false,rest:true});
+  assert.equal(response.status,200);
+  const month=(await api(db,"/api/calendar?month=2026-11")).body;
+  const day=(await api(db,"/api/calendar?month=2026-10")).body.days.find(x=>x.on_date==="2026-10-27");
+  assert.deepEqual([day.planned,day.rest,day.template_id],[false,true,null]);
+  assert.equal(month.days.find(x=>x.on_date==="2026-11-03").template_id,12);
 });
