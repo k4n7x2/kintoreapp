@@ -2636,7 +2636,7 @@ window.addEventListener("popstate", () => {
 });
 
 function setAuthenticated(next) {
-  if (!next) closeSettingsPlanReset();
+  if (!next) closeSettingsPlanReset(true);
   if (!next) closeRepeatSheet(false);
   const wasAuthorized = authorized;
   if (!next || !wasAuthorized) {
@@ -2775,8 +2775,8 @@ const settingsPlanResetFeedback = byId("settings-plan-reset-feedback");
 let settingsPlanResetPending = false;
 let settingsPlanResetReady = false;
 
-function closeSettingsPlanReset() {
-  if (settingsPlanResetPending) return;
+function closeSettingsPlanReset(force = false) {
+  if (settingsPlanResetPending && !force) return;
   settingsPlanResetConfirm.hidden = true;
   settingsPlanResetOpen.disabled = false;
   settingsPlanResetCheck.checked = false;
@@ -2850,7 +2850,7 @@ settingsPlanResetExecute.addEventListener("click",async()=>{
     }
   } catch(error) {
     if (error.status===401) {setAuthenticated(false);return;}
-    settingsPlanResetFeedback.textContent="削除できませんでした。予定データは変更されていません。";
+    settingsPlanResetFeedback.textContent="削除結果を確認できませんでした。接続状態とカレンダーの予定を確認してください。";
   } finally {
     settingsPlanResetPending=false;
     settingsPlanResetCancel.disabled=false;
