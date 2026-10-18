@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { handleRepeatAPI } from "../src/workout-repeat.js";
 
 class FakeDB {
-  constructor() { this.series=[]; this.exceptions=[]; this.next=1; this.sqlLog=[]; this.restDays=new Set();this.plannedDays=new Set(); }
+  constructor() { this.series=[]; this.exceptions=[]; this.next=1; this.sqlLog=[]; this.restDays=new Set();this.plannedDays=new Set();this.dayOverrides=new Map(); }
   prepare(sql) {
     const db=this;
     return {bind(...args) {return {
@@ -17,6 +17,8 @@ class FakeDB {
     if(sql.startsWith("SELECT planned, rest FROM gym_calendar_days"))return [{
       planned:this.plannedDays.has(a[0])?1:0,rest:this.restDays.has(a[0])?1:0}];
     if(sql.startsWith("SELECT planned FROM gym_calendar_days"))return [{planned:this.plannedDays.has(a[0])?1:0}];
+    if(sql.startsWith("SELECT starts_on, ends_on, cadence, every_n FROM workout_repeat_series"))
+      return this.series.filter(x=>(!x.ends_on||x.ends_on>=a[0])&&x.starts_on<=a[1]);
     if(sql.startsWith("SELECT ends_on FROM workout_repeat_series WHERE group_id"))return this.series
       .filter(x=>x.group_id===a[0]).sort((x,y)=>y.starts_on.localeCompare(x.starts_on))
       .slice(0,1).map(x=>({ends_on:x.ends_on}));
@@ -32,6 +34,10 @@ class FakeDB {
   }
   write(sql,a) {
     this.sqlLog.push(sql);
+    if(sql.startsWith("DELETE FROM gym_plan_overrides WHERE on_date=?")) {
+      this.dayOverrides.delete(a[0]);
+      return {success:true};
+    }
     if(sql.startsWith("UPDATE gym_calendar_days SET planned=0")) {
       this.plannedDays.delete(a[0]);
       if(sql.includes("rest=0"))this.restDays.delete(a[0]);
@@ -191,4 +197,30 @@ test("cancel first rest occurrence does not resurrect its original manual status
   assert.equal((await api(db,"/api/repeat?date=2026-10-19")).body.occurrences.length,0);
   assert.equal((await api(db,"/api/repeat?date=2026-10-26")).body.occurrences[0].kind,"rest");
   assert.equal(db.sqlLog.some(sql=>sql.includes("workout_sets")||sql.includes("attended=")),false);
+});
+
+test("creating a repeat removes only the initial explicit one-off day override",async()=>{
+  const db=new FakeDB();
+  db.dayOverrides.set("2026-10-20",0);
+  db.plannedDays.add("2026-10-20");
+  db.dayOverrides.set("2026-10-21",0);
+  const created=await api(db,"/api/repeat","POST",
+    {start_on:"2026-10-20",cadence:"weekly",every_n:1,kind:"gym",exercises:[]});
+  assert.equal(created.status,201);
+  assert.equal(db.dayOverrides.has("2026-10-20"),false);
+  assert.equal(db.dayOverrides.get("2026-10-21"),0);
+});
+test("overlap between repeat series cannot be created from another start date",async()=>{
+  const db=new FakeDB();
+  const a=await api(db,"/api/repeat","POST",{start_on:"2026-10-20",cadence:"weekly",every_n:1,kind:"gym",exercises:[]});
+  assert.equal(a.status,201);
+  const duplicate=await api(db,"/api/repeat","POST",
+    {start_on:"2026-10-21",cadence:"daily",every_n:1,kind:"rest",exercises:[]});
+  assert.equal(duplicate.status,409);
+  assert.equal(duplicate.body.error,"overlapping_recurrence");
+  assert.equal(db.series.length,1);
+  const different=await api(db,"/api/repeat","POST",
+    {start_on:"2026-10-22",cadence:"weekly",every_n:1,kind:"rest",exercises:[]});
+  assert.equal(different.status,201);
+  assert.equal(db.series.length,2);
 });
