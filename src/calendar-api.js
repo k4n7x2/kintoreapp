@@ -1,5 +1,6 @@
 import { repeatMonth, repeatOnDate, missingWorkoutRepeat } from "./workout-repeat.js";
 import { resolveDayPlan, dayPlanKind } from "./calendar-day-state.js";
+import { readWeekSlots, weekSlotOn } from "./training-setup.js";
 import { weekdaysToMask, recurringOn, previousISODate } from "./calendar-plan.js";
 
 function missingPlanTables(error) {
@@ -43,11 +44,12 @@ async function oneDay(db, date) {
   try { repeats=await repeatOnDate(db,date); }
   catch(error) { if (!missingWorkoutRepeat(error)) throw error; }
   const repeat=repeats.at(-1)??null;
+  const weekly=weekSlotOn(date,(await readWeekSlots(db)).slots);
   const legacyRecurring=recurringOn(date,rules);
   const state=resolveDayPlan({manual:info.manual,legacyOverride:exception,
-    legacyRecurring,repeat});
+    legacyRecurring,repeat,weekly});
   return {...state,manual:info.manual,restReady:info.restReady,
-    rules,exception,legacyRecurring,repeat,repeatConflict:repeats.length>1,
+    rules,exception,legacyRecurring,repeat,weekly,repeatConflict:repeats.length>1,
     recurrenceReady};
 }
 
@@ -81,6 +83,7 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
       recurrenceReady=false;
     }
     const repeat=await repeatMonth(db,range);
+    const weeklySetup=await readWeekSlots(db);
     const repeating=new Map(repeat.days.map(item=>[item.on_date,item]));
     const [year,month]=range[0].split("-").map(Number);
     const lastDay=new Date(Date.UTC(year,month,0)).getUTCDate();
@@ -91,18 +94,20 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
       const occurrence=repeating.get(date);
       const exception=exceptions.get(date)??null;
       const legacyRecurring=recurringOn(date,rules);
+      const weekly=weekSlotOn(date,weeklySetup.slots);
       const status=resolveDayPlan({manual,legacyOverride:exception,
-        legacyRecurring,repeat:occurrence});
+        legacyRecurring,repeat:occurrence,weekly});
       if (status.planned || status.rest || manual?.attended || manual?.planned ||
           exceptions.has(date) || occurrence) {
         days.push({on_date:date,planned:status.planned,rest:status.rest,
           attended:!!manual?.attended,source:status.source,
+          template_id:status.source==="weekly-template"?weekly?.template_id??null:null,
           recurring:legacyRecurring,exception,repeat_kind:occurrence?.kind??null,
           repeated_workout:!!occurrence,repeat_conflict:!!occurrence?.conflict});
       }
     }
     return respond({days,rules,recurrence_ready:recurrenceReady,
-      rest_ready:restReady,repeat_ready:repeat.ready});
+      rest_ready:restReady,repeat_ready:repeat.ready,weekly_setup_ready:weeklySetup.ready});
   }
 
   if (url.pathname === "/api/calendar/recurrence" && method === "PUT") {
@@ -216,6 +221,7 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
     return respond({on_date:date,planned:effective.planned,rest:effective.rest,
       attended,source:effective.source,exception:effective.exception,
       repeat_kind:effective.repeat?.kind??null,repeated_workout:!!effective.repeat,
+      template_id:effective.source==="weekly-template"?effective.weekly?.template_id??null:null,
       rest_ready:current.restReady});
   }
   return respond({ error: "method_not_allowed" }, 405);

@@ -3150,3 +3150,52 @@ body.is-authenticated.is-sd-page #app-screen {
   #page-calendar .calendar-month-picker { left: 7px; right: 7px; padding: 10px; }
   #page-calendar .calendar-year-controls { gap: 7px; }
 }
+
+
+/* Week schedule + reusable menu templates, optimized for narrow Android screens. */
+.record-linked-template {margin:8px 0;padding:7px 10px;background:var(--raised);
+  color:var(--accent-soft);border-radius:9px;font-size:11px;}
+.record-linked-template[hidden],.record-repeat-trigger[hidden],
+#record-template-form[hidden] {display:none!important;}
+.record-template-save {margin:9px 0;}
+.record-template-open {display:block;width:100%;min-height:42px;padding:8px 12px;
+  border:1px solid var(--line);border-radius:10px;background:var(--surface);
+  color:var(--muted);font-size:12px;text-align:left;cursor:pointer;}
+#record-template-form {display:grid;gap:7px;margin-top:9px;padding:11px;border:1px solid var(--line);
+  border-radius:11px;background:var(--raised);}
+#record-template-form label {font-size:12px;font-weight:650;color:var(--ink);}
+.record-template-form-actions {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;}
+.record-template-form-actions input {width:100%;min-width:0;min-height:42px;border:1px solid var(--line);
+  border-radius:8px;background:var(--surface);color:var(--ink);padding:8px 10px;font:inherit;font-size:13px;}
+.record-template-form-actions button {min-height:42px;padding:8px 15px;border:none;border-radius:8px;
+  background:var(--accent);color:var(--on-accent);font-weight:700;cursor:pointer;}
+.record-template-save .feedback {margin:0;font-size:11px;}
+.weekly-setup-panel,.weekly-templates-panel {display:grid;gap:12px;}
+.weekly-setup-panel .field-hint,.weekly-templates-panel .field-hint {margin:0;}
+.weekly-setup-days {display:grid;gap:8px;}
+.weekly-setup-day {display:grid;grid-template-columns:38px minmax(75px,.8fr) minmax(0,1.3fr);
+  gap:6px;align-items:center;}
+.weekly-setup-day strong {font-size:12px;font-weight:700;}
+.weekly-setup-day select {width:100%;max-width:100%;min-width:0;min-height:43px;
+  border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);
+  font:inherit;font-size:12px;padding:7px 5px;}
+.weekly-setup-day select:disabled {opacity:.45;}
+#weekly-setup-save {min-height:46px;padding:10px 13px;border:0;border-radius:10px;
+  background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:700;cursor:pointer;}
+#weekly-setup-save:disabled {opacity:.5;cursor:not-allowed;}
+.weekly-templates-list {display:grid;gap:8px;}
+.weekly-template-item {display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--raised);}
+.weekly-template-item>div {min-width:0;display:grid;gap:3px;}
+.weekly-template-item strong {font-size:13px;}
+.weekly-template-item small {font-size:11px;color:var(--muted);overflow-wrap:anywhere;}
+.weekly-template-item button {flex:none;min-height:42px;}
+.weekly-setup-panel .feedback,.weekly-templates-panel .feedback {margin:0;font-size:12px;}
+.weekly-setup-panel button:focus-visible,.weekly-setup-day select:focus-visible,
+.record-template-save button:focus-visible,.record-template-save input:focus-visible {
+  outline:2px solid var(--accent);outline-offset:2px;
+}
+@media(max-width:360px){
+  .weekly-setup-day {grid-template-columns:31px minmax(65px,.8fr) minmax(0,1.2fr);gap:5px;}
+  .weekly-setup-day select {font-size:11px;}
+}

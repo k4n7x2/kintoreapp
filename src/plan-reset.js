@@ -5,7 +5,8 @@ const PLAN_TABLES = [
   "gym_plan_rules",
   "gym_plan_overrides",
   "workout_repeat_series",
-  "workout_repeat_exceptions"
+  "workout_repeat_exceptions",
+  "gym_weekly_slots"
 ];
 
 async function planInventory(db) {
@@ -16,7 +17,7 @@ async function planInventory(db) {
   const present = new Set((rows.results ?? []).map(row => row.name));
   const counts = {
     singlePlans: 0, restDays: 0, legacyRules: 0,
-    legacyExceptions: 0, repeatSeries: 0, repeatExceptions: 0
+    legacyExceptions: 0, repeatSeries: 0, repeatExceptions: 0, weeklySlots: 0
   };
   let hasRest = false;
   if (present.has("gym_calendar_days")) {
@@ -34,7 +35,8 @@ async function planInventory(db) {
     ["gym_plan_rules","legacyRules"],
     ["gym_plan_overrides","legacyExceptions"],
     ["workout_repeat_series","repeatSeries"],
-    ["workout_repeat_exceptions","repeatExceptions"]
+    ["workout_repeat_exceptions","repeatExceptions"],
+    ["gym_weekly_slots","weeklySlots"]
   ];
   for (const [table, key] of tables) {
     if (!present.has(table)) continue;
@@ -57,6 +59,8 @@ export async function handlePlanResetAPI(db,request,method,{respond,readJSON}) {
     return respond({error:"confirmation_required"},400);
   const {present,hasRest,counts} = inventory;
   const statements=[];
+  if (present.has("gym_weekly_slots"))
+    statements.push(db.prepare("DELETE FROM gym_weekly_slots"));
   if (present.has("workout_repeat_exceptions"))
     statements.push(db.prepare("DELETE FROM workout_repeat_exceptions"));
   if (present.has("workout_repeat_series"))
