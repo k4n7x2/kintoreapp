@@ -6,7 +6,10 @@ class FakeD1 {
   constructor({ready=true}={}){this.ready=ready;this.menus=[];this.slots=[];this.nextId=1;this.writes=[];}
   prepare(sql){
     const db=this;
-    return {bind(...args){return {
+    return {
+      all:async()=>({results:db.read(sql,[])}),
+      first:async()=>db.read(sql,[])[0]??null,
+      bind(...args){return {
       all:async()=>({results:db.read(sql,args)}),
       first:async()=>db.read(sql,args)[0]??null,
       run:async()=>db.write(sql,args)
