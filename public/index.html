@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261018-reset-plans-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261019-weekly-template-v1">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261018-reset-plans-v1"></script>
+  <script type="module" src="/app.js?v=20261019-weekly-template-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261017-gallery-v1">
   <script type="module" src="/gallery.js?v=20261018-remove-legacy-r1-v1"></script>
 </head>
@@ -156,6 +156,17 @@
                   <div id="exercise-list" class="exercise-list" aria-label="この日のトレーニング種目"></div>
                   <p id="exercise-empty" class="exercise-empty">この日の種目はまだありません。</p>
                   <button type="button" class="record-add-exercise" id="add-exercise" disabled>＋ 種目を追加</button>
+                  <div class="record-template-save">
+                    <button type="button" id="record-template-open" class="record-template-open" disabled>この日の種目をテンプレートに保存</button>
+                    <form id="record-template-form" hidden>
+                      <label for="record-template-title">テンプレート名</label>
+                      <div class="record-template-form-actions">
+                        <input type="text" id="record-template-title" maxlength="60" placeholder="例：胸・腕の日" autocomplete="off" required>
+                        <button type="submit" id="record-template-submit">登録</button>
+                      </div>
+                      <p id="record-template-feedback" class="feedback" role="status" aria-live="polite"></p>
+                    </form>
+                  </div>
                   <button type="button" id="repeat-trigger" class="record-repeat-trigger" aria-haspopup="dialog" aria-controls="repeat-sheet" disabled>
                     <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/></svg>
                     <span class="record-repeat-text"><strong>繰り返し</strong><span id="repeat-summary">読み込み中…</span></span>
@@ -507,7 +518,24 @@
           <span class="system-indicator" id="db-indicator"></span>
         </div>
       </section>
-          <section class="section settings-plan-reset" aria-labelledby="settings-plan-reset-heading">
+                    <section class="section weekly-setup-section" aria-labelledby="weekly-setup-heading">
+            <div class="section-heading"><h2 id="weekly-setup-heading">週間スケジュール</h2></div>
+            <div class="panel weekly-setup-panel">
+              <p class="field-hint">ジム・休息日を曜日ごとに指定。ジムの日はメニューを任意で紐づけると、記録画面で自動表示されます。</p>
+              <div id="weekly-setup-days" class="weekly-setup-days"></div>
+              <button type="button" id="weekly-setup-save" disabled>週間予定を保存</button>
+              <p id="weekly-setup-feedback" class="feedback" role="status" aria-live="polite"></p>
+            </div>
+          </section>
+          <section class="section weekly-templates-section" aria-labelledby="weekly-templates-heading">
+            <div class="section-heading"><h2 id="weekly-templates-heading">メニューテンプレート</h2></div>
+            <div class="panel weekly-templates-panel">
+              <p class="field-hint">記録画面で種目を組んで「テンプレートに保存」。ここで登録済みメニューを確認・削除できます。</p>
+              <div id="weekly-templates-list" class="weekly-templates-list"></div>
+              <p id="weekly-templates-feedback" class="feedback" role="status" aria-live="polite"></p>
+            </div>
+          </section>
+<section class="section settings-plan-reset" aria-labelledby="settings-plan-reset-heading">
             <div class="section-heading">
               <h2 id="settings-plan-reset-heading">予定の管理</h2>
             </div>
