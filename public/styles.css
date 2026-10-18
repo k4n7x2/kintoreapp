@@ -1466,7 +1466,6 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
 #page-record #record-editor-view[hidden],
 #page-record #record-workout-panel[hidden],
 #page-record #record-history-view[hidden],
-#page-record .record-plan-panel[hidden],
 #page-record .exercise-editor[hidden] { display: none !important; }
 #page-record .record-panel { padding: 14px 13px; }
 #page-record .record-day-navigation {
@@ -1540,46 +1539,121 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
   #page-record .record-date-field:active,
   #page-record .record-date-field.is-pressed { transform: none; }
 }
-#page-record .record-quick-actions {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px; margin: 0 0 14px;
-}
-#page-record .record-status-action {
-  min-height: 48px; padding: 10px 7px;
-  border: 1px solid var(--line); border-radius: 12px;
-  background: var(--raised);
-  color: var(--ink);
-  font-size: 13px; font-weight: 700; font-family: inherit;
-  cursor: pointer;
-}
-#page-record .record-status-action[aria-pressed="true"] {
-  color: var(--accent-soft);
-  border-color: var(--accent);
-  background: var(--completed);
-}
-#page-record .record-status-action:disabled { opacity: .6; cursor: not-allowed; }
-#page-record .record-status-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-#page-record .record-plan-panel {
-  padding: 10px 12px 8px;
-  margin: -5px 0 12px;
+/* Record day status: one mutually exclusive plan, one independent visit record. */
+#page-record .record-day-status {
+  display: grid;
+  gap: 5px;
+  margin: 0 0 12px;
+  padding: 8px 10px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--deep);
 }
-#page-record .record-plan-panel .record-switch {
-  display: flex; flex-direction: row; position: relative;
-  align-items: center; justify-content: space-between;
-  gap: 10px; min-height: 44px; width: 100%;
-  color: var(--ink); font-size: 13px; font-weight: 650;
+#page-record .record-status-line {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
 }
-#page-record .record-plan-panel .record-switch input {
-  position: absolute; right: 0; top: 0;
-  width: 46px; height: 44px; min-height: 44px;
-  padding: 0; margin: 0;
-  opacity: 0; cursor: pointer; z-index: 1;
+#page-record .record-status-label {
+  display: block;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
 }
-#page-record .record-plan-panel .record-switch-track { flex: 0 0 38px; }
-#page-record .record-plan-panel .field-hint { margin: 0 0 3px; }
+#page-record .record-plan-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  min-width: 0;
+}
+#page-record .record-plan-option {
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: clamp(11px, 3.1vw, 13px);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .1s ease-out, border-color .1s ease-out, transform .1s ease-out;
+}
+#page-record .record-plan-option[aria-pressed="true"] {
+  background: var(--completed);
+  border-color: var(--accent);
+  color: var(--accent-soft);
+}
+#page-record .record-plan-option:active:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  transform: translateY(1px) scale(.98);
+  transition-duration: 0s;
+}
+#page-record .record-plan-option:focus-visible,
+#page-record .record-attendance-control:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+#page-record .record-plan-option:disabled { opacity: .55; cursor: not-allowed; }
+#page-record .record-attendance-copy { min-width: 0; }
+#page-record .record-attendance-caption {
+  display: block;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+#page-record .record-attendance-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 124px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#page-record .record-attendance-control:active:not(:has(input:disabled)) {
+  background: var(--completed);
+}
+#page-record .record-attendance-control:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--completed);
+  color: var(--accent-soft);
+}
+#page-record .record-attendance-control input {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  margin: 0;
+  flex: 0 0 20px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+#page-record .record-attendance-control input:disabled { cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) {
+  #page-record .record-plan-option { transition: none; }
+  #page-record .record-plan-option:active:not(:disabled) { transform: none; }
+}
 /* Compact weekly-plan editor; scrolls with the record content above the fixed SD area. */
 #page-record .plan-recurrence-editor,
 #page-record .plan-occurrence-editor {
@@ -1867,13 +1941,14 @@ body.is-authenticated.is-record #app-screen { height: 100%; min-height: 0; }
 }
 @media (max-width: 360px) {
   #page-record .record-panel { padding-inline: 10px; }
-  #page-record .record-quick-actions { gap: 7px; }
-  #page-record .record-status-action { padding-inline: 4px; font-size: 12px; }
+  #page-record .record-day-status { padding-inline: 8px; }
+  #page-record .record-status-line { grid-template-columns: 58px minmax(0, 1fr); gap: 6px; }
+  #page-record .record-plan-options { gap: 4px; }
+  #page-record .record-plan-option { padding-inline: 2px; font-size: 11px; }
   #page-record .record-date-field { font-size: 15px; gap: 6px; padding-inline: 7px; }
   #page-record .record-title-row h2 { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  #page-record .record-status-action,
   #page-record .exercise-overview { transition: none; }
 }
 

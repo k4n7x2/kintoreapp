@@ -68,9 +68,8 @@ const exerciseEmpty = byId("exercise-empty");
 const recordOverview = byId("record-overview-view");
 const recordEditor = byId("record-editor-view");
 const recordEditorHost = byId("record-editor-host");
-const recordAttendance = byId("record-attendance");
-const recordPlanToggle = byId("record-plan-toggle");
-const recordPlanPanel = byId("record-plan-panel");
+const recordPlanOptions = [...document.querySelectorAll("#page-record .record-plan-option")];
+const recordAttendanceStatus = byId("record-attendance-status");
 const repeatTrigger = byId("repeat-trigger");
 const repeatSheet = byId("repeat-sheet");
 const repeatSheetClose = byId("repeat-sheet-close");
@@ -332,8 +331,6 @@ function selectRecordDate(date, { navigate = true } = {}) {
   pendingRecordDate = date;
   resetWorkoutForm(date);
   saveFeedback.textContent = "";
-  recordPlanPanel.hidden = true;
-  recordPlanToggle.setAttribute("aria-expanded", "false");
   if (previousMonth !== currentMonth() || !recordsLoaded) {
     ++recordsRequestId;
     recordsLoaded = false;
@@ -424,11 +421,13 @@ function renderDayDetail() {
   dayRest.disabled = !authorized || !calendarAvailable || !calendarRestReady || calendarSaving;
   dayAttended.disabled = !authorized || !calendarAvailable || calendarSaving;
   byId("rest-migration-hint").hidden = !authorized || !calendarAvailable || calendarRestReady;
-  recordAttendance.disabled = dayAttended.disabled;
-  recordAttendance.textContent = dayAttended.checked ? "来館済み" : "来館していない";
-  recordAttendance.setAttribute("aria-pressed", String(dayAttended.checked));
-  recordPlanToggle.disabled = dayPlanned.disabled;
-  recordPlanToggle.textContent = dayRest.checked ? "休息日・編集" : dayPlanned.checked ? "予定あり・編集" : "予定を編集";
+  const planStatus = dayRest.checked ? "rest" : dayPlanned.checked ? "gym" : "none";
+  for (const option of recordPlanOptions) {
+    option.setAttribute("aria-pressed", String(option.dataset.planStatus === planStatus));
+    option.disabled = !authorized || !calendarAvailable || calendarSaving ||
+      (option.dataset.planStatus === "rest" && !calendarRestReady);
+  }
+  recordAttendanceStatus.textContent = dayAttended.checked ? "来館済み" : "来館記録なし";
   renderRepeatEditor();
   calendarError.textContent = authorized && recordsLoaded && !calendarAvailable
     ? "予定・来館の保存にはD1の追加マイグレーション（0002）が必要です。"
@@ -1472,17 +1471,21 @@ cancelWorkoutEdit.addEventListener("click", () => {
   resetWorkoutForm(saveDate.value);
   saveFeedback.textContent = "";
 });
-recordAttendance.addEventListener("click", () => {
-  if (!authorized || !calendarAvailable || calendarSaving) return;
-  dayAttended.checked = !dayAttended.checked;
-  persistDaySwitches();
-});
-recordPlanToggle.addEventListener("click", () => {
-  if (!authorized || !calendarAvailable) return;
-  recordPlanPanel.hidden = !recordPlanPanel.hidden;
-  recordPlanToggle.setAttribute("aria-expanded", String(!recordPlanPanel.hidden));
-  if (!recordPlanPanel.hidden) renderDayDetail();
-});
+for (const option of recordPlanOptions) {
+  option.addEventListener("click", () => {
+    if (!authorized || !calendarAvailable || calendarSaving) return;
+    const status = option.dataset.planStatus;
+    if (status === "rest" && !calendarRestReady) return;
+    const current = dayRest.checked ? "rest" : dayPlanned.checked ? "gym" : "none";
+    if (status === current) return;
+    dayPlanned.checked = status === "gym";
+    dayRest.checked = status === "rest";
+    for (const button of recordPlanOptions) {
+      button.setAttribute("aria-pressed", String(button === option));
+    }
+    persistDaySwitches();
+  });
+}
 for (const [id, delta] of [["record-prev-day", -1], ["record-next-day", 1]]) {
   byId(id).addEventListener("click", () => {
     const date = saveDate.value;
@@ -1880,6 +1883,7 @@ async function persistDaySwitches() {
   dayPlanned.disabled = true;
   dayRest.disabled = true;
   dayAttended.disabled = true;
+  for (const option of recordPlanOptions) option.disabled = true;
   try {
     const result = await fetchJSON("/api/calendar/" + encodeURIComponent(date), {
       method: "PUT",
@@ -1890,7 +1894,7 @@ async function persistDaySwitches() {
       if (result.planned || result.attended || result.rest) calendarDays.set(date, result);
       else calendarDays.delete(date);
     }
-    calendarStatusMessage = "保存しました。";
+    calendarStatusMessage = "";
   } catch (error) {
     if (error.status === 401) {
       setAuthenticated(false);
@@ -1935,14 +1939,6 @@ async function savePlanAction(path, body, successText) {
     if (authorized) renderCalendar();
   }
 }
-dayPlanned.addEventListener("change", () => {
-  if (dayPlanned.checked) dayRest.checked = false;
-  persistDaySwitches();
-});
-dayRest.addEventListener("change", () => {
-  if (dayRest.checked) dayPlanned.checked = false;
-  persistDaySwitches();
-});
 dayAttended.addEventListener("change", persistDaySwitches);
 // 年月表示を押すと年と月を直接選べる。年のプレビューだけではDBの取得を行わない。
 const calendarMonthTrigger = byId("calendar-month-trigger");
@@ -2728,8 +2724,6 @@ function setAuthenticated(next) {
       unit:"kg_reps"
     }]));
     ++exerciseSettingsRequestId;
-    recordPlanPanel.hidden = true;
-    recordPlanToggle.setAttribute("aria-expanded", "false");
     resetWorkoutForm();
     saveFeedback.textContent = "";
     renderCalendar();

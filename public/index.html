@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261018-repeat-status-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261018-compact-day-status-v1">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261018-repeat-status-v1"></script>
+  <script type="module" src="/app.js?v=20261018-compact-day-status-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261017-gallery-v1">
   <script type="module" src="/gallery.js?v=20261018-remove-legacy-r1-v1"></script>
 </head>
@@ -105,17 +105,29 @@
                     <input id="workout-date" name="performed_on" type="hidden" disabled>
                     <button type="button" id="record-next-day" class="record-date-arrow" aria-label="次の日">›</button>
                   </div>
-                  <div class="record-quick-actions">
-                    <button type="button" id="record-attendance" class="record-status-action" aria-pressed="false" disabled>来館していない</button>
-                    <button type="button" id="record-plan-toggle" class="record-status-action" aria-controls="record-plan-panel" aria-expanded="false" disabled>予定を編集</button>
+                  <div class="record-day-status" role="group" aria-label="この日の状態">
+                    <div class="record-status-line">
+                      <span id="record-day-plan-label" class="record-status-label">予定</span>
+                      <div class="record-plan-options" role="group" aria-labelledby="record-day-plan-label">
+                        <button type="button" class="record-plan-option" data-plan-status="none" aria-pressed="true" disabled>未設定</button>
+                        <button type="button" class="record-plan-option" data-plan-status="gym" aria-pressed="false" disabled>ジム</button>
+                        <button type="button" class="record-plan-option" data-plan-status="rest" aria-pressed="false" disabled>休息</button>
+                      </div>
+                    </div>
+                    <div class="record-status-line">
+                      <div class="record-attendance-copy">
+                        <span class="record-status-label">来館実績</span>
+                        <span id="record-attendance-status" class="record-attendance-caption">来館記録なし</span>
+                      </div>
+                      <label class="record-attendance-control">
+                        <input type="checkbox" id="day-attended" disabled>
+                        <span>来館した</span>
+                      </label>
+                    </div>
                   </div>
-                  <div id="record-plan-panel" class="record-plan-panel" hidden>
-                    <label class="record-switch"><span>ジムに行く予定</span><input type="checkbox" id="day-planned" role="switch" disabled><span class="record-switch-track" aria-hidden="true"></span></label>
-                    <label class="record-switch"><span>休息日にする</span><input type="checkbox" id="day-rest" role="switch" disabled><span class="record-switch-track" aria-hidden="true"></span></label>
-                    <p id="rest-migration-hint" class="field-hint" hidden>休息日を保存するにはD1の追加マイグレーション（0004）が必要です。予定・来館は引き続き使えます。</p>
-                    <p class="field-hint">休息日は手動で指定します。筋トレをしなかった日を自動登録しません。</p>
-                  </div>
-                  <input type="checkbox" id="day-attended" hidden tabindex="-1" aria-hidden="true" disabled>
+                  <input type="checkbox" id="day-planned" hidden tabindex="-1" aria-hidden="true" disabled>
+                  <input type="checkbox" id="day-rest" hidden tabindex="-1" aria-hidden="true" disabled>
+                  <p id="rest-migration-hint" class="field-hint" hidden>休息日を保存するにはD1の追加マイグレーション（0004）が必要です。予定・来館は引き続き使えます。</p>
                   <p id="calendar-error" class="feedback record-calendar-feedback" role="status" aria-live="polite"></p>
                   <div class="record-title-row">
                     <h2 id="record-form-title">この日のトレーニング</h2>
