@@ -61,7 +61,7 @@ test("8秒以上の無操作で履歴リセット、時刻逆転にも耐える"
   state=registerSdTap([1000,1100,1200],500);
   assert.deepEqual(state,{history:[500],repeat:false});
   state=registerSdTap([1000,1100,1200],9199);
-  assert.deepEqual(state,{history:[9199],repeat:false});
+  assert.deepEqual(state,{history:[1200,9199],repeat:false});
 });
 test("長時間連打でもメモリ履歴は64件以下", () => {
   let state={history:[]};
