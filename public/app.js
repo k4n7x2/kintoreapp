@@ -1542,7 +1542,8 @@ async function loadRepeatForDate(date) {
       repeatReady = false; // Do not silently overwrite one of multiple overlapping series.
       repeatFeedback.textContent = "複数の繰り返し予定が重複しています。編集はできません。";
     }
-    if (repeatReady) {
+    if (repeatReady && !hasRecordChanges() &&
+        !calendarDays.get(date)?.rest && calendarDays.get(date)?.exception !== 0) {
       const existingNames = new Set([...exerciseList.querySelectorAll(".exercise-card")]
         .map(card => normalizeExerciseName(card.nameInput.value)));
       for (const instance of occurrences) for (const item of instance.exercises || []) {
@@ -1590,6 +1591,10 @@ async function submitRepeatChange(method) {
   const cadence=rawCadence==="biweekly" ? "weekly" : rawCadence;
   const every_n=rawCadence==="biweekly" ? 2 : 1;
   const end_on=repeatEnd.value || null;
+  if (!instance && dayRest.checked) {
+    repeatFeedback.textContent="休息日を解除してから繰り返しを登録してください。";
+    return;
+  }
   if (!instance && end_on && end_on < date) {
     repeatFeedback.textContent="終了日は開始日以降にしてください。";
     return;
