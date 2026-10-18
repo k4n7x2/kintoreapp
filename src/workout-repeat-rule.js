@@ -58,3 +58,20 @@ export function validateRepeatContent(value) {
   const exercises = validateWorkoutSnapshot(value.exercises);
   return exercises ? {kind:"gym",exercises} : null;
 }
+
+// Returns true when two rules schedule any of the same date. Unlike comparing
+// start dates, this catches weekly/daily/monthly collisions further in the future.
+export function seriesOverlap(a,b) {
+  const start=a.starts_on>b.starts_on?a.starts_on:b.starts_on;
+  const endA=a.ends_on??"2100-12-31";
+  const endB=b.ends_on??"2100-12-31";
+  const end=endA<endB?endA:endB;
+  if (end<start) return false;
+  const first=Date.parse(start+"T00:00:00Z");
+  const last=Date.parse(end+"T00:00:00Z");
+  for(let time=first;time<=last;time+=86400000){
+    const date=new Date(time).toISOString().slice(0,10);
+    if(matchesSeries(date,a)&&matchesSeries(date,b))return true;
+  }
+  return false;
+}
