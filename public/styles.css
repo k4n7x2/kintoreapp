@@ -2671,10 +2671,6 @@ body.is-authenticated.is-sd-page #app-screen {
   font-size: 11px;
   cursor: pointer;
 }
-#page-record #record-manage-exercises {
-  display: flex;
-  margin: 3px 0 7px auto;
-}
 #page-record .exercise-picker-heading,
 #page-analysis .analysis-list-heading {
   display: flex;
