@@ -1,5 +1,6 @@
 import { handleRepeatAPI } from "./workout-repeat.js";
 import { handleCalendarAPI } from "./calendar-api.js";
+import { handlePlanResetAPI } from "./plan-reset.js";
 // 個人用ログイン。パスワードはCloudflare Secret APP_PASSWORDにのみ保存。
 // パスワードも筋トレ記録もGitHub/ブラウザStorageには保存しない。
 const encoder = new TextEncoder();
@@ -284,6 +285,9 @@ export default {
         try {
           if (url.pathname === "/api/repeat" || url.pathname.startsWith("/api/repeat/")) {
             return handleRepeatAPI(env.DB,url,request,method,{respond,validDate,monthRange,readJSON});
+          }
+          if (url.pathname === "/api/calendar/reset") {
+            return handlePlanResetAPI(env.DB,request,method,{respond,readJSON});
           }
           if (url.pathname === "/api/calendar" || url.pathname.startsWith("/api/calendar/")) {
             return handleCalendarAPI(env.DB, url, request, method, { respond, monthRange, validDate, readJSON });

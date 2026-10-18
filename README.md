@@ -80,11 +80,20 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 - 以前の0005「曜日だけ繰り返す」予定は削除・自動移行しない。旧APIは互換性のため残すが、新規登録UIは内容の複製方式へ置き換えた。旧曜日ルールに種目内容は無い。
 - **本番で有効化するには0007のD1マイグレーションが別途必要**。既存適用履歴・0004/0005/0006の状態を先に照合し、既存データを削除・初期化しない。未適用時は繰り返し編集を無効化し、通常の実績記録・旧予定・休息日を維持する。
 
+### 設定：予定だけをすべて削除
+
+- 設定 → 予定の管理 →「予定をすべて削除」で、対象の登録件数を先に確認してからチェックボックスによる確認後に削除する。**実装・マージだけでは削除しない**。
+- 対象：単発のジム予定・休息日（`gym_calendar_days`の`planned`/`rest`）、旧`gym_plan_rules`/`gym_plan_overrides`、新`workout_repeat_series`/`workout_repeat_exceptions`。一括処理はD1の`batch`で実行。
+- 非対象：`gym_calendar_days.attended`、`workout_sessions`、`workout_sets`、`exercise_catalog`、認証設定など。来館記録がある日付は行を維持して予定フラグだけを解除し、来館していない予定専用の日付行だけ削除する。
+- 認証済み・同一Origin JSONのみ受付。`GET /api/calendar/reset`で対象の設定レコード数を取得、`POST /api/calendar/reset`は`{scope:"plans_only",confirm:"DELETE_ALL_PLANS"}`を明示した場合だけ実行。旧DBで一部テーブルや休息日列がない場合にも、存在する予定テーブルだけを削除する（追加のDBマイグレーションなし）。
+- 削除成功後は現在のカレンダーを再取得し、記録画面の繰り返し選択をリセット。未保存のトレーニング入力は勝手に破棄しない。ブラウザ側の永続ストレージには記録しない。
+
 ## API（個人用）
 
 | HTTP | エンドポイント | 内容 |
 |---|---|---|
 | GET | `/api/health` | 公開診断。D1接続とSecret設定有無 |
+| GET／POST | `/api/calendar/reset` | 予定の全削除：GETで対象件数、POSTは明示的な確認と認証・同一Originが必要。来館・筋トレ実績は保全 |
 | POST | `/api/login` | パスワード認証、Cookie発行 |
 | GET | `/api/session` | Cookie検証。未認証は401 |
 | POST | `/api/logout` | Cookie破棄。認証前にも扱う |
