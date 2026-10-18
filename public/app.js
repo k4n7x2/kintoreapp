@@ -1544,6 +1544,8 @@ function syncRepeatEndField() {
 function renderRepeatEditor() {
   const ready = authorized && dbReady && repeatReady && !repeatLoading && !repeatBusy;
   const existing = !!repeatOccurrence;
+  // Legacy snapshot repeats remain editable, but new registration uses weekday+menu.
+  repeatTrigger.hidden = !existing || calendarDays.get(selectedDate)?.source==="weekly-template";
   repeatTrigger.disabled = !authorized || !dbReady;
   repeatSummary.textContent = repeatLoading ? "読み込み中…" :
     !repeatReady ? "利用不可・要確認" :
