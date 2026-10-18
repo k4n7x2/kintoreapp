@@ -2967,9 +2967,9 @@ weekSave.addEventListener("click",async()=>{
       method:"PUT",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({starts_on:todayISO(),slots})
     });
-    weekFeedback.textContent="週間予定を保存しました。今日以降の該当曜日に自動反映します。";
     await loadWorkouts();
     await loadTrainingSetup();
+    weekFeedback.textContent="週間予定を保存しました。今日以降の該当曜日に自動反映します。";
   }catch(error){
     if(error.status===401){setAuthenticated(false);return;}
     weekFeedback.textContent="週間予定を保存できませんでした。入力と接続を確認してください。";
@@ -3021,6 +3021,7 @@ settingsPlanResetOpen.addEventListener("click",async()=>{
       "休息日 " + Number(counts.restDays||0) + "件",
       "旧毎週ルール " + Number(counts.legacyRules||0) + "件",
       "繰り返しルール " + Number(counts.repeatSeries||0) + "件",
+      "週間スケジュール " + Number(counts.weeklySlots||0) + "件",
       "個別例外 " + (Number(counts.legacyExceptions||0)+
         Number(counts.repeatExceptions||0)) + "件"
     ];
