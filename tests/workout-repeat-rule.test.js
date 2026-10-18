@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {matchesSeries,validateWorkoutSnapshot} from "../src/workout-repeat-rule.js";
+import {matchesSeries,validateWorkoutSnapshot,validateRepeatContent} from "../src/workout-repeat-rule.js";
 
 const rule=(starts_on,cadence="weekly",every_n=1,ends_on=null)=>
   ({starts_on,cadence,every_n,ends_on});
@@ -36,4 +36,18 @@ test("reject malformed or duplicate input without truncation",()=>{
   assert.equal(validateWorkoutSnapshot([{...valid,sets:[]}]),null);
   assert.equal(validateWorkoutSnapshot([{...valid,sets:[{weight_kg:NaN,reps:10,duration_seconds:0}]}]),null);
   assert.equal(validateWorkoutSnapshot([{...valid,note:"x".repeat(301)}]),null);
+});
+
+test("rest day can recur without exercises, but cannot contain logged sets",()=>{
+  assert.deepEqual(validateRepeatContent({kind:"rest",exercises:[]}),{kind:"rest",exercises:[]});
+  assert.equal(validateRepeatContent({kind:"rest",exercises:[{name:"anything"}]}),null);
+});
+test("planned gym can recur with no registered exercises",()=>{
+  assert.deepEqual(validateRepeatContent({kind:"gym",exercises:[]}),{kind:"gym",exercises:[]});
+  assert.equal(validateRepeatContent({kind:"unknown",exercises:[]}),null);
+});
+test("legacy content arrays remain recognized as full gym plans",()=>{
+  const old=[{name:"チェストプレス",unit:"kg_reps",note:"",sets:[{weight_kg:30,reps:10,duration_seconds:0}]}];
+  assert.deepEqual(validateRepeatContent(old),{kind:"gym",exercises:old});
+  assert.equal(validateRepeatContent([]),null);
 });
