@@ -1,140 +1,197 @@
 #!/usr/bin/env python3
-"""Check NEW standard home portraits; existing images are not retroactively certified.
+"""Strict pre-registration validation of a portrait and its reviewed pixel annotations.
 
-Usage: python scripts/check_home_portrait.py IMAGE [--landmarks IMAGE.anchors.json]
-The landmarks sidecar is a reviewed, image-pixel annotation, NOT auto face detection.
+This checks image structure and human-supplied landmarks, NOT the truth of face
+landmark positions. A reviewer must visually confirm an overlay against the
+exact source bytes. Certification of the full artwork requires separate QA.
 """
 import argparse
+import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 
-try:
-    from PIL import Image
-except ImportError:
-    sys.exit("ERROR: Pillow is required (python -m pip install Pillow)")
+from PIL import Image, ImageSequence
 
-DEFAULT_STANDARD = Path(__file__).resolve().parents[1] / "docs/shiori/home-portrait-standard-v1.json"
+DEFAULT_STANDARD = Path(__file__).resolve().parents[1] / 'docs/shiori/home-portrait-standard-v1.json'
 
 
-def error(out, message):
-    out.append(message)
+def _read_json(path):
+    def reject_constant(value):
+        raise ValueError(f'non-finite JSON constant {value}')
+    try:
+        data = json.loads(Path(path).read_text(encoding='utf-8'), parse_constant=reject_constant)
+    except (OSError, ValueError) as exc:
+        return None, [f'cannot read JSON {path}: {exc}']
+    if not isinstance(data, dict):
+        return None, [f'JSON root must be an object: {path}']
+    return data, []
 
 
-def valid_point(value, name, width, height, issues):
+def _numeric(value, *, integer=False):
+    return (not isinstance(value, bool) and isinstance(value, (int, float))
+            and math.isfinite(value) and (not integer or isinstance(value, int)))
+
+
+def _point(value, name, width, height, issues):
     if (not isinstance(value, list) or len(value) != 2 or
-            any(isinstance(n, bool) or not isinstance(n, (int, float)) for n in value)):
-        error(issues, f"{name}: expected [x, y] numeric coordinates")
+        not all(_numeric(k) for k in value) or
+        not (0 <= value[0] < width and 0 <= value[1] < height)):
+        issues.append(f'{name}: expected [x,y] finite coordinates inside canvas')
         return None
-    x, y = value
-    if not (0 <= x < width and 0 <= y < height):
-        error(issues, f"{name}: point {value} outside {width}x{height} canvas")
-        return None
-    return (x, y)
+    return value
 
 
-def check(image_path, standard_path, landmarks_path, allow_provisional=False):
-    issues = []
+def _height(value, name, max_height, issues):
+    if not _numeric(value) or not 0 <= value < max_height:
+        issues.append(f'{name}: finite y-coordinate required inside canvas')
+        return None
+    return value
+
+
+def _validate_standard(s, allow_provisional):
+    errors=[]
+    if s.get('id') != 'home-portrait-v1':
+        errors.append('unsupported standard ID')
+    if s.get('status') != 'calibrated' and not allow_provisional:
+        errors.append("standard is not calibrated; cannot issue PASS")
+    canvas=s.get('canvas')
+    if not isinstance(canvas, dict):
+        return None, errors + ['standard.canvas must be an object']
+    w,h=canvas.get('width'),canvas.get('height')
+    if not all(_numeric(v,integer=True) and 0<v<10000 for v in (w,h)):
+        return None, errors + ['standard canvas dimensions invalid']
+    margin=s.get('minimumHorizontalMargin')
+    if not _numeric(margin) or not 0 < margin < 0.5:
+        errors.append('minimumHorizontalMargin must be finite in (0,0.5)')
+    tol=s.get('tolerances')
+    if not isinstance(tol,dict):
+        return None, errors + ['tolerances must be an object']
+    for key in ('eyePositionPx','headPositionPx','headHeightPercent','shoulderPositionPx'):
+        n=tol.get(key)
+        if not _numeric(n) or not 0 < n <= 100:
+            errors.append(f'tolerances.{key} must be finite, positive and <=100')
+    anchors=s.get('anchors')
+    if not isinstance(anchors,dict):
+        return None, errors + ['reference anchors must be an object']
+    eye=_point(anchors.get('eyeCenter'),'reference.eyeCenter',w,h,errors)
+    top=_height(anchors.get('headTopY'),'reference.headTopY',h,errors)
+    chin=_height(anchors.get('chinY'),'reference.chinY',h,errors)
+    if top is not None and chin is not None and chin <= top:
+        errors.append('reference head height must be positive')
+    if errors:
+        return None, errors
+    return (w,h),errors
+
+
+def check(image_path, standard_path=DEFAULT_STANDARD, landmarks_path=None, allow_provisional=False,
+          distribution=False):
+    errors=[]
+    s,issues=_read_json(standard_path)
+    if issues:return issues
+    dims,issues=_validate_standard(s,allow_provisional)
+    errors.extend(issues)
+    if dims is None:return errors
+    w,h=dims
+    path=Path(image_path)
+    expected_format='WEBP' if path.suffix == '.webp' else 'PNG' if path.suffix == '.png' else None
+    if expected_format is None:
+        errors.append('filename must use lowercase .png or .webp extension')
+    if distribution and expected_format!='WEBP':
+        errors.append('distribution image must be a .webp file')
     try:
-        standard = json.loads(Path(standard_path).read_text(encoding="utf-8"))
-    except (OSError, ValueError) as e:
-        return [f"cannot read standard JSON: {e}"]
-    dims = standard.get("canvas", {})
-    width, height = dims.get("width"), dims.get("height")
-    if not (isinstance(width, int) and isinstance(height, int) and width > 0 and height > 0):
-        return ["standard JSON has invalid canvas dimensions"]
-    if standard.get("status") != "calibrated" and not allow_provisional:
-        error(issues, "standard has no verified pixel anchors (status must be 'calibrated')")
-    try:
-        with Image.open(image_path) as im:
-            fmt, size, bands = im.format, im.size, im.getbands()
-            if fmt not in ("PNG", "WEBP"):
-                error(issues, f"format must be PNG or WebP, got {fmt}")
-            if size != (width, height):
-                error(issues, f"canvas mismatch: {size}, expected {(width, height)}")
-            if "A" not in bands and "transparency" not in im.info:
-                error(issues, "no alpha channel / palette transparency")
-            rgba = im.convert("RGBA")
-            alpha = rgba.getchannel("A")
-            if alpha.getextrema()[0] != 0:
-                error(issues, "background is not truly transparent (no alpha=0 pixels)")
-            threshold = standard.get("alphaThreshold", 32)
-            opaque = alpha.point(lambda a: 255 if a > threshold else 0)
-            bbox = opaque.getbbox()
+        image_bytes=path.read_bytes()
+        digest=hashlib.sha256(image_bytes).hexdigest()
+        with Image.open(path) as im:
+            if expected_format != im.format:
+                errors.append(f'file format mismatch: suffix {path.suffix} contains {im.format}')
+            if distribution and im.format!='WEBP':
+                errors.append('distribution must contain real WebP bytes')
+            if getattr(im,'n_frames',1)!=1 or getattr(im,'is_animated',False):
+                errors.append('animated or multi-frame image is not allowed')
+            if im.size!=(w,h):
+                errors.append(f'canvas mismatch: {im.size} != {(w,h)}')
+            if 'A' not in im.getbands() and 'transparency' not in im.info:
+                errors.append('image lacks alpha/transparency channel')
+            alpha=im.convert('RGBA').getchannel('A')
+            if alpha.getextrema()[1]==0:
+                errors.append('image is entirely transparent')
+            elif alpha.getextrema()[0]!=0:
+                errors.append('image has no fully transparent pixels')
+            margin=s.get('minimumHorizontalMargin',0.10)
+            if _numeric(margin) and 0 < margin < 0.5:
+                band=math.ceil(w*margin)
+                pix=alpha.load()
+                if any(pix[x,y]!=0 for y in range(im.height) for x in range(band)):
+                    errors.append(f'left transparency safety band ({band}px) must have alpha=0')
+                if any(pix[x,y]!=0 for y in range(im.height) for x in range(w-band,w)):
+                    errors.append(f'right transparency safety band ({band}px) must have alpha=0')
+                if any(pix[x,0]!=0 for x in range(im.width)):
+                    errors.append('visible character touches top image edge')
+            # Reject a one-dot placeholder; visual QA is still required.
+            bbox=alpha.getbbox()
             if bbox is None:
-                error(issues, "image has no visible character pixels")
-            else:
-                min_margin = standard.get("minimumHorizontalMargin", 0.10)
-                left = bbox[0] / size[0]
-                right = (size[0] - bbox[2]) / size[0]
-                if left < min_margin:
-                    error(issues, f"left transparency {left:.1%} < {min_margin:.0%}")
-                if right < min_margin:
-                    error(issues, f"right transparency {right:.1%} < {min_margin:.0%}")
-                if bbox[1] == 0:
-                    error(issues, "hair/head touches the top edge")
-    except (OSError, ValueError, ZeroDivisionError) as e:
-        return issues + [f"cannot inspect image: {e}"]
-
-    try:
-        annotations = json.loads(Path(landmarks_path).read_text(encoding="utf-8"))
-    except (OSError, ValueError) as e:
-        return issues + [f"missing/unreadable landmark sidecar: {landmarks_path} ({e})"]
-    if annotations.get("standard") != standard.get("id"):
-        error(issues, "sidecar standard ID does not match the manifest")
-    if annotations.get("reviewed") is not True:
-        error(issues, "landmarks were not marked as manually reviewed")
-    anchors = standard.get("anchors")
-    measured = annotations.get("anchors", {})
-    if not isinstance(anchors, dict) or not all(k in anchors for k in ("eyeCenter", "headTopY", "chinY")):
-        return issues + ["reference anchors not calibrated; no comparison can be made"]
-    if not isinstance(measured, dict):
-        return issues + ["invalid sidecar anchors"]
-    reference_eye = valid_point(anchors["eyeCenter"], "reference.eyeCenter", width, height, issues)
-    image_eye = valid_point(measured.get("eyeCenter"), "image.eyeCenter", width, height, issues)
-    if reference_eye and image_eye:
-        tolerance = standard["tolerances"]["eyePositionPx"]
-        for axis, a, b in zip("xy", image_eye, reference_eye):
-            if abs(a - b) > tolerance:
-                error(issues, f"eyeCenter.{axis} delta {a-b:+g}px exceeds +/-{tolerance}px")
-    for name in ("headTopY", "chinY"):
-        ref, actual = anchors[name], measured.get(name)
-        if not isinstance(actual, (int, float)) or isinstance(actual, bool) or not 0 <= actual < height:
-            error(issues, f"{name}: missing/invalid image-pixel y coordinate")
-        elif abs(actual - ref) > standard["tolerances"]["headPositionPx"]:
-            error(issues, f"{name} delta {actual-ref:+g}px exceeds head-position tolerance")
-    if all(isinstance(measured.get(k), (int, float)) for k in ("headTopY", "chinY")):
-        head = measured["chinY"] - measured["headTopY"]
-        baseline = anchors["chinY"] - anchors["headTopY"]
-        if baseline <= 0 or head <= 0:
-            error(issues, "head height must be positive")
-        elif abs(head-baseline) / baseline * 100 > standard["tolerances"]["headHeightPercent"]:
-            error(issues, f"head-height difference {100*(head-baseline)/baseline:+.2f}% exceeds tolerance")
-    if annotations.get("samePoseAsReference"):
-        for name in ("leftShoulder", "rightShoulder"):
-            ref = valid_point(anchors.get(name), f"reference.{name}", width, height, issues)
-            measured_pt = valid_point(measured.get(name), f"image.{name}", width, height, issues)
-            if ref and measured_pt and any(abs(a-b) > standard["tolerances"]["shoulderPositionPx"] for a, b in zip(ref, measured_pt)):
-                error(issues, f"{name} differs from same-pose reference")
-    return issues
+                errors.append('no visible portrait')
+            elif (bbox[2]-bbox[0])*(bbox[3]-bbox[1]) < 0.08*w*h:
+                errors.append('visible portrait has implausibly small bounding box')
+    except (OSError,ValueError,IndexError) as exc:
+        return errors+[f'cannot inspect image: {exc}']
+    side=landmarks_path or Path(str(path)+'.anchors.json')
+    ann,issues=_read_json(side)
+    if issues:return errors+issues
+    if ann.get('standard')!=s.get('id'):
+        errors.append('annotation standard ID mismatch')
+    if ann.get('reviewed') is not True:
+        errors.append('annotation must be manually reviewed')
+    if ann.get('imageSha256')!=digest:
+        errors.append('annotation is stale or unbound: image SHA-256 mismatch')
+    review=ann.get('review')
+    if not isinstance(review,dict) or not all(isinstance(review.get(k),str) and review[k].strip() for k in ('reviewer','method','evidence')):
+        errors.append('reviewer, measurement method and image-coordinate evidence are required')
+    measured=ann.get('anchors')
+    if not isinstance(measured,dict):return errors+['annotation anchors must be an object']
+    anchors=s['anchors'];tol=s['tolerances']
+    p=_point(measured.get('eyeCenter'),'image.eyeCenter',w,h,errors)
+    q=_point(anchors.get('eyeCenter'),'reference.eyeCenter',w,h,errors)
+    if p is not None and q is not None and _numeric(tol.get('eyePositionPx')):
+        for i,axis in enumerate('xy'):
+            if abs(p[i]-q[i])>tol['eyePositionPx']:
+                errors.append(f'eyeCenter.{axis} difference {p[i]-q[i]:+g}px exceeds tolerance')
+    top=_height(measured.get('headTopY'),'image.headTopY',h,errors)
+    chin=_height(measured.get('chinY'),'image.chinY',h,errors)
+    if top is not None and chin is not None:
+        if chin<=top:errors.append('image head height must be positive')
+        for value,key in ((top,'headTopY'),(chin,'chinY')):
+            if _numeric(tol.get('headPositionPx')) and abs(value-anchors[key])>tol['headPositionPx']:
+                errors.append(f'{key} differs by {value-anchors[key]:+g}px')
+        baseline=anchors['chinY']-anchors['headTopY']
+        if baseline>0 and _numeric(tol.get('headHeightPercent')) and abs(chin-top-baseline)/baseline*100>tol['headHeightPercent']:
+            errors.append('head-height difference exceeds tolerance')
+    if ann.get('samePoseAsReference') is True:
+        # No global shoulders until there is a verified pose-base image.
+        errors.append('samePoseAsReference requires a separately approved pose-base; not implemented')
+    elif ann.get('samePoseAsReference') not in (False,None):
+        errors.append('samePoseAsReference must be boolean')
+    return errors
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("image", type=Path, help="new PNG or WebP portrait")
-    parser.add_argument("--standard", type=Path, default=DEFAULT_STANDARD)
-    parser.add_argument("--landmarks", type=Path, help="reviewed coordinate sidecar (default: IMAGE.anchors.json)")
-    parser.add_argument("--allow-provisional", action="store_true", help="development diagnosis only: skip status gate, never use in PR gate")
-    args = parser.parse_args()
-    sidecar = args.landmarks or Path(str(args.image) + ".anchors.json")
-    issues = check(args.image, args.standard, sidecar, args.allow_provisional)
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('image',type=Path)
+    parser.add_argument('--standard',type=Path,default=DEFAULT_STANDARD)
+    parser.add_argument('--landmarks',type=Path)
+    parser.add_argument('--distribution',action='store_true',help='require actual static WebP output')
+    parser.add_argument('--allow-provisional',action='store_true',help='local diagnostics only, never CI')
+    args=parser.parse_args()
+    issues=check(args.image,args.standard,args.landmarks,args.allow_provisional,args.distribution)
     if issues:
-        print(f"FAIL {args.image}\n" + "\n".join(" - " + i for i in issues))
+        print('FAIL '+str(args.image)+'\n'+'\n'.join(' - '+x for x in issues))
         return 1
-    print(f"PASS {args.image}: geometry, alpha, margins and reviewed anchors conform")
-    print("NOTE: art/face identity, clothing, natural crop and in-app appearance still need human review")
+    print('PASS: file structure, full transparent margins, bound reviewed annotations')
+    print('HUMAN QA REQUIRED: check landmark overlay, character identity, pose, natural crop and app rendering')
     return 0
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+if __name__=='__main__':
+    raise SystemExit(main())

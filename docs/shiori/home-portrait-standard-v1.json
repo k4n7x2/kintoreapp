@@ -1,7 +1,7 @@
 {
   "id": "home-portrait-v1",
-  "status": "calibrated",
-  "statusReason": "Nominal source-pixel anchors calibrated from the approved 691x1536 Android screenshot using manually inspected screenshot landmarks and an inverse transform of the verified CSS at a 412px-wide viewport. These are display-calibrated design coordinates, NOT direct mouse-click measurements of the original WebP.",
+  "status": "provisional",
+  "statusReason": "Approved 11514 screenshot and exact 941x1672 roomwear-fun source SHA verified. Pixel-grid inspection directly confirms hair top y=27 and approximate chin/eye positions, but independently repeatable source eye-corner/chin picks within the +/-4px standard have not been recorded. Keep fail-closed provisional status until landmark protocol and cross-render verification pass.",
   "coordinateSystem": "source image pixels; top-left origin, x right, y down",
   "canvas": {
     "width": 941,
@@ -27,10 +27,10 @@
   "reference": {
     "approvedDisplayCommit": "5b8d16ce23eab0ec188d69b2d5e33ea5923a4018",
     "inspectedSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
-    "canonicalImageCandidate": "public/assets/shiori/home/v1/shiori-home-roomwear-joy-r1.webp",
+    "canonicalImageCandidate": "public/assets/shiori/home/v1/shiori-home-roomwear-fun-r1.webp",
     "trainingImage": "public/assets/shiori/gim/v1/shiori-home-training-bust-v1.webp",
     "approvedScreenshotMeasurements": {
-      "basis": "2026-10-16 approved 691x1536 Android captures; detailed roomwear-Joy pixel annotations and CSS inverse projection; measured manually on screenshot",
+      "basis": "Screen coordinates annotated from SHA-256-identified 11514.jpg. Audit independently established corresponding source roomwear-fun by pixel matching; raw source-image landmark picks remain unverified.",
       "screenshotSize": [
         691,
         1536
@@ -43,7 +43,7 @@
         ],
         "chinY": 948
       },
-      "roomwearJoy": {
+      "roomwearFun": {
         "headTopY": 567,
         "eyeCenter": [
           341.5,
@@ -52,7 +52,42 @@
         "chinY": 919
       }
     },
-    "privacy": "Screenshot image bytes and Android status bar are not stored in GitHub. Only image coordinates are retained."
+    "privacy": "Screenshot image bytes and Android status bar are not stored in GitHub. Only image coordinates are retained.",
+    "auditEvidence": {
+      "date": "2026-10-16",
+      "screenshotSha256": "a2092c7f7bdfa1b2ce3f2ea32195ea2a141e1b43ec0b7ff143564457c6e71098",
+      "candidateFunSha256": "1e055d3096baf1f0f4514d0219c271a429c265fb8a784ae15867fbe4a506e74a",
+      "excludedJoySha256": "239c2ffb4a2aef7587e014c5da18bcc122b74239830ad623ef5d268695418087",
+      "pixelRegistrationRMSE": {
+        "fun": 4.17,
+        "joy": 15.2
+      },
+      "source": "Independent Work Astra audit report dated 2026-10-16; requires confirmation before final calibration",
+      "note": "Hash-based attribution is evidence of source identity, not a new person design or position approval"
+    },
+    "sourceAttribution": {
+      "status": "verified-by-independent-pixel-registration",
+      "sourceAsset": "public/assets/shiori/home/v1/shiori-home-roomwear-fun-r1.webp",
+      "gitBlobSha": "5b78328cb5dd174ddca5bb330ab10be2814c00e6",
+      "sourceAssetSha256": "1e055d3096baf1f0f4514d0219c271a429c265fb8a784ae15867fbe4a506e74a",
+      "screenshot": "11514.jpg",
+      "screenshotSha256": "a2092c7f7bdfa1b2ce3f2ea32195ea2a141e1b43ec0b7ff143564457c6e71098",
+      "screenshotDimensions": [
+        691,
+        1536
+      ],
+      "screenshotSource": "user-supplied Android screenshot (private, not included in public repository)",
+      "verifiedImageSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
+      "method": "independent 3-parameter pixel registration of face (3339 alpha>=250 points), hair and clothing, compared against all seven roomwear portraits, 2026-10-16 Astra audit",
+      "pixelRegistrationRMSE": {
+        "funFace": 4.17,
+        "joyFace": 15.2,
+        "funHair": 2.63,
+        "funClothing": 2.42
+      },
+      "note": "RGB RMSE in 8-bit intensity units is evidence of image identity, not an estimate of face landmark coordinate precision",
+      "outcome": "Fun source identity confirmed; direct original-image landmark measurement remains open."
+    }
   },
   "calibration": {
     "method": "screenshot_pixel_annotations_plus_css_inverse_projection",
@@ -111,6 +146,50 @@
     "shoulderStatus": "unmeasured; samePoseAsReference checking requires independent shoulder annotation",
     "referenceSourceCommit": "1d8dc7285e1113ee02665b66f5d922120dd0cc82",
     "screenshotPrivacy": "Reference screenshots remain in conversation, not committed to public repository.",
-    "nextStep": "Confirm the first new conforming portrait on Android with unchanged common display CSS; original legacy portraits not changed."
+    "nextStep": "Record repeatable two-pass eye-corner and chin point annotations in source raster; cross-check against screen-calibrated nominal anchors and record first new standard-image Android render. Do not promote on round-trip reprojection alone.",
+    "sourceImageReview": "Verified input image raster and GitHub source SHA in CI on 2026-10-17. Pixel-grid views of head top, eyes and chin inspected. Direct y=27 opaque hair top confirmed. Eye corner midpoint and chin tip are not yet independently repeatably annotated at +/-4 source px; status remains provisional.",
+    "calibrationStatus": "screen-projected-only",
+    "sourceLandmarkAnnotationStatus": "pixel-grid-reviewed; eye-corner and chin-coordinate repeat picks pending",
+    "sourceLandmarkAnnotationRequirement": "Use pinned fun-r1.webp and the coordinates shown in source pixel-grid QA, record explicit left/right outer-eye corners, physical chin tip and repeated annotations; require uncertainty below decision tolerance before promoting status calibrated.",
+    "screenshotHashVerifiedLocally": "a2092c7f7bdfa1b2ce3f2ea32195ea2a141e1b43ec0b7ff143564457c6e71098",
+    "checkedInversePositions": {
+      "eyeX": 448.7241915776976,
+      "eyeY": 321.0134480864916,
+      "headTopY": 26.55965475603975,
+      "chinY": 448.75002238259395
+    },
+    "inverseProjectionType": "round-trip geometry check only (not independent face pixel identification)",
+    "sourceReferenceGitBlobSha": "5b78328cb5dd174ddca5bb330ab10be2814c00e6",
+    "sourceRasterReview": {
+      "status": "direct-source-pixels-inspected; independent eye-corner annotation still awaiting repeatable protocol",
+      "method": "Pillow decoded pinned roomwear-fun WebP in GitHub Actions, pixel-coordinate grid overlays viewed for head, face, eyes and chin",
+      "auditGithubRunId": 38932211412,
+      "auditGithubJobId": 117078756954,
+      "sourceSha256VerifiedByRunner": "1e055d3096baf1f0f4514d0219c271a429c265fb8a784ae15867fbe4a506e74a",
+      "sourceSizePixels": [
+        941,
+        1672
+      ],
+      "headTopAlphaRow": {
+        "regionX": [
+          200,
+          699
+        ],
+        "minimumRowPixels": 10,
+        "byThresholdGreaterThan": {
+          "0": 19,
+          "32": 25,
+          "128": 26,
+          "240": 27
+        }
+      },
+      "chinContourVisualRangeY": [
+        449,
+        453
+      ],
+      "eyeCenterVisualCheck": "Crosshair at (449,321) falls between the two eyes on source pixel grids; outer-eye corner measurement definition not yet independently double-annotated to +/-4 source px.",
+      "conclusion": "Keep nominal display anchors unchanged. Head-top y=27 supported directly; chin appears near the nominal target but exact tip remains to be reviewed; no unsupported precision claim for eye-center.",
+      "temporaryImages": "Only diagnostic crops of already-public source raster were printed to CI logs; none were committed as new reference artwork"
+    }
   }
 }
