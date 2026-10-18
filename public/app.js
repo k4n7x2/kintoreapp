@@ -2339,42 +2339,17 @@ document.addEventListener("keydown", (event) => {
 });
 
 
-/* Monogatari comparison: lazy iframe only. No D1, app storage or new auth flow. */
+/* Monogatari scenes: lazy iframe only. No D1, app storage or new auth flow. */
 const monogatariTestShell = byId("monogatari-test-shell");
 const monogatariTestOpen = byId("monogatari-test-open");
 const monogatariTestClose = byId("monogatari-test-close");
 const monogatariTestFrame = byId("monogatari-test-frame");
 const monogatariTestTitle = byId("monogatari-test-title");
-const episode01VariantToggle = byId("episode-01-variant-toggle");
-let episode01Variant = "after";
 let activeMonogatariEntry = monogatariTestOpen;
-function syncEpisode01VariantToggle() {
-  const revised = episode01Variant === "after";
-  episode01VariantToggle.setAttribute("aria-checked", String(revised));
-  episode01VariantToggle.setAttribute("aria-label",
-    revised ? "第1話：採用版を表示中。旧差分に切り替える"
-            : "第1話：旧差分を表示中。採用版に切り替える");
-  episode01VariantToggle.classList.toggle("is-revised", revised);
-}
-function sendEpisode01Variant() {
-  if (monogatariTestShell.hidden || activeMonogatariEntry !== episode01Open) return;
-  monogatariTestFrame.contentWindow?.postMessage(
-    { type: "kintore-episode-01-variant-v1", variant: episode01Variant },
-    window.location.origin
-  );
-}
-episode01VariantToggle.addEventListener("click", () => {
-  if (monogatariTestShell.hidden || activeMonogatariEntry !== episode01Open) return;
-  episode01Variant = episode01Variant === "before" ? "after" : "before";
-  syncEpisode01VariantToggle();
-  sendEpisode01Variant();
-});
-monogatariTestFrame.addEventListener("load", sendEpisode01Variant);
 function closeMonogatariTest(fromPopstate = false) {
   if (monogatariTestShell.hidden) return;
   monogatariTestShell.hidden = true;
   monogatariTestFrame.src = "about:blank";
-  episode01VariantToggle.hidden = true;
   document.body.classList.remove("is-story-test");
   byId("app-screen").inert = false;
   byId("app-header").inert = false;
@@ -2385,7 +2360,6 @@ monogatariTestOpen.addEventListener("click", () => {
   if (!authorized || activePage !== "events" ||
       !storyPlayer.hidden || !monogatariTestShell.hidden) return;
   activeMonogatariEntry = monogatariTestOpen;
-  episode01VariantToggle.hidden = true;
   monogatariTestTitle.removeAttribute("aria-label");
   monogatariTestTitle.textContent = "Monogatari試作";
   monogatariTestShell.hidden = false;
@@ -2421,9 +2395,6 @@ episode01Open.addEventListener("click", () => {
   if (!authorized || activePage !== "events" ||
       !storyPlayer.hidden || !monogatariTestShell.hidden) return;
   activeMonogatariEntry = episode01Open;
-  episode01Variant = "after";
-  syncEpisode01VariantToggle();
-  episode01VariantToggle.hidden = false;
   monogatariTestTitle.textContent = "第1話";
   monogatariTestTitle.setAttribute("aria-label", "第1話 久しぶり、はじめまして。｜仮実装");
   monogatariTestShell.hidden = false;

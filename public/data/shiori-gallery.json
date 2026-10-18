@@ -18,37 +18,33 @@
           "id": "thinking",
           "label": "考える",
           "versions": {
-            "before": "/assets/shiori/gim/v1/shiori-gim-story-thinking-r1.webp",
-            "after": "/assets/shiori/gim/v1/shiori-gim-story-thinking-alt1.webp"
+            "current": "/assets/shiori/gim/v1/shiori-gim-story-thinking-alt1.webp"
           },
-          "adoptedVersion": "after"
+          "adoptedVersion": "current"
         },
         {
           "id": "surprised",
           "label": "驚き",
           "versions": {
-            "before": "/assets/shiori/gim/v1/shiori-gim-story-surprised-r1.webp",
-            "after": "/assets/shiori/gim/v1/shiori-gim-story-surprised-alt1.webp"
+            "current": "/assets/shiori/gim/v1/shiori-gim-story-surprised-alt1.webp"
           },
-          "adoptedVersion": "after"
+          "adoptedVersion": "current"
         },
         {
           "id": "smile",
           "label": "笑顔",
           "versions": {
-            "before": "/assets/shiori/gim/v1/shiori-gim-story-smile-r1.webp",
-            "after": "/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp"
+            "current": "/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp"
           },
-          "adoptedVersion": "after"
+          "adoptedVersion": "current"
         },
         {
           "id": "playful",
           "label": "いたずら",
           "versions": {
-            "before": "/assets/shiori/gim/v1/shiori-gim-story-playful-r1.webp",
-            "after": "/assets/shiori/gim/v1/shiori-gim-story-playful-alt1.webp"
+            "current": "/assets/shiori/gim/v1/shiori-gim-story-playful-alt1.webp"
           },
-          "adoptedVersion": "after"
+          "adoptedVersion": "current"
         }
       ]
     },

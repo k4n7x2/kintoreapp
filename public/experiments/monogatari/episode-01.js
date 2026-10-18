@@ -33,43 +33,7 @@ monogatari.characters({
     }
   }
 });
-// Comparison mode is UI-only and never changes progress, dialogue or personal data.
-// Normal is the confirmed before version in both modes; four other expressions switch.
-// Monogatari produces an img for each sprite; adapt its source in the same microtask
-// after a scene/sprite action so the selected set is used for all future expressions.
-const storySpriteName = /shiori-gim-story-(thinking|surprised|smile|playful)-(r1|alt1)\.webp(?=$|[?#])/;
-const normalSpriteName = /(?:shiori-home-training-bust-v1|shiori-gim-story-normal-alt1(?:-before)?)\.webp(?=$|[?#])/;
-let expressionVariant = "after";
-function applyExpressionVariant() {
-  const wantedSuffix = expressionVariant === "after" ? "alt1" : "r1";
-  const wantedNormal = "shiori-gim-story-normal-alt1-before.webp";
-  document.querySelectorAll('game-screen img[data-character="s"]').forEach((img) => {
-    const src = img.getAttribute("src");
-    if (!src) return;
-    const normal = normalSpriteName.exec(src);
-    if (normal) {
-      if (normal[0] !== wantedNormal) {
-        img.setAttribute("src", src.replace(normal[0], wantedNormal));
-      }
-      return;
-    }
-    const found = storySpriteName.exec(src);
-    if (!found || found[2] === wantedSuffix) return;
-    img.setAttribute("src", src.replace(found[0],
-      "shiori-gim-story-" + found[1] + "-" + wantedSuffix + ".webp"));
-  });
-}
-const expressionObserver = new MutationObserver(applyExpressionVariant);
-expressionObserver.observe(document.getElementById("monogatari"), {
-  childList: true, subtree: true, attributes: true, attributeFilter: ["src"]
-});
-window.addEventListener("message", (event) => {
-  if (event.source !== window.parent || event.origin !== window.location.origin ||
-      event.data?.type !== "kintore-episode-01-variant-v1") return;
-  if (event.data.variant !== "before" && event.data.variant !== "after") return;
-  expressionVariant = event.data.variant;
-  applyExpressionVariant();
-});
+// The adopted five sprites are fixed; retired r1 expressions are never requested.
 const say = (speaker, lines) => lines.map((line) => speaker + " " + line);
 function pose(mode) {
   return { Function: {

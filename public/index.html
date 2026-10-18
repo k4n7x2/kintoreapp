@@ -7,10 +7,10 @@
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
   <link rel="stylesheet" href="/styles.css?v=20261018-home-story-normal-v1">
-  <link rel="stylesheet" href="/story-test.css?v=20261017-episode-variant-v1">
-  <script type="module" src="/app.js?v=20261018-home-story-normal-v1"></script>
+  <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
+  <script type="module" src="/app.js?v=20261018-remove-legacy-r1-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261017-gallery-v1">
-  <script type="module" src="/gallery.js?v=20261018-selected-portraits-v1"></script>
+  <script type="module" src="/gallery.js?v=20261018-remove-legacy-r1-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -362,7 +362,7 @@
 
         <section class="app-page" id="page-gallery" data-page="gallery" aria-labelledby="gallery-heading" hidden>
           <div class="page-heading"><h1 id="gallery-heading">ギャラリー</h1></div>
-          <p class="gallery-intro">栞の登録済み素材を確認。第1話の表情は修正前後をその場で比較できます。</p>
+          <p class="gallery-intro">栞の採用済み素材を確認。第1話の通常表情のみ修正前後を比較できます。</p>
           <div id="gallery-groups" class="gallery-group-tabs" role="group" aria-label="素材の分類">
             <button type="button" data-gallery-group="story" aria-pressed="true">ジム・第1話</button>
             <button type="button" data-gallery-group="home" aria-pressed="false">部屋着</button>
@@ -473,12 +473,6 @@
         <div class="monogatari-test-toolbar">
           <button id="monogatari-test-close" type="button" aria-label="イベント一覧へ戻る">‹ 戻る</button>
           <h2 id="monogatari-test-title">Monogatari試作</h2>
-          <button id="episode-01-variant-toggle" type="button" role="switch" aria-checked="true"
-            aria-label="第1話：採用版を表示中。旧差分に切り替える" hidden>
-            <span class="episode-01-variant-before">旧差分</span>
-            <span class="episode-01-variant-track" aria-hidden="true"><span></span></span>
-            <span class="episode-01-variant-after">採用版</span>
-          </button>
         </div>
         <iframe id="monogatari-test-frame" title="朝倉栞 Monogatari演出試作"
           src="about:blank" referrerpolicy="same-origin"></iframe>

@@ -86,7 +86,7 @@ function renderGallery() {
   galleryItems.replaceChildren(...itemButtons);
 
   galleryTitle.textContent = group.label + " · " + item.label +
-    (item.adoptedVersion ? "（採用：" + (item.adoptedVersion === "before" ? "修正前" : "修正後") + "）" : "");
+    (item.adoptedVersion ? (item.adoptedVersion === "current" ? "（採用済み）" : "（採用：修正前）") : "");
   galleryViewModes.hidden = !comparable;
   galleryVersionControls.hidden = !comparable;
   for (const button of galleryModeButtons) {
@@ -106,14 +106,14 @@ function renderGallery() {
   } else {
     const version = comparable ? selectedVersion : "current";
     galleryCanvases.replaceChildren(
-      galleryFrame(item, version, comparable ? (version === "before" ? "修正前" : "修正後") : "登録素材")
+      galleryFrame(item, version, comparable ? (version === "before" ? "修正前" : "修正後") : (item.adoptedVersion ? "採用版" : "登録素材"))
     );
   }
   galleryDescription.textContent = comparable
     ? (isSideBySide
       ? "左右にスクロールして比較できます。画像の透明余白や人物位置は補正していません。"
       : "修正前・修正後を同じ表示枠で切り替えられます。透明余白や人物位置は補正していません。")
-    : "現在登録されている素材です。比較用の別版はありません。";
+    : "採用済みの画像です。旧差分は整理済みです。";
 }
 
 async function loadGallery() {

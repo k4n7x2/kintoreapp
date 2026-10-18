@@ -3,6 +3,13 @@
 確認日：2026-10-16 JST。今回の機能拡張の確認元：main `eaecebe692af1607459783c6614e038d36df0bdd`。既存画像や認証方式の変更なし。
 この文書は確認時点の記録。今後は最新mainと再照合する。**以下の「現在の実装」を現行の要約とし、後半の履歴は各変更時点の記録として読む。** 技術・APIの詳細は[README](../README.md)、分担は[共通案内](project-guide.md)。
 
+## 2026-10-18 ジム用立ち絵の旧4差分を整理
+
+- 採用状態：normal は `shiori-gim-story-normal-alt1-before.webp`（修正前）を維持し、thinking / surprised / smile / playful は各 `*-alt1.webp`（修正後）を維持。ホームのジム用通常立ち絵も同じ normal を使用。
+- 未採用の旧 `shiori-gim-story-{thinking,surprised,smile,playful}-r1.webp` の4枚だけを main から削除。Git履歴では復元可能。normal の比較用 `shiori-gim-story-normal-alt1.webp` と旧 `shiori-home-training-bust-v1.webp`、部屋着、SD、他の参照画像は維持。
+- 第1話の画像比較スイッチと親子iframeの旧差分切替処理を廃止し、採用済み5画像だけをロード。ギャラリーでは通常表情のみ修正前／修正後比較を維持し、ほか4表情は採用画像の単一表示に変更。過去の比較実装に関する下記記録は履歴であり、現在の動作ではない。
+- 画像の描き直し、人物設定・台本、既存記録・D1への変更なし。静的参照・JS構文検査後、Android実機とWorkersデプロイは未確認。
+
 ## 2026-10-18 ホームのジム用通常立ち絵を第1話の採用版へ統一
 
 - 第1話で採用した `public/assets/shiori/gim/v1/shiori-gim-story-normal-alt1-before.webp`（1086×1448、透過WebP）をホームのトレーニングウェア表示にも使用。従来の `shiori-home-training-bust-v1.webp` は保存し、画像そのものは変更しない。
