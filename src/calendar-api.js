@@ -36,8 +36,8 @@ async function oneDay(db, date) {
     rules=ruleRows.results??[];
     exception=override?.planned??null;
   } catch(error) {
-    if (!missingPlanTables(error)) throw error;
-    recurrenceReady=false;
+    // Retain the legacy per-day editing fallback when 0005 was never applied.
+    throw error;
   }
   let repeats=[];
   try { repeats=await repeatOnDate(db,date); }
