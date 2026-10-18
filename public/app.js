@@ -1667,8 +1667,10 @@ async function loadRepeatForDate(date) {
       repeatReady = false; // Do not silently overwrite one of multiple overlapping series.
       repeatFeedback.textContent = "複数の繰り返し予定が重複しています。編集はできません。";
     }
+    const dayState=calendarDays.get(date);
     if (repeatReady && !hasRecordChanges() &&
-        !calendarDays.get(date)?.rest && calendarDays.get(date)?.exception !== 0) {
+        (!dayState || dayState.source==="repeat") &&
+        !dayState?.rest && dayState?.exception !== 0) {
       const existingNames = new Set([...exerciseList.querySelectorAll(".exercise-card")]
         .map(card => normalizeExerciseName(card.nameInput.value)));
       for (const instance of occurrences) for (const item of instance.exercises || []) {
@@ -1722,10 +1724,6 @@ async function submitRepeatChange(method, chosenScope = null) {
   if (method !== "DELETE" && repeatEndEnabled.checked && !end_on) {
     setRepeatFeedback("終了日を指定してください。"); return;
   }
-  if (!instance && dayRest.checked) {
-    setRepeatFeedback("休息日を解除してから繰り返しを登録してください。");
-    return;
-  }
   if (!instance && end_on && end_on < date) {
     setRepeatFeedback("終了日は開始日以降にしてください。");
     return;
@@ -1751,8 +1749,8 @@ async function submitRepeatChange(method, chosenScope = null) {
     }
   } catch (error) {
     if (error.status===401) { setAuthenticated(false); return; }
-    setRepeatFeedback(error.status===503 ? "D1の0007マイグレーションが必要です。" :
-      error.status===409 ? "同じ日に他の繰り返し予定があるか、予定が変更されています。" :
+    setRepeatFeedback(error.status===503 ? "予定テーブルの適用状態を確認してください。" :
+      error.status===409 ? "既存の繰り返し予定と重複しています。対象の日付・周期を確認してください。" :
       "繰り返し設定を保存できませんでした。");
   } finally {
     repeatBusy=false;
@@ -1876,6 +1874,7 @@ async function persistDaySwitches() {
   const planned = dayPlanned.checked;
   const attended = dayAttended.checked;
   const rest = calendarRestReady ? dayRest.checked : undefined;
+  const canRefreshDraft = !hasRecordChanges();
   calendarSaving = true;
   calendarStatusDate = date;
   calendarStatusMessage = "保存中…";
@@ -1891,8 +1890,12 @@ async function persistDaySwitches() {
       body: JSON.stringify({ planned, attended, ...(rest === undefined ? {} : { rest }) })
     });
     if (date.slice(0, 7) === currentMonth()) {
-      if (result.planned || result.attended || result.rest) calendarDays.set(date, result);
+      if (result.planned || result.attended || result.rest || result.exception !== null ||
+          result.repeated_workout) calendarDays.set(date, result);
       else calendarDays.delete(date);
+    }
+    if (selectedDate===date && canRefreshDraft && !hasRecordChanges()) {
+      hydrateStoredRecordForDate(date);
     }
     calendarStatusMessage = "";
   } catch (error) {
