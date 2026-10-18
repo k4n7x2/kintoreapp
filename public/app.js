@@ -60,6 +60,13 @@ const recordEditorHost = byId("record-editor-host");
 const recordAttendance = byId("record-attendance");
 const recordPlanToggle = byId("record-plan-toggle");
 const recordPlanPanel = byId("record-plan-panel");
+const planWeekdayInputs = [...document.querySelectorAll(".plan-weekday")];
+const planWeeklySave = byId("plan-weekly-save");
+const planWeeklyStop = byId("plan-weekly-stop");
+const planRuleStatus = byId("plan-rule-status");
+const planSkip = byId("plan-skip");
+const planMove = byId("plan-move");
+const planMoveDate = byId("plan-move-date");
 const recordNoteDetails = byId("record-note-details");
 const recordWorkoutPanel = byId("record-workout-panel");
 const recordHistoryView = byId("record-history-view");
@@ -118,6 +125,8 @@ let calendarStatusMessage = "";
 const calendarDays = new Map();
 let calendarAvailable = false;
 let calendarRestReady = false;
+let recurrenceReady = false;
+let recurrenceRules = [];
 let monthTruncated = false;
 let selectedDate = "";
 let editingWorkoutId = null;
@@ -384,6 +393,20 @@ function renderDayDetail() {
   recordAttendance.setAttribute("aria-pressed", String(dayAttended.checked));
   recordPlanToggle.disabled = dayPlanned.disabled;
   recordPlanToggle.textContent = dayRest.checked ? "休息日・編集" : dayPlanned.checked ? "予定あり・編集" : "予定を編集";
+  const currentRule = recurrenceRules.filter(rule =>
+    rule.start_on <= selectedDate && (!rule.end_on || rule.end_on >= selectedDate)).at(-1);
+  for (const box of planWeekdayInputs) {
+    box.checked = !!currentRule && (currentRule.weekdays_mask & (1 << (Number(box.value) - 1))) !== 0;
+    box.disabled = !authorized || !recurrenceReady || calendarSaving;
+  }
+  planWeeklySave.disabled = !authorized || !recurrenceReady || calendarSaving;
+  planWeeklyStop.disabled = !authorized || !recurrenceReady || calendarSaving || !currentRule;
+  planSkip.disabled = !authorized || !recurrenceReady || calendarSaving || !dayPlanned.checked;
+  planMoveDate.disabled = !authorized || !recurrenceReady || calendarSaving || !dayPlanned.checked;
+  planMove.disabled = planMoveDate.disabled;
+  planRuleStatus.textContent = !calendarAvailable ? "予定を取得しています。" :
+    !recurrenceReady ? "繰り返しを使うにはD1の0005マイグレーションが必要です。" :
+    currentRule ? "この日を含む毎週の設定を変更できます。" : "この日から新しい毎週の予定を設定できます.";
   calendarError.textContent = authorized && recordsLoaded && !calendarAvailable
     ? "予定・来館の保存にはD1の追加マイグレーション（0002）が必要です。"
     : calendarStatusDate === selectedDate ? calendarStatusMessage : "";
@@ -1318,12 +1341,17 @@ async function loadWorkouts() {
     calendarDays.clear();
     calendarAvailable = false;
     calendarRestReady = false;
+    recurrenceReady = false;
+    recurrenceRules = [];
     try {
       const calendar = await fetchJSON("/api/calendar?month=" + encodeURIComponent(month));
       if (!authorized || month !== currentMonth() || requestId !== recordsRequestId) return;
       for (const day of calendar.days || []) {
-        calendarDays.set(day.on_date, { planned: !!day.planned, attended: !!day.attended, rest: !!day.rest });
+        calendarDays.set(day.on_date, { planned: !!day.planned, attended: !!day.attended, rest: !!day.rest,
+          recurring: !!day.recurring, exception: day.exception ?? null });
       }
+      recurrenceReady = calendar.recurrence_ready === true;
+      recurrenceRules = Array.isArray(calendar.rules) ? calendar.rules : [];
       calendarAvailable = true;
       calendarRestReady = !!calendar.rest_ready;
     } catch (error) {
@@ -1369,6 +1397,8 @@ async function loadWorkouts() {
     monthTruncated = false;
     calendarAvailable = false;
     calendarRestReady = false;
+    recurrenceReady = false;
+    recurrenceRules = [];
     calendarDays.clear();
     completeDates.clear();
     renderCalendar();
@@ -1415,6 +1445,7 @@ recordPlanToggle.addEventListener("click", () => {
   if (!authorized || !calendarAvailable) return;
   recordPlanPanel.hidden = !recordPlanPanel.hidden;
   recordPlanToggle.setAttribute("aria-expanded", String(!recordPlanPanel.hidden));
+  if (!recordPlanPanel.hidden) renderDayDetail();
 });
 for (const [id, delta] of [["record-prev-day", -1], ["record-next-day", 1]]) {
   byId(id).addEventListener("click", () => {
@@ -1598,6 +1629,70 @@ async function persistDaySwitches() {
     if (authorized) renderCalendar();
   }
 }
+async function savePlanAction(path, body, successText) {
+  if (!authorized || !calendarAvailable || !recurrenceReady || calendarSaving) return false;
+  const date = selectedDate;
+  calendarSaving = true;
+  calendarStatusDate = date;
+  calendarStatusMessage = "保存中…";
+  renderDayDetail();
+  try {
+    await fetchJSON(path, {
+      method: path.endsWith("/move") ? "POST" : "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    // Reload the month's merged occurrences; a move may also affect another month.
+    await loadWorkouts();
+    calendarStatusMessage = successText;
+    return true;
+  } catch (error) {
+    if (error.status === 401) {
+      setAuthenticated(false);
+      loginFeedback.textContent = "ログインの有効期限が切れました。もう一度ログインしてください。";
+      return false;
+    }
+    calendarStatusMessage = error.status === 409 ? "変更先に既に予定があるか、元の予定がなくなっています。" :
+      error.status === 503 ? "繰り返し予定にはD1の0005マイグレーションが必要です。" :
+      "予定を変更できませんでした。";
+    return false;
+  } finally {
+    calendarSaving = false;
+    if (authorized) renderCalendar();
+  }
+}
+planWeeklySave.addEventListener("click", async () => {
+  const weekdays = planWeekdayInputs.filter(box => box.checked).map(box => Number(box.value));
+  if (!weekdays.length) {
+    calendarStatusDate = selectedDate;
+    calendarStatusMessage = "繰り返す曜日を1つ以上選んでください。";
+    renderDayDetail();
+    return;
+  }
+  if (!confirm(selectedDate + "以降の毎週の予定を更新しますか？ それより前の予定と個別変更は残ります。")) return;
+  await savePlanAction("/api/calendar/recurrence", { start_on: selectedDate, weekdays }, "毎週の予定を保存しました。");
+});
+planWeeklyStop.addEventListener("click", async () => {
+  if (!confirm(selectedDate + "以降の毎週の予定を終了しますか？ 個別に登録した予定は残ります。")) return;
+  await savePlanAction("/api/calendar/recurrence", { start_on: selectedDate, weekdays: [] }, "この日以降の毎週の予定を終了しました。");
+});
+planSkip.addEventListener("click", async () => {
+  if (!dayPlanned.checked || !recurrenceReady) return;
+  dayPlanned.checked = false;
+  await persistDaySwitches();
+});
+planMove.addEventListener("click", async () => {
+  const destination = planMoveDate.value;
+  if (!destination || destination === selectedDate) {
+    calendarStatusDate = selectedDate;
+    calendarStatusMessage = "別の移動先日付を指定してください。";
+    renderDayDetail();
+    return;
+  }
+  const moved = await savePlanAction("/api/calendar/move",
+    { from_date: selectedDate, to_date: destination }, destination + "へ予定を移動しました。");
+  if (moved) planMoveDate.value = "";
+});
 dayPlanned.addEventListener("change", () => {
   if (dayPlanned.checked) dayRest.checked = false;
   persistDaySwitches();
@@ -1624,6 +1719,8 @@ function changeMonth(offset) {
   recordsLoaded = false;
   calendarAvailable = false;
   calendarRestReady = false;
+  recurrenceReady = false;
+  recurrenceRules = [];
   monthTruncated = false;
   calendarDays.clear();
   completeDates.clear();
@@ -2287,6 +2384,8 @@ function setAuthenticated(next) {
     recordsLoaded = false;
     calendarAvailable = false;
     calendarRestReady = false;
+    recurrenceReady = false;
+    recurrenceRules = [];
     monthTruncated = false;
     calendarDays.clear();
     completeDates.clear();

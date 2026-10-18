@@ -1,3 +1,4 @@
+import { handleCalendarAPI } from "./calendar-api.js";
 // 個人用ログイン。パスワードはCloudflare Secret APP_PASSWORDにのみ保存。
 // パスワードも筋トレ記録もGitHub/ブラウザStorageには保存しない。
 const encoder = new TextEncoder();
@@ -279,70 +280,8 @@ export default {
         }
 
         try {
-          if (url.pathname === "/api/calendar" && method === "GET") {
-            const range = monthRange(url.searchParams.get("month"));
-            if (!range) return respond({ error: "invalid_month" }, 400);
-            let result;
-            let restReady = true;
-            try {
-              result = await env.DB.prepare(
-                "SELECT on_date, planned, attended, rest FROM gym_calendar_days WHERE on_date >= ? AND on_date < ? ORDER BY on_date"
-              ).bind(...range).all();
-            } catch (error) {
-              if (!/no such column:\s*rest\b/i.test(String(error?.message ?? error))) throw error;
-              restReady = false;
-              result = await env.DB.prepare(
-                "SELECT on_date, planned, attended FROM gym_calendar_days WHERE on_date >= ? AND on_date < ? ORDER BY on_date"
-              ).bind(...range).all();
-            }
-            return respond({ days: result.results ?? [], rest_ready: restReady });
-          }
-
-          const dayMatch = /^\/api\/calendar\/(\d{4}-\d{2}-\d{2})$/.exec(url.pathname);
-          if (dayMatch && method === "PUT") {
-            if (!validDate(dayMatch[1])) return respond({ error: "invalid_date" }, 400);
-            const parsed = await readJSON(request, 256);
-            if (parsed.error) return respond({ error: parsed.error }, parsed.status);
-            const { planned, attended, rest } = parsed.value ?? {};
-            if (typeof planned !== "boolean" || typeof attended !== "boolean" ||
-                (rest !== undefined && typeof rest !== "boolean")) {
-              return respond({ error: "invalid_calendar_state" }, 400);
-            }
-            let restReady = true;
-            try {
-              // 0004未適用でも既存の予定・来館の保存を続けられる。
-              await env.DB.prepare("SELECT rest FROM gym_calendar_days LIMIT 1").all();
-            } catch (error) {
-              if (!/no such column:\s*rest\b/i.test(String(error?.message ?? error))) throw error;
-              restReady = false;
-            }
-            if (!restReady && rest === true) return respond({ error: "rest_migration_required" }, 503);
-            if (restReady) {
-              // 旧クライアントがrestを省略した場合、既存の休息日を維持。
-              const previous = rest === undefined
-                ? await env.DB.prepare("SELECT rest FROM gym_calendar_days WHERE on_date = ?").bind(dayMatch[1]).first()
-                : null;
-              const nextRest = rest === undefined ? (!!previous?.rest && !planned) : rest;
-              if (nextRest && planned) return respond({ error: "invalid_calendar_state" }, 400);
-              if (!planned && !attended && !nextRest) {
-                await env.DB.prepare("DELETE FROM gym_calendar_days WHERE on_date = ?").bind(dayMatch[1]).run();
-              } else {
-                await env.DB.prepare(
-                  "INSERT INTO gym_calendar_days (on_date, planned, attended, rest) VALUES (?, ?, ?, ?) " +
-                  "ON CONFLICT(on_date) DO UPDATE SET planned = excluded.planned, attended = excluded.attended, rest = excluded.rest, updated_at = CURRENT_TIMESTAMP"
-                ).bind(dayMatch[1], Number(planned), Number(attended), Number(nextRest)).run();
-              }
-              return respond({ on_date: dayMatch[1], planned, attended, rest: nextRest });
-            }
-            if (!planned && !attended) {
-              await env.DB.prepare("DELETE FROM gym_calendar_days WHERE on_date = ?").bind(dayMatch[1]).run();
-            } else {
-              await env.DB.prepare(
-                "INSERT INTO gym_calendar_days (on_date, planned, attended) VALUES (?, ?, ?) " +
-                "ON CONFLICT(on_date) DO UPDATE SET planned = excluded.planned, attended = excluded.attended, updated_at = CURRENT_TIMESTAMP"
-              ).bind(dayMatch[1], Number(planned), Number(attended)).run();
-            }
-            return respond({ on_date: dayMatch[1], planned, attended, rest: false, rest_ready: false });
+          if (url.pathname === "/api/calendar" || url.pathname.startsWith("/api/calendar/")) {
+            return handleCalendarAPI(env.DB, url, request, method, { respond, monthRange, validDate, readJSON });
           }
 
           // 初期候補・ユーザー登録済み・実施済み種目の統合。
