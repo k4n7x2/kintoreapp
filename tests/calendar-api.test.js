@@ -83,10 +83,10 @@ class FakeD1 {
 
 const deps = {
   respond: (body, status = 200) => ({ body, status }),
-  validDate: value => typeof value === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(value) &&
+  validDate: value => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
     !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value,
   monthRange: value => {
-    if (!/^\\d{4}-\\d{2}$/.test(value ?? "")) return null;
+    if (!/^\d{4}-\d{2}$/.test(value ?? "")) return null;
     const [year, month] = value.split("-").map(Number);
     if (month < 1 || month > 12) return null;
     const next = new Date(Date.UTC(year, month, 1));
