@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261018-compact-day-status-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261018-reset-plans-v1">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261018-compact-day-status-v1"></script>
+  <script type="module" src="/app.js?v=20261018-reset-plans-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261017-gallery-v1">
   <script type="module" src="/gallery.js?v=20261018-remove-legacy-r1-v1"></script>
 </head>
@@ -507,6 +507,25 @@
           <span class="system-indicator" id="db-indicator"></span>
         </div>
       </section>
+          <section class="section settings-plan-reset" aria-labelledby="settings-plan-reset-heading">
+            <div class="section-heading">
+              <h2 id="settings-plan-reset-heading">予定の管理</h2>
+            </div>
+            <div class="panel settings-plan-reset-panel">
+              <p class="settings-plan-reset-description">すべてのジム予定・休息日・繰り返し設定をまとめて削除します。筋トレ記録と来館実績は残ります。</p>
+              <button type="button" id="settings-plan-reset-open" class="settings-plan-reset-open">予定をすべて削除</button>
+              <div id="settings-plan-reset-confirm" class="settings-plan-reset-confirm" hidden>
+                <p class="settings-plan-reset-warning">この操作は取り消せません。以下の予定設定を削除します。</p>
+                <p id="settings-plan-reset-preview" class="settings-plan-reset-preview" role="status" aria-live="polite">対象を確認中…</p>
+                <label class="settings-plan-reset-check"><input type="checkbox" id="settings-plan-reset-check" disabled><span>筋トレ記録・来館実績は残し、予定だけを削除することを確認しました</span></label>
+                <div class="settings-plan-reset-actions">
+                  <button type="button" id="settings-plan-reset-execute" disabled>予定を全削除する</button>
+                  <button type="button" id="settings-plan-reset-cancel">キャンセル</button>
+                </div>
+              </div>
+              <p id="settings-plan-reset-feedback" class="feedback" role="status" aria-live="polite"></p>
+            </div>
+          </section>
           <section class="section settings-project-links" aria-labelledby="project-links-heading">
             <div class="section-heading"><h2 id="project-links-heading">開発・管理</h2></div>
             <div class="panel settings-project-link-list">
