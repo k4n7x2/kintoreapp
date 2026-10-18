@@ -2838,6 +2838,10 @@ settingsPlanResetExecute.addEventListener("click",async()=>{
       body:JSON.stringify({scope:"plans_only",confirm:"DELETE_ALL_PLANS"})
     });
     cleared=true;
+    repeatOccurrence=null;
+    repeatEditorSeriesId=null;
+    repeatFeedback.textContent="";
+    renderRepeatEditor();
     settingsPlanResetFeedback.textContent="予定と休息日の設定をすべて削除しました。筋トレ記録・来館実績は残っています。";
     settingsPlanResetConfirm.hidden=true;
     settingsPlanResetCheck.checked=false;
