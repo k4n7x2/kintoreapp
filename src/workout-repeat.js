@@ -101,7 +101,7 @@ export async function handleRepeatAPI(db,url,request,method,{respond,validDate,m
       const startDay=Date.parse(start_on+"T00:00:00Z");
       const endDay=Date.parse(horizon+"T00:00:00Z");
       const candidates=otherRows.results??[];
-      for (let timestamp=startDay;timestamp<=endDay;timestamp+=86400000) {
+      for (let timestamp=startDay;candidates.length && timestamp<=endDay;timestamp+=86400000) {
         const day=new Date(timestamp).toISOString().slice(0,10);
         if (!matchesSeries(day,{starts_on:start_on,ends_on:end_on,cadence,every_n})) continue;
         if (candidates.some(old=>matchesSeries(day,old))) {
