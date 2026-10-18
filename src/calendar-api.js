@@ -134,7 +134,7 @@ export async function handleCalendarAPI(db, url, request, method, { respond, mon
     try {
       const [source, target] = await Promise.all([oneDay(db, from_date), oneDay(db, to_date)]);
       if (!source.planned) return respond({ error: "source_not_planned" }, 409);
-      if (source.source === "repeat") return respond({ error: "repeat_move_requires_snapshot" }, 409);
+      if (source.repeat) return respond({ error: "repeat_move_requires_snapshot" }, 409);
       if (target.planned || target.rest) return respond({ error: "target_already_planned_or_rest" }, 409);
       await db.batch([
         db.prepare("INSERT INTO gym_plan_overrides (on_date, planned) VALUES (?, 0) ON CONFLICT(on_date) DO UPDATE SET planned = 0, updated_at = CURRENT_TIMESTAMP").bind(from_date),
