@@ -50,7 +50,7 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 - `localStorage`、`IndexedDB`等へ個人データを永続保存しない。認証Cookieと操作中のメモリ状態は許容。
 - 固定コンテンツやブラウザの通常の静的キャッシュと、個人データの保存は区別する。個人の会話・記録を公開GitHubへ置かない。
 
-[初期SQL](migrations/0001_initial.sql)の`workout_sessions`と`workout_sets`を筋トレ実績・種目別セット保存に使用する。追加SQL [`0002_calendar_days.sql`](migrations/0002_calendar_days.sql)は予定・来館フラグを独立保存する。**[`0003_exercise_catalog.sql`](migrations/0003_exercise_catalog.sql)** は種目名を主キーとした種目設定（部位・単位）の保存と、記録時の`entry_unit`・`duration_seconds`追加用。既存の重量・回数の記録はデフォルト`kg_reps`として保つ。既存のトレーニング記録は自動で来館扱いに変換しない。SQLファイルの存在は本番適用の証拠ではなく、`/api/health`の`SELECT 1`成功もテーブル・保存処理の証明ではない。
+[初期SQL](migrations/0001_initial.sql)の`workout_sessions`と`workout_sets`を筋トレ実績・種目別セット保存に使用する。追加SQL [`0002_calendar_days.sql`](migrations/0002_calendar_days.sql)は予定・来館フラグを独立保存する。[`0004_calendar_rest_days.sql`](migrations/0004_calendar_rest_days.sql)は明示的休息日フラグを追加し、既存行をすべて休息未指定（0）のまま保全する。**[`0003_exercise_catalog.sql`](migrations/0003_exercise_catalog.sql)** は種目名を主キーとした種目設定（部位・単位）の保存と、記録時の`entry_unit`・`duration_seconds`追加用。既存の重量・回数の記録はデフォルト`kg_reps`として保つ。既存のトレーニング記録は自動で来館扱いに変換しない。SQLファイルの存在は本番適用の証拠ではなく、`/api/health`の`SELECT 1`成功もテーブル・保存処理の証明ではない。
 
 既存DBを削除・再初期化しない。初回セットアップ時はD1 Consoleまたはマイグレーションで適用するが、過去のConsole適用とマイグレーション管理の差を先に確認する。既存の列構造とデータを確認し、必要な追加マイグレーションを用意する。
 
@@ -72,10 +72,10 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 | DELETE | `/api/exercises/log` | JSON `{performed_on, exercise_name}`の指定日・指定種目のセットを削除。複数種目セッションは他種目を保持、空セッションのみ削除。認証・同一Origin・JSON必須 |
 | GET | `/api/exercises/history?name=種目名` | 種目別セット履歴（最大1200セット、`truncated`で表示上限通知、認証必須）。分析の実施日一覧から共通の編集画面へ接続 |
 | GET | `/api/workouts/recent?name=種目名&before=YYYY-MM-DD` | 同名種目の前回セット（最大12セット＋`truncated`）。`before`指定時はその日より前の最新実績、未指定時は従来どおり最新実績 |
-| GET | `/api/calendar?month=YYYY-MM` | 月別の予定・来館フラグ（0002必要） |
-| PUT | `/api/calendar/YYYY-MM-DD` | 予定／来館の独立保存、両方falseなら該当日のフラグを削除 |
+| GET | `/api/calendar?month=YYYY-MM` | 予定・来館・休息フラグ。0004未適用では従来の列を返し`rest_ready:false` |
+| PUT | `/api/calendar/YYYY-MM-DD` | `planned`／`attended`と任意`rest`。0004未適用でも旧2項目を保存可能。休息日の有効化のみ503。3項目ともfalseならフラグ削除 |
 
-日付は2000～2100年の実在日、メモは最大300（JavaScriptの`length`）。同日複数記録が可能。実施日数と件数は別で、月200件超は全件集計にならない。種目は60文字以内、1件最大48セット。セットごとに重量（0〜2000kg）・回数（0〜1000回）を保存する。新しい種目別保存ではNFKC正規化・空白除去・英字小文字化した種目名を共通キーとして扱い、専用の種目IDは設けない。各種目1～12セットを日付ごとに保存し、他種目の記録は変更しない。旧式の全種目一括保存APIは互換性維持のため残す。繰り返し予定・種目テンプレート・お気に入りの永続保存・設定保存APIは未実装。単発の予定・来館はスイッチ切り替え時にD1へ保存する。Secret未設定・不正長では`/api/health`以外のAPIは503。
+日付は2000～2100年の実在日、メモは最大300（JavaScriptの`length`）。同日複数記録が可能。実施日数と件数は別で、月200件超は全件集計にならない。種目は60文字以内、1件最大48セット。セットごとに重量（0〜2000kg）・回数（0〜1000回）を保存する。新しい種目別保存ではNFKC正規化・空白除去・英字小文字化した種目名を共通キーとして扱い、専用の種目IDは設けない。各種目1～12セットを日付ごとに保存し、他種目の記録は変更しない。旧式の全種目一括保存APIは互換性維持のため残す。休息日は0004適用後に日付別`rest`フラグへ手動保存。予定と休息は排他的で、来館・実績は独立。未記録日を自動的に休息日にしない。繰り返し予定・種目テンプレート・お気に入りの永続保存・設定保存APIは未実装。単発の予定・来館はスイッチ切り替え時にD1へ保存する。Secret未設定・不正長では`/api/health`以外のAPIは503。
 
 ## 開発・必要時の確認
 
