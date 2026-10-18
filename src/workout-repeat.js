@@ -18,8 +18,14 @@ async function matchingRows(db, date) {
 
 export async function repeatOnDate(db,date) {
   const rows=await matchingRows(db,date);
+  const groups=[...new Set(rows.map(row=>row.group_id))];
+  const latest=new Map(await Promise.all(groups.map(async group=>{
+    const tail=await db.prepare("SELECT ends_on FROM workout_repeat_series WHERE group_id=? ORDER BY starts_on DESC LIMIT 1")
+      .bind(group).first();
+    return [group,tail?.ends_on??null];
+  })));
   return rows.map(row=>({id:row.id,group_id:row.group_id,cadence:row.cadence,
-    every_n:row.every_n,starts_on:row.starts_on,ends_on:row.ends_on,
+    every_n:row.every_n,starts_on:row.starts_on,ends_on:latest.get(row.group_id)??null,
     exercises:JSON.parse(row.content_json)}));
 }
 export async function repeatMonth(db, range) {
