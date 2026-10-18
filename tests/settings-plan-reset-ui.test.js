@@ -17,7 +17,7 @@ test("destructive control exists only in authenticated settings page with explan
   assert.match(css,/\.settings-plan-reset-confirm\[hidden\]/);
 });
 test("UI requires checkbox and server-side explicit destructive confirmation",()=>{
-  assert.match(script,/settingsPlanResetReady\s*&&\s*!settingsPlanResetCheck\.checked/);
+  assert.match(script,/!settingsPlanResetReady\s*\|\|\s*!settingsPlanResetCheck\.checked/);
   assert.match(script,/scope:"plans_only",confirm:"DELETE_ALL_PLANS"/);
   assert.match(worker,/handlePlanResetAPI\(env\.DB,request,method,\{respond,readJSON\}\)/);
   assert.match(worker,/if \(\["POST", "PUT", "PATCH", "DELETE"\]\.includes\(method\) && !sameOriginJSON/);
