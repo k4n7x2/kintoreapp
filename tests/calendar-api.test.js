@@ -32,12 +32,19 @@ class FakeD1 {
   read(sql, args) {
     if (sql.startsWith("SELECT * FROM workout_repeat_series")) {
       if (this.repeatSeries === null) throw Error("no such table: workout_repeat_series");
-      return this.repeatSeries.filter(row => row.starts_on < args[0] &&
-        (!row.ends_on || row.ends_on >= args[1]));
+      return this.repeatSeries.filter(row =>
+        (sql.includes("starts_on < ?") ? row.starts_on < args[0] : row.starts_on <= args[0]) &&
+        (!row.ends_on || row.ends_on >= args[1])).sort((a,b)=>a.id-b.id);
     }
     if (sql.startsWith("SELECT * FROM workout_repeat_exceptions")) {
       if (this.repeatSeries === null) throw Error("no such table: workout_repeat_exceptions");
-      return this.repeatExceptions.filter(row=>row.on_date>=args[0]&&row.on_date<args[1]);
+      return this.repeatExceptions.filter(row=>sql.includes("on_date = ?")
+        ? row.on_date===args[0] : row.on_date>=args[0]&&row.on_date<args[1]);
+    }
+    if (sql.startsWith("SELECT ends_on FROM workout_repeat_series")) {
+      return (this.repeatSeries||[]).filter(row=>row.group_id===args[0])
+        .sort((a,b)=>b.starts_on.localeCompare(a.starts_on))
+        .slice(0,1).map(row=>({ends_on:row.ends_on}));
     }
     if (sql.includes("gym_plan_") && !this.recurring) {
       throw Error("D1_ERROR: no such table: gym_plan_rules");
@@ -229,4 +236,59 @@ test("one-day cancellations of rest and empty gym rules keep prior manual data i
   const month=(await api(db,"/api/calendar?month=2026-10")).body;
   assert.equal(month.days.some(x=>x.on_date==="2026-10-26"),false);
   assert.equal(month.days.some(x=>x.on_date==="2026-10-27"),false);
+});
+
+test("new snapshot recurrence and legacy weekday calendar resolve to one gym state",async()=>{
+  const db=new FakeD1();
+  db.repeatSeries=[{id:6,group_id:"g",starts_on:"2026-10-20",ends_on:null,
+    cadence:"weekly",every_n:1,content_json:JSON.stringify({kind:"gym",exercises:[]})}];
+  db.rules=[{id:1,start_on:"2026-10-20",end_on:null,weekdays_mask:2}];
+  db.manual.set("2026-10-20",{planned:1,attended:1,rest:0});
+  const response=await api(db,"/api/calendar?month=2026-10");
+  const entry=response.body.days.filter(d=>d.on_date==="2026-10-20");
+  assert.equal(entry.length,1);
+  assert.deepEqual([entry[0].planned,entry[0].rest,entry[0].attended],
+    [true,false,true]);
+  assert.equal(entry[0].source,"manual");
+});
+test("day-specific none or rest overrides snapshot gym without replacing next week",async()=>{
+  const db=new FakeD1();
+  db.repeatSeries=[{id:1,group_id:"g",starts_on:"2026-10-20",ends_on:null,
+    cadence:"weekly",every_n:1,content_json:JSON.stringify({kind:"gym",exercises:[]})}];
+  let changed=await api(db,"/api/calendar/2026-10-27","PUT",
+    {planned:false,attended:false,rest:true});
+  assert.equal(changed.status,200);
+  assert.deepEqual([changed.body.planned,changed.body.rest],[false,true]);
+  assert.equal(db.overrides.get("2026-10-27"),0);
+  let response=await api(db,"/api/calendar?month=2026-10");
+  let day=response.body.days.find(x=>x.on_date==="2026-10-27");
+  assert.deepEqual([day.planned,day.rest,day.source],[false,true,"manual"]);
+  assert.equal(response.body.days.find(x=>x.on_date==="2026-10-20").planned,true);
+  changed=await api(db,"/api/calendar/2026-10-27","PUT",
+    {planned:false,attended:false,rest:false});
+  assert.equal(changed.status,200);
+  response=await api(db,"/api/calendar?month=2026-10");
+  day=response.body.days.find(x=>x.on_date==="2026-10-27");
+  assert.deepEqual([day.planned,day.rest,day.exception],[false,false,0]);
+});
+test("explicit gym overrides a repeating rest; future rest remains intact",async()=>{
+  const db=new FakeD1();
+  db.repeatSeries=[{id:1,group_id:"r",starts_on:"2026-10-19",ends_on:null,
+    cadence:"weekly",every_n:1,content_json:JSON.stringify({kind:"rest",exercises:[]})}];
+  let changed=await api(db,"/api/calendar/2026-10-26","PUT",
+    {planned:true,attended:false,rest:false});
+  assert.equal(changed.status,200);
+  let month=(await api(db,"/api/calendar?month=2026-10")).body;
+  const day=month.days.find(x=>x.on_date==="2026-10-26");
+  assert.deepEqual([day.planned,day.rest,day.source],[true,false,"exception"]);
+  assert.equal(month.days.find(x=>x.on_date==="2026-10-19").rest,true);
+});
+test("snapshot recurrence cannot move without moving its exercise snapshot",async()=>{
+  const db=new FakeD1();
+  db.repeatSeries=[{id:1,group_id:"g",starts_on:"2026-10-20",ends_on:null,
+    cadence:"weekly",every_n:1,content_json:JSON.stringify({kind:"gym",exercises:[]})}];
+  const result=await api(db,"/api/calendar/move","POST",
+    {from_date:"2026-10-20",to_date:"2026-10-21"});
+  assert.equal(result.status,409);
+  assert.equal(result.body.error,"repeat_move_requires_snapshot");
 });
