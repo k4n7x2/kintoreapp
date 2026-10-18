@@ -71,10 +71,20 @@ const recordEditorHost = byId("record-editor-host");
 const recordAttendance = byId("record-attendance");
 const recordPlanToggle = byId("record-plan-toggle");
 const recordPlanPanel = byId("record-plan-panel");
+const repeatTrigger = byId("repeat-trigger");
+const repeatSheet = byId("repeat-sheet");
+const repeatSheetClose = byId("repeat-sheet-close");
+const repeatSheetBackdrop = byId("repeat-sheet-backdrop");
+const repeatSheetForm = byId("repeat-sheet-form");
+const repeatSheetPreview = byId("repeat-sheet-preview");
 const repeatCadence = byId("repeat-cadence");
 const repeatEnd = byId("repeat-end");
-const repeatScope = byId("repeat-scope");
-const repeatScopeRow = byId("repeat-scope-row");
+const repeatEndEnabled = byId("repeat-end-enabled");
+const repeatEndField = byId("repeat-end-field");
+const repeatScopePanel = byId("repeat-scope-panel");
+const repeatScopeTitle = byId("repeat-scope-title");
+const repeatScopeDescription = byId("repeat-scope-description");
+const repeatScopeFeedback = byId("repeat-scope-feedback");
 const repeatSave = byId("repeat-save");
 const repeatDelete = byId("repeat-delete");
 const repeatSummary = byId("repeat-summary");
@@ -150,6 +160,8 @@ let repeatLoading = false;
 let repeatBusy = false;
 let repeatRequestId = 0;
 let repeatEditorSeriesId = null;
+let repeatSheetOpen = false;
+let repeatScopeMethod = null;
 let monthTruncated = false;
 let selectedDate = "";
 let editingWorkoutId = null;
@@ -313,6 +325,7 @@ function selectRecordDate(date, { navigate = true } = {}) {
       !confirm("未保存の種目入力を破棄して、日付を切り替えますか？")) return false;
   closeExerciseEditor();
   setRecordHistoryVisible(false);
+  closeRepeatSheet(false);
   const previousMonth = currentMonth();
   shownYear = Number(date.slice(0, 4));
   shownMonth = Number(date.slice(5, 7)) - 1;
@@ -1284,7 +1297,8 @@ function resetWorkoutForm(date = todayISO()) {
   repeatEditorSeriesId = null;
   repeatCadence.value = "weekly";
   repeatEnd.value = "";
-  repeatScope.value = "only";
+  repeatEndEnabled.checked = false;
+  repeatScopeFeedback.textContent = "";
   renderRepeatEditor();
 }
 function workoutSummary(record) {
@@ -1507,31 +1521,127 @@ function collectExerciseSets(card) {
   }
   return sets;
 }
+function describeRepeatCadence(cadence, every) {
+  if (cadence === "daily") return every === 1 ? "毎日" : every + "日ごと";
+  if (cadence === "monthly") return every === 1 ? "毎月" : every + "か月ごと";
+  return every === 2 ? "隔週" : every === 1 ? "毎週" : every + "週ごと";
+}
+function syncRepeatEndField() {
+  repeatEndField.hidden = !repeatEndEnabled.checked;
+  repeatEnd.disabled = !repeatEndEnabled.checked || !authorized || !repeatReady || repeatBusy;
+}
 function renderRepeatEditor() {
   const ready = authorized && dbReady && repeatReady && !repeatLoading && !repeatBusy;
   const existing = !!repeatOccurrence;
+  repeatTrigger.disabled = !authorized || !dbReady;
   repeatSummary.textContent = repeatLoading ? "読み込み中…" :
-    !repeatReady ? "利用にはD1の0007マイグレーションが必要です。" :
-    existing ? "入力した内容を繰り返している予定です。" : "今表示している入力内容をそのまま複製します。";
-  repeatScopeRow.hidden = !existing;
+    !repeatReady ? "設定を確認" :
+    existing ? describeRepeatCadence(repeatOccurrence.cadence,repeatOccurrence.every_n) +
+      (repeatOccurrence.ends_on ? " ・ " + repeatOccurrence.ends_on.replaceAll("-","/") + "まで" : "") :
+    "繰り返しなし";
+  const cards = [...exerciseList.querySelectorAll(".exercise-card")];
+  const totalSets = cards.reduce((sum,card)=>sum + card.rows.querySelectorAll(".exercise-set").length,0);
+  repeatSheetPreview.textContent = cards.length
+    ? selectedDate.replaceAll("-","/") + "の入力内容： " + cards.length + "種目・" + totalSets + "セット"
+    : "先に記録画面で種目を入力してください。";
   repeatDelete.hidden = !existing;
-  repeatCadence.disabled = !ready || (existing && repeatScope.value === "only");
-  repeatEnd.disabled = !ready || (existing && repeatScope.value === "only");
+  repeatCadence.disabled = !ready;
+  repeatEndEnabled.disabled = !ready;
   repeatSave.disabled = !ready;
   repeatDelete.disabled = !ready || !existing;
-  if (existing) {
-    if (repeatEditorSeriesId !== repeatOccurrence.id) {
-      repeatEditorSeriesId = repeatOccurrence.id;
-      repeatCadence.value = repeatOccurrence.cadence === "weekly" && repeatOccurrence.every_n === 2
-        ? "biweekly" : repeatOccurrence.cadence;
-      repeatEnd.value = repeatOccurrence.ends_on || "";
-    }
-    repeatSave.textContent = "入力内容を選択範囲へ反映";
-  } else {
-    repeatSave.textContent = "この内容を繰り返し登録";
+  if (existing && repeatEditorSeriesId !== repeatOccurrence.id) {
+    repeatEditorSeriesId = repeatOccurrence.id;
+    repeatCadence.value = repeatOccurrence.cadence === "weekly" && repeatOccurrence.every_n === 2
+      ? "biweekly" : repeatOccurrence.cadence;
+    repeatEnd.value = repeatOccurrence.ends_on || "";
+    repeatEndEnabled.checked = !!repeatOccurrence.ends_on;
   }
+  repeatSave.textContent = existing ? "変更を保存" : "この内容で繰り返す";
   repeatEnd.min = selectedDate;
+  syncRepeatEndField();
 }
+function setRepeatFeedback(message) {
+  repeatFeedback.textContent = message;
+  repeatScopeFeedback.textContent = message;
+}
+function closeRepeatSheet(restoreFocus = true) {
+  if (!repeatSheetOpen) return;
+  repeatSheetOpen = false;
+  repeatScopeMethod = null;
+  repeatSheet.hidden = true;
+  repeatScopePanel.hidden = true;
+  repeatSheetForm.hidden = false;
+  if (restoreFocus && authorized && activePage === "record") repeatTrigger.focus();
+}
+function openRepeatSheet() {
+  if (!authorized || !dbReady) return;
+  repeatScopeMethod = null;
+  repeatSheetForm.hidden = false;
+  repeatScopePanel.hidden = true;
+  repeatScopeFeedback.textContent = "";
+  repeatSheet.hidden = false;
+  repeatSheetOpen = true;
+  renderRepeatEditor();
+  repeatSheetClose.focus();
+}
+function chooseRepeatScope(method) {
+  if (repeatBusy || !repeatOccurrence) return;
+  if (method === "PATCH") {
+    try { snapshotDisplayedWorkout(); }
+    catch(error) {setRepeatFeedback(error.message);return;}
+    if (repeatEndEnabled.checked && !repeatEnd.value) {
+      setRepeatFeedback("終了日を指定してください。");
+      return;
+    }
+  }
+  repeatScopeMethod = method;
+  repeatSheetForm.hidden = true;
+  repeatScopePanel.hidden = false;
+  repeatScopeTitle.textContent = method === "DELETE" ? "削除する範囲" : "変更する範囲";
+  repeatScopeDescription.textContent = method === "DELETE"
+    ? "指定した範囲の繰り返し予定を削除します。実際の筋トレ記録は残ります。"
+    : "登録済みの予定をどこまで変更するか選んでください。「この予定のみ」は周期・終了日を変更しません。";
+  for (const button of repeatScopePanel.querySelectorAll("[data-repeat-scope]")) {
+    const title = button.querySelector("strong");
+    title.textContent = method === "DELETE" ?
+      ({only:"今回だけ削除",future:"この予定以降を削除",all:"すべて削除"}[button.dataset.repeatScope]) :
+      ({only:"この予定のみ",future:"この予定以降",all:"すべての予定"}[button.dataset.repeatScope]);
+    button.classList.toggle("is-delete",method === "DELETE");
+  }
+  repeatScopeFeedback.textContent = "";
+  repeatScopePanel.querySelector('[data-repeat-scope="only"]').focus();
+}
+repeatTrigger.addEventListener("click",openRepeatSheet);
+repeatSheetClose.addEventListener("click",()=>closeRepeatSheet());
+repeatSheetBackdrop.addEventListener("click",()=>closeRepeatSheet());
+repeatEndEnabled.addEventListener("change",()=>{
+  if (!repeatEndEnabled.checked) repeatEnd.value = "";
+  syncRepeatEndField();
+});
+byId("repeat-scope-back").addEventListener("click",()=>{
+  repeatScopeMethod = null;
+  repeatScopePanel.hidden = true;
+  repeatSheetForm.hidden = false;
+  repeatSave.focus();
+});
+repeatScopePanel.querySelectorAll("[data-repeat-scope]").forEach(button=>{
+  button.addEventListener("click",()=>{
+    if (repeatScopeMethod) submitRepeatChange(repeatScopeMethod,button.dataset.repeatScope);
+  });
+});
+document.addEventListener("keydown",event=>{
+  if (!repeatSheetOpen) return;
+  if (event.key === "Escape") {
+    event.preventDefault(); closeRepeatSheet(); return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = [...repeatSheet.querySelectorAll('button:not([disabled]), select:not([disabled]), input:not([disabled])')]
+    .filter(el=>el.tabIndex>=0 && !el.closest("[hidden]"));
+  if (!focusable.length) return;
+  const first=focusable[0],last=focusable[focusable.length-1];
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault();last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault();first.focus(); }
+});
 
 // Load the plan separately from performed sessions: previews are never marked as saved workouts.
 async function loadRepeatForDate(date) {
@@ -1586,7 +1696,7 @@ function snapshotDisplayedWorkout() {
   if (!exercises.length) throw new Error("先に種目を1つ以上入力してください。");
   return exercises;
 }
-async function submitRepeatChange(method) {
+async function submitRepeatChange(method, chosenScope = null) {
   if (!authorized || !dbReady || !repeatReady || repeatBusy || repeatLoading) return;
   let exercises=null;
   if (method !== "DELETE") {
@@ -1594,25 +1704,26 @@ async function submitRepeatChange(method) {
     catch (error) { repeatFeedback.textContent=error.message;return; }
   }
   const date=selectedDate, instance=repeatOccurrence;
-  const scope=instance ? repeatScope.value : null;
+  const scope=instance ? chosenScope : null;
+  if (instance && !scope) return;
   const rawCadence=repeatCadence.value;
   const cadence=rawCadence==="biweekly" ? "weekly" : rawCadence;
   const every_n=rawCadence==="biweekly" ? 2 : 1;
-  const end_on=repeatEnd.value || null;
+  const end_on=repeatEndEnabled.checked ? repeatEnd.value || null : null;
+  if (method !== "DELETE" && repeatEndEnabled.checked && !end_on) {
+    setRepeatFeedback("終了日を指定してください。"); return;
+  }
   if (!instance && dayRest.checked) {
-    repeatFeedback.textContent="休息日を解除してから繰り返しを登録してください。";
+    setRepeatFeedback("休息日を解除してから繰り返しを登録してください。");
     return;
   }
   if (!instance && end_on && end_on < date) {
-    repeatFeedback.textContent="終了日は開始日以降にしてください。";
+    setRepeatFeedback("終了日は開始日以降にしてください。");
     return;
   }
   const target = instance ? "/api/repeat/" + instance.id : "/api/repeat";
-  const message = method === "DELETE" ? "繰り返し予定を削除" :
-    instance ? "この入力内容で繰り返し予定を更新" : "入力内容を繰り返し予定として登録";
-  if (!confirm(message + "しますか？ 実施済みの筋トレ記録は変更しません。")) return;
   repeatBusy=true;
-  repeatFeedback.textContent="保存中…";
+  setRepeatFeedback("保存中…");
   renderRepeatEditor();
   try {
     await fetchJSON(target,{method:instance ? method : "POST",
@@ -1625,22 +1736,22 @@ async function submitRepeatChange(method) {
     await loadWorkouts();
     if (authorized && selectedDate === date) {
       hydrateStoredRecordForDate(date);
-      repeatFeedback.textContent=method==="DELETE" ? "繰り返し設定を削除しました。" :
-        "入力内容を繰り返し予定に反映しました。";
+      closeRepeatSheet(false);
+      byId("record-overview-feedback").textContent = method==="DELETE" ?
+        "繰り返し予定を削除しました。" : "繰り返し予定を保存しました。";
     }
   } catch (error) {
     if (error.status===401) { setAuthenticated(false); return; }
-    repeatFeedback.textContent=error.status===503 ? "D1の0007マイグレーションが必要です。" :
+    setRepeatFeedback(error.status===503 ? "D1の0007マイグレーションが必要です。" :
       error.status===409 ? "同じ日に他の繰り返し予定があるか、予定が変更されています。" :
-      "繰り返し設定を保存できませんでした。";
+      "繰り返し設定を保存できませんでした。");
   } finally {
     repeatBusy=false;
     if (authorized) renderRepeatEditor();
   }
 }
-repeatScope.addEventListener("change",renderRepeatEditor);
-repeatSave.addEventListener("click",()=>submitRepeatChange("PATCH"));
-repeatDelete.addEventListener("click",()=>submitRepeatChange("DELETE"));
+repeatSave.addEventListener("click",()=>repeatOccurrence ? chooseRepeatScope("PATCH") : submitRepeatChange("PATCH"));
+repeatDelete.addEventListener("click",()=>chooseRepeatScope("DELETE"));
 
 // 一度成功した日付・種目への繰り返し保存を新しい達成として扱わない（メモリのみ）。
 let exerciseSaveInFlight = false;
@@ -2436,6 +2547,7 @@ document.addEventListener("keydown", (event) => {
 
 function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
+  if (repeatSheetOpen && screen !== "record") closeRepeatSheet(false);
   const previousPage = activePage;
   if (screen !== "calendar") setCalendarMonthPicker(false);
   if (drawerOpen) setDrawerOpen(false);
@@ -2515,6 +2627,7 @@ window.addEventListener("popstate", () => {
 });
 
 function setAuthenticated(next) {
+  if (!next) closeRepeatSheet(false);
   const wasAuthorized = authorized;
   if (!next || !wasAuthorized) {
     sceneTimeOverride = "auto";
