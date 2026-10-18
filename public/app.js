@@ -1536,16 +1536,18 @@ function renderRepeatEditor() {
   repeatTrigger.disabled = !authorized || !dbReady;
   repeatSummary.textContent = repeatLoading ? "読み込み中…" :
     !repeatReady ? "利用不可・要確認" :
-    existing ? describeRepeatCadence(repeatOccurrence.cadence,repeatOccurrence.every_n) +
+    existing ? (repeatOccurrence.kind === "rest" ? "休息日 ・ " : "ジム予定 ・ ") +
+      describeRepeatCadence(repeatOccurrence.cadence,repeatOccurrence.every_n) +
       (repeatOccurrence.ends_on ? " ・ " + repeatOccurrence.ends_on.replaceAll("-","/") + "まで" : "") :
     "繰り返しなし";
   const cards = [...exerciseList.querySelectorAll(".exercise-card")];
   const totalSets = cards.reduce((sum,card)=>sum + card.rows.querySelectorAll(".exercise-set").length,0);
   repeatSheetPreview.textContent = !repeatReady
     ? (repeatLoading ? "設定を読み込み中…" : "繰り返し設定を利用できません。D1の0007適用・接続状態を確認してください。")
-    : cards.length
-      ? selectedDate.replaceAll("-","/") + "の入力内容： " + cards.length + "種目・" + totalSets + "セット"
-      : "先に記録画面で種目を入力してください。";
+    : dayRest.checked ? "休息日を繰り返します。種目はコピーされません。"
+    : dayPlanned.checked && !cards.length ? "ジムに行く予定を繰り返します（種目未登録）。"
+    : cards.length ? selectedDate.replaceAll("-","/") + "の入力内容： " + cards.length + "種目・" + totalSets + "セット"
+    : "先に「ジムに行く予定」か「休息日」を設定するか、種目を入力してください。";
   repeatDelete.hidden = !existing;
   repeatCadence.disabled = !ready;
   repeatEndEnabled.disabled = !ready;
@@ -1589,7 +1591,7 @@ function openRepeatSheet() {
 function chooseRepeatScope(method) {
   if (repeatBusy || !repeatOccurrence) return;
   if (method === "PATCH") {
-    try { snapshotDisplayedWorkout(); }
+    try { snapshotRepeatDay(); }
     catch(error) {setRepeatFeedback(error.message);return;}
     if (repeatEndEnabled.checked && !repeatEnd.value) {
       setRepeatFeedback("終了日を指定してください。");
@@ -1686,8 +1688,9 @@ async function loadRepeatForDate(date) {
   }
 }
 
-function snapshotDisplayedWorkout() {
+function snapshotRepeatDay() {
   if (activeExerciseCard) closeExerciseEditor();
+  if (dayRest.checked) return {kind:"rest",exercises:[]};
   const exercises=[];
   for (const card of exerciseList.querySelectorAll(".exercise-card")) {
     const name=normalizeExerciseName(card.nameInput.value);
@@ -1695,15 +1698,16 @@ function snapshotDisplayedWorkout() {
     exercises.push({name,unit:card.unit,note:card.noteValue || "",
       sets:collectExerciseSets(card)});
   }
-  if (!exercises.length) throw new Error("先に種目を1つ以上入力してください。");
-  return exercises;
+  if (!exercises.length && !dayPlanned.checked)
+    throw new Error("先にジムの予定・休息日を設定するか、種目を入力してください。");
+  return {kind:"gym",exercises};
 }
 async function submitRepeatChange(method, chosenScope = null) {
   if (!authorized || !dbReady || !repeatReady || repeatBusy || repeatLoading) return;
-  let exercises=null;
+  let snapshot=null;
   if (method !== "DELETE") {
-    try { exercises=snapshotDisplayedWorkout(); }
-    catch (error) { repeatFeedback.textContent=error.message;return; }
+    try { snapshot=snapshotRepeatDay(); }
+    catch (error) {setRepeatFeedback(error.message);return;}
   }
   const date=selectedDate, instance=repeatOccurrence;
   const scope=instance ? chosenScope : null;
@@ -1731,9 +1735,9 @@ async function submitRepeatChange(method, chosenScope = null) {
     await fetchJSON(target,{method:instance ? method : "POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(instance ? {date,scope,
-        ...(exercises ? {exercises}: {}),
+        ...(snapshot || {}),
         ...(method !== "DELETE" && scope !== "only" ? {cadence,every_n,end_on} : {})} :
-        {start_on:date,cadence,every_n,end_on,exercises})});
+        {start_on:date,cadence,every_n,end_on,...snapshot})});
     if (!authorized || selectedDate !== date) return;
     await loadWorkouts();
     if (authorized && selectedDate === date) {
