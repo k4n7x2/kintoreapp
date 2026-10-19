@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "standardId": "home-portrait-v2-trial",
+  "status": "candidate-anchoring-pending",
+  "revisionDate": "2026-10-19",
+  "selection": "User confirmed exact prior trial source and requested unification within the visual-production project; formal replacement of v1 not yet approved",
+  "masterSource": {
+    "uploadName": "11621.webp",
+    "priorTrialName": "11577.webp",
+    "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
+    "dimensions": [
+      1086,
+      1448
+    ],
+    "format": "WEBP",
+    "decodedMode": "RGBA",
+    "verifiedCurrentSession": true,
+    "verifiedByteIdentityWithPriorTrialSHA": true,
+    "registeredAsGitHubReference": false,
+    "generationToolInputVerified": false,
+    "edgePixelCountAlphaGreaterThan32": {
+      "top": 38,
+      "left": 38,
+      "right": 318,
+      "bottom": 945
+    },
+    "sourceOfTruth": "project attachment for image-tool input; GitHub tracks specs and provenance, no automatic synchronization"
+  },
+  "scope": {
+    "include": [
+      "home-screen normal-proportion close-up portraits",
+      "same-pose expression variants",
+      "clothing variants"
+    ],
+    "exclude": [
+      "SD",
+      "event CG",
+      "fullbody character sheet",
+      "backgrounds"
+    ]
+  },
+  "geometry": {
+    "coordinateFrame": "source image pixels; top-left origin; x right, y down",
+    "canvas": {
+      "width": 1086,
+      "height": 1448,
+      "lock": true
+    },
+    "anchors": {
+      "screenLeftEyeOutlineCenter": [
+        423,
+        448
+      ],
+      "screenRightEyeOutlineCenter": [
+        583,
+        356
+      ],
+      "eyeMidpoint": [
+        503,
+        402
+      ],
+      "eyeSeparationApproxPx": 184.56,
+      "chinTip": [
+        592,
+        585
+      ],
+      "topHairVisibleYApprox": 0,
+      "faceGuideBox": [
+        335,
+        240,
+        715,
+        590
+      ]
+    },
+    "measurementQuality": "manual approximate, not independently repeated; NOT calibrated or eligible for strict pass/fail",
+    "headTiltApproxDegrees": 30,
+    "pose": "tilted head; hand touching hair; close-up upper body",
+    "edgePolicy": {
+      "type": "intentional-closeup-crop",
+      "minLeftRightTransparentMargin": null,
+      "allowContactAllFourEdges": true,
+      "noAutomaticTrimming": true,
+      "forbidUnnaturalFaceEyeHandHairClipping": true
+    }
+  },
+  "proposedThresholdsAfterCalibration": {
+    "eyeMidpointPerAxisPx": 6,
+    "eyeSeparationPercent": 2,
+    "chinTipPerAxisPx": 8,
+    "faceGuideBoxStrict": false
+  },
+  "requirements": {
+    "basePortrait": "use actual source/reference images",
+    "samePoseExpression": "alter only face expression parts; preserve hair/body/pose/outfit",
+    "outfitChange": "preserve head scale/placement; keep natural physique",
+    "pngSource": "1086x1448 transparent",
+    "githubCopy": "lossy WebP quality85 preserve alpha/dimensions",
+    "qa": "human review and Android checks required"
+  },
+  "transition": {
+    "v1Preserved": true,
+    "existingPortraitsUnmodified": true,
+    "cssUnmodified": true,
+    "formalPromotionPending": true
+  },
+  "sourceRepoMainSHA": "f7148b56734f76faef386c97b4482c9c3e2f3508",
+  "priorTrialPR": "https://github.com/k4n7x2/kintoreapp/pull/28"
+}
