@@ -1,6 +1,7 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
+import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js";
 const now = new Date();
 let shownYear = now.getFullYear();
 let shownMonth = now.getMonth();
@@ -2103,7 +2104,7 @@ const loginSuccess = byId("login-success");
 const pages = new Set(["home", "calendar", "record", "talk", "notices", "analysis", "exercise-settings", "events", "gallery", "settings"]);
 
 // 背景はGitHubの固定素材。場所はログインのたびにランダム選択し、端末には保存しない。
-const sceneLocations = ["gym", "city", "campus", "room"];
+const sceneLocations = ["gym", ...REGULAR_SCENE_LOCATIONS];
 const sceneLocationNames = { gym: "ジム", city: "街", campus: "大学", room: "栞の部屋" };
 const sceneTimeNames = { morning: "朝", day: "昼", night: "夜" };
 const sceneBackground = byId("scene-background");
@@ -2113,6 +2114,63 @@ const sceneTimeSelect = byId("scene-time");
 let sceneTimeOverride = "auto";
 let sceneLocation = null;
 let sceneTime = null;
+// All Wi-Fi state stays in memory; server confirms a renewable 30-minute lease.
+let gymPresenceActive = false;
+let gymPresenceLeaseUntil = 0;
+let gymPresenceRequestId = 0;
+let gymPresencePending = null;
+let gymPreviewOverride = false;
+function currentGymVisuals() {
+  return resolveGymVisuals({
+    connected: gymPresenceActive,
+    preview: gymPreviewOverride,
+    scene: sceneLocation,
+    outfit: currentOutfit
+  });
+}
+function isGymModeActive() { return currentGymVisuals().automatic; }
+function startManualGymPreview() {
+  const wasAutomatic = isGymModeActive();
+  gymPreviewOverride = true;
+  if (wasAutomatic) {
+    refreshScene();
+    refreshOutfit({ reroll: true });
+    if (authorized && activePage === "home") showHomeGreeting();
+  }
+}
+function updateGymPresence(connected, leaseMs = 0) {
+  const wasAutomatic = isGymModeActive();
+  gymPresenceActive = connected === true && leaseMs > 0;
+  gymPresenceLeaseUntil = gymPresenceActive ? performance.now() + leaseMs : 0;
+  if (wasAutomatic !== isGymModeActive()) {
+    refreshScene();
+    refreshOutfit({ reroll: true });
+    if (authorized && activePage === "home") showHomeGreeting();
+  }
+}
+async function refreshGymPresence() {
+  if (!authorized || document.hidden) return;
+  if (gymPresencePending) return gymPresencePending;
+  const id = ++gymPresenceRequestId;
+  const request = (async () => {
+    try {
+      const response = await fetchJSON("/api/gym-presence");
+      if (id !== gymPresenceRequestId || !authorized) return;
+      const leaseMs = gymLeaseDuration(response);
+      updateGymPresence(leaseMs > 0, leaseMs);
+    } catch (error) {
+      if (id !== gymPresenceRequestId || !authorized) return;
+      if (error.status === 401) {
+        setAuthenticated(false);
+      } else if (gymPresenceActive && performance.now() >= gymPresenceLeaseUntil) {
+        updateGymPresence(false);
+      }
+    }
+  })();
+  gymPresencePending = request;
+  void request.finally(() => { if (gymPresencePending === request) gymPresencePending = null; });
+  return request;
+}
 
 function sceneTimeSlot(hour) {
   if (hour >= 5 && hour < 12) return "morning";
@@ -2121,27 +2179,29 @@ function sceneTimeSlot(hour) {
 }
 function randomSceneLocation(excludeCurrent = false) {
   const candidates = excludeCurrent
-    ? sceneLocations.filter((location) => location !== sceneLocation)
-    : sceneLocations;
+    ? REGULAR_SCENE_LOCATIONS.filter((location) => location !== sceneLocation)
+    : REGULAR_SCENE_LOCATIONS;
   return candidates[Math.floor(Math.random() * candidates.length)];
 }
 function refreshScene() {
   if (!authorized || !sceneLocation) return;
+  const location = currentGymVisuals().scene;
   const time = sceneTimeOverride === "auto" ? sceneTimeSlot(new Date().getHours()) : sceneTimeOverride;
-  if (time !== sceneTime || sceneBackground.dataset.location !== sceneLocation) {
-    const url = "/assets/backgrounds/" + sceneLocation + "-" + time + ".webp";
+  if (time !== sceneTime || sceneBackground.dataset.location !== location) {
+    const url = "/assets/backgrounds/" + location + "-" + time + ".webp";
     sceneBackground.style.backgroundImage = 'url("' + url + '")';
-    sceneBackground.dataset.location = sceneLocation;
+    sceneBackground.dataset.location = location;
     sceneBackground.dataset.time = time;
     sceneTime = time;
   }
-  sceneLocationSelect.value = sceneLocation;
+  sceneLocationSelect.value = location;
   sceneTimeSelect.value = sceneTimeOverride;
-  sceneStatus.textContent = "現在： " + sceneLocationNames[sceneLocation] + "・" + sceneTimeNames[time] + (sceneTimeOverride === "auto" ? "（端末時刻）" : "（テスト固定）");
+  sceneStatus.textContent = "現在： " + sceneLocationNames[location] + "・" + sceneTimeNames[time] + (isGymModeActive() ? "（ジムWi-Fi連動）" : sceneTimeOverride === "auto" ? "（端末時刻）" : "（テスト固定）");
 }
 function setSceneLocation(nextLocation) {
   if (!authorized || !sceneLocations.includes(nextLocation)) return;
   sceneLocation = nextLocation;
+  startManualGymPreview();
   refreshScene();
 }
 sceneLocationSelect.addEventListener("change", () => setSceneLocation(sceneLocationSelect.value));
@@ -2158,11 +2218,19 @@ sceneTimeSelect.addEventListener("change", () => {
 });
 // 自動の場合だけ端末時刻に追従。テスト固定は復帰・画面遷移後も維持する。
 setInterval(refreshScene, 60 * 1000);
+setInterval(() => {
+  if (!authorized) return;
+  if (gymPresenceActive && performance.now() >= gymPresenceLeaseUntil) updateGymPresence(false);
+  if (!document.hidden) void refreshGymPresence();
+}, 30 * 1000);
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) refreshScene();
+  if (!document.hidden) {
+    refreshScene();
+    void refreshGymPresence();
+  }
 });
-window.addEventListener("focus", refreshScene);
-window.addEventListener("pageshow", refreshScene);
+window.addEventListener("focus", () => { refreshScene(); void refreshGymPresence(); });
+window.addEventListener("pageshow", () => { refreshScene(); void refreshGymPresence(); });
 
 
 // ホームの既存セリフ候補を必要時だけ取得する。端末には永続保存しない。
