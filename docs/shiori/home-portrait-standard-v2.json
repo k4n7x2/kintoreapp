@@ -24,7 +24,11 @@
       "right": 318,
       "bottom": 945
     },
-    "sourceOfTruth": "project attachment for image-tool input; GitHub tracks specs and provenance, no automatic synchronization"
+    "sourceOfTruth": "project attachment for image-tool input; GitHub tracks specs and provenance, no automatic synchronization",
+    "gitHubMatchingPublicAsset": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp",
+    "gitHubBlobSha": "2684bf59ba281ceca9ce468030c807239ea2a665",
+    "gitHubPixelAndByteIdentityVerified": true,
+    "note": "Exact source binary already exists as the deployed gym/smile WebP at the fixed main SHA; a formal docs/shiori/reference master designation and image-tool input verification remain separate work."
   },
   "scope": {
     "include": [
@@ -156,5 +160,10 @@
     "formalPromotionPending": true
   },
   "sourceRepoMainSHA": "f7148b56734f76faef386c97b4482c9c3e2f3508",
-  "priorTrialPR": "https://github.com/k4n7x2/kintoreapp/pull/28"
+  "priorTrialPR": "https://github.com/k4n7x2/kintoreapp/pull/28",
+  "qaEvidence": {
+    "existingTenAssetAudit": "docs/shiori/home-portrait-v2-existing-audit.json",
+    "humanReadableAudit": "docs/shiori/home-portrait-v2-existing-audit.md",
+    "status": "read-only quantitative diagnostics complete, anatomical eye/chin landmarks and Android review pending"
+  }
 }
