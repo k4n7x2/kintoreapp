@@ -1,0 +1,517 @@
+{
+  "schemaVersion": 1,
+  "stage": "STEP5 first pass values recorded before opening STEP4 numerical audit",
+  "sourceCommit": "f7148b56734f76faef386c97b4482c9c3e2f3508",
+  "pr": 38,
+  "evidence": "https://github.com/k4n7x2/kintoreapp/actions/runs/39275559673",
+  "status": "manual_estimates_not_calibrated",
+  "method": "Single observer, anonymous image order, 5px source-coordinate fixed grid, previous landmarks not displayed in inspection images; NOT independent reviewer, not pixel-click annotation",
+  "coord": "left-top image origin (0,0), x right, y down; 1086x1448",
+  "definition": {
+    "screenLeftEye": {
+      "outerCanthus": "image-left corner, toward temple",
+      "innerCanthus": "image-right corner, toward nose",
+      "upperLidAtCentralX": "visual top aperture boundary at approximately central iris X",
+      "lowerLidAtCentralX": "visual lower aperture boundary at approximately central iris X"
+    },
+    "screenRightEye": {
+      "innerCanthus": "image-left corner toward nose",
+      "outerCanthus": "image-right corner toward temple",
+      "upperLidAtCentralX": "visual top aperture boundary at approximately central iris X",
+      "lowerLidAtCentralX": "visual lower aperture boundary at approximately central iris X"
+    },
+    "chinTip": "lowest turn of visible chin jaw outline; exclude lower mouth lip and hair strands"
+  },
+  "precision": {
+    "gridStepPx": 5,
+    "canthiEstimatedUncertaintyPerAxisPx": [
+      6,
+      12
+    ],
+    "upperLidEstimatedUncertaintyPerAxisPx": [
+      5,
+      9
+    ],
+    "lowerLidEstimatedUncertaintyPerAxisPx": [
+      6,
+      11
+    ],
+    "chinEstimatedUncertaintyPerAxisPx": [
+      5,
+      8
+    ],
+    "note": "Not statistical confidence intervals. Important corners obscured by eyelashes/hair or ambiguous painted edge."
+  },
+  "points": [
+    {
+      "anonymousCode": "A1",
+      "id": "private/thinking",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-thinking-r1.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          371,
+          467
+        ],
+        "innerCanthus": [
+          476,
+          432
+        ],
+        "upperLidAtCentralX": [
+          430,
+          416
+        ],
+        "lowerLidAtCentralX": [
+          435,
+          468
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          559,
+          366
+        ],
+        "outerCanthus": [
+          640,
+          332
+        ],
+        "upperLidAtCentralX": [
+          601,
+          319
+        ],
+        "lowerLidAtCentralX": [
+          601,
+          376
+        ]
+      },
+      "chinTip": [
+        604,
+        587
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    },
+    {
+      "anonymousCode": "A2",
+      "id": "gym/playful",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-playful-alt1.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          366,
+          500
+        ],
+        "innerCanthus": [
+          470,
+          463
+        ],
+        "upperLidAtCentralX": [
+          432,
+          443
+        ],
+        "lowerLidAtCentralX": [
+          431,
+          500
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          553,
+          389
+        ],
+        "outerCanthus": [
+          640,
+          348
+        ],
+        "upperLidAtCentralX": [
+          603,
+          337
+        ],
+        "lowerLidAtCentralX": [
+          602,
+          396
+        ]
+      },
+      "chinTip": [
+        609,
+        605
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    },
+    {
+      "anonymousCode": "A3",
+      "id": "private/normal",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-normal-r1.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          369,
+          476
+        ],
+        "innerCanthus": [
+          474,
+          439
+        ],
+        "upperLidAtCentralX": [
+          429,
+          418
+        ],
+        "lowerLidAtCentralX": [
+          431,
+          471
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          555,
+          380
+        ],
+        "outerCanthus": [
+          640,
+          335
+        ],
+        "upperLidAtCentralX": [
+          599,
+          317
+        ],
+        "lowerLidAtCentralX": [
+          604,
+          379
+        ]
+      },
+      "chinTip": [
+        599,
+        589
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    },
+    {
+      "anonymousCode": "A4",
+      "id": "gym/surprised",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-surprised-alt1.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          367,
+          498
+        ],
+        "innerCanthus": [
+          475,
+          453
+        ],
+        "upperLidAtCentralX": [
+          428,
+          432
+        ],
+        "lowerLidAtCentralX": [
+          432,
+          500
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          555,
+          390
+        ],
+        "outerCanthus": [
+          640,
+          347
+        ],
+        "upperLidAtCentralX": [
+          604,
+          330
+        ],
+        "lowerLidAtCentralX": [
+          608,
+          397
+        ]
+      },
+      "chinTip": [
+        610,
+        612
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    },
+    {
+      "anonymousCode": "A5",
+      "id": "private/smile",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-smile-r1.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          370,
+          477
+        ],
+        "innerCanthus": [
+          474,
+          440
+        ],
+        "upperLidAtCentralX": [
+          429,
+          420
+        ],
+        "lowerLidAtCentralX": [
+          429,
+          472
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          556,
+          378
+        ],
+        "outerCanthus": [
+          638,
+          336
+        ],
+        "upperLidAtCentralX": [
+          604,
+          320
+        ],
+        "lowerLidAtCentralX": [
+          603,
+          380
+        ]
+      },
+      "chinTip": [
+        599,
+        586
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    },
+    {
+      "anonymousCode": "A6",
+      "id": "gym/normal",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-normal-alt1-before.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          369,
+          481
+        ],
+        "innerCanthus": [
+          476,
+          440
+        ],
+        "upperLidAtCentralX": [
+          430,
+          420
+        ],
+        "lowerLidAtCentralX": [
+          430,
+          476
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          558,
+          385
+        ],
+        "outerCanthus": [
+          641,
+          338
+        ],
+        "upperLidAtCentralX": [
+          603,
+          321
+        ],
+        "lowerLidAtCentralX": [
+          606,
+          381
+        ]
+      },
+      "chinTip": [
+        602,
+        591
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    },
+    {
+      "anonymousCode": "A7",
+      "id": "private/surprised",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-surprised-r1.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          368,
+          471
+        ],
+        "innerCanthus": [
+          477,
+          426
+        ],
+        "upperLidAtCentralX": [
+          428,
+          409
+        ],
+        "lowerLidAtCentralX": [
+          430,
+          473
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          553,
+          371
+        ],
+        "outerCanthus": [
+          639,
+          326
+        ],
+        "upperLidAtCentralX": [
+          603,
+          307
+        ],
+        "lowerLidAtCentralX": [
+          605,
+          379
+        ]
+      },
+      "chinTip": [
+        605,
+        580
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    },
+    {
+      "anonymousCode": "A8",
+      "id": "gym/smile",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          370,
+          476
+        ],
+        "innerCanthus": [
+          475,
+          444
+        ],
+        "upperLidAtCentralX": [
+          430,
+          418
+        ],
+        "lowerLidAtCentralX": [
+          431,
+          472
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          557,
+          379
+        ],
+        "outerCanthus": [
+          639,
+          338
+        ],
+        "upperLidAtCentralX": [
+          606,
+          319
+        ],
+        "lowerLidAtCentralX": [
+          602,
+          378
+        ]
+      },
+      "chinTip": [
+        599,
+        588
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    },
+    {
+      "anonymousCode": "A9",
+      "id": "private/playful",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-playful-r1.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          368,
+          475
+        ],
+        "innerCanthus": [
+          475,
+          438
+        ],
+        "upperLidAtCentralX": [
+          431,
+          418
+        ],
+        "lowerLidAtCentralX": [
+          430,
+          474
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          555,
+          380
+        ],
+        "outerCanthus": [
+          639,
+          336
+        ],
+        "upperLidAtCentralX": [
+          604,
+          320
+        ],
+        "lowerLidAtCentralX": [
+          604,
+          379
+        ]
+      },
+      "chinTip": [
+        600,
+        585
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    },
+    {
+      "anonymousCode": "A10",
+      "id": "gym/thinking",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-thinking-alt1.webp",
+      "screenLeftEye": {
+        "outerCanthus": [
+          370,
+          502
+        ],
+        "innerCanthus": [
+          472,
+          465
+        ],
+        "upperLidAtCentralX": [
+          431,
+          445
+        ],
+        "lowerLidAtCentralX": [
+          433,
+          503
+        ]
+      },
+      "screenRightEye": {
+        "innerCanthus": [
+          552,
+          395
+        ],
+        "outerCanthus": [
+          641,
+          356
+        ],
+        "upperLidAtCentralX": [
+          602,
+          337
+        ],
+        "lowerLidAtCentralX": [
+          606,
+          403
+        ]
+      },
+      "chinTip": [
+        607,
+        608
+      ],
+      "confidence": "provisional-review-only",
+      "notes": "approximate 5px-grid anatomical anchor candidate; iris color centroid not used"
+    }
+  ]
+}
