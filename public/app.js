@@ -2316,7 +2316,7 @@ const homePortraits = {
 let privateExpressionMode = "random";
 let privateTrialReady = false;
 let privateTrialCheck = null;
-let currentOutfit = "training";
+let currentOutfit = "roomwear";
 let currentPortrait = null;
 const failedHomePortraits = new Set();
 
@@ -2352,9 +2352,11 @@ function refreshOutfit({ reroll = false } = {}) {
   let candidates = homePortraits[activeOutfit]
     .filter((variant) => !failedHomePortraits.has(variant.src));
   if (!candidates.length) {
-    currentOutfit = "training";
-    candidates = homePortraits.training;
+    // If non-gym art fails, never show training clothes outside the gym by accident.
     currentPortrait = null;
+    shioriHomeArt.removeAttribute("src");
+    outfitStatus.textContent = "この衣装の画像を読み込めませんでした。";
+    return;
   }
   const fixed = activeOutfit === "private-v2" && privateExpressionMode !== "random"
     ? candidates.find((variant) => variant.id === privateExpressionMode)
@@ -2433,7 +2435,7 @@ window.addEventListener("shiori:try-private-v2", async (event) => {
   setScreen("home");
 });
 shioriHomeArt.addEventListener("error", () => {
-  if (!["roomwear", "private-v2"].includes(currentOutfit) || !currentPortrait
+  if (!["roomwear", "private-v2"].includes(currentGymVisuals().outfit) || !currentPortrait
     || currentPortrait.src !== shioriHomeArt.getAttribute("src")) return;
   failedHomePortraits.add(currentPortrait.src);
   if (currentOutfit === "private-v2") {
@@ -2441,14 +2443,14 @@ shioriHomeArt.addEventListener("error", () => {
     privateTrialReady = false;
     privateTrialOption.disabled = true;
     privateTrialStatus.textContent = "私服試験画像を読み込めませんでした。再確認が必要です。";
-    selectOutfit("training");
-    outfitStatus.textContent = "私服試験画像を読み込めず、トレーニングウェアへ戻しました。";
+    selectOutfit("roomwear");
+    outfitStatus.textContent = "私服試験画像を読み込めず、部屋着へ戻しました。";
     return;
   }
   const remaining = homePortraits.roomwear.some(({ src }) => !failedHomePortraits.has(src));
   refreshOutfit({ reroll: true });
   if (!remaining) {
-    outfitStatus.textContent = "部屋着の画像を読み込めなかったため、トレーニングウェアに戻しました。";
+    outfitStatus.textContent = "部屋着の画像を読み込めませんでした。ジム以外ではトレーニングウェアを表示しません。";
   }
 });
 const devPanel = byId("dev-settings-panel");
