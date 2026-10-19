@@ -22,9 +22,11 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install QA dependency
-        run: python -m pip install Pillow
+        run: python -m pip install Pillow numpy
       - name: Run synthetic regression tests
         run: python -m unittest discover -s tests -p 'test_check_home_portrait_v2.py' -v
+      - name: Read-only existing 10-image portrait comparison
+        run: python scripts/audit_existing_home_v2.py
       - name: Check newly added/changed v2-marked home portraits
         if: github.event_name == 'pull_request'
         shell: bash
