@@ -84,3 +84,18 @@
 @media (prefers-reduced-motion: reduce) {
   #page-gallery .gallery-canvases { scroll-behavior: auto; }
 }
+
+#page-gallery .gallery-try-home:not([hidden]) {
+  display: block;
+  margin-top: 10px;
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid var(--bubble-line);
+  border-radius: 11px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+#page-gallery .gallery-try-home:active { background: var(--surface); }
