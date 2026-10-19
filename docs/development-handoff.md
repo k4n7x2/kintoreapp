@@ -39,7 +39,7 @@
 
 1. 依頼範囲を実装し、変更に必要な構文・JSON・参照・API・画面を検証します。表示変更はAndroid相当の狭い幅でも確認します。文書だけの変更は参照・記載整合性を検証します。
 2. GitHub反映前に最新mainを再確認し、並行変更を保全します。通常更新でforce pushしません。変更ファイルとコミットSHAを確認します。
-3. 通常の公開経路はCloudflare Workers Buildsによるmainの取り込みと`npx wrangler deploy`です。Pagesへ切り替えず、不要な手動デプロイを重ねません。`docs/`は静的配信対象外です。
+3. 通常の公開経路はGitHub `main` → Cloudflare Workers BuildsのProduction Deploy command `npm run db:migrate:remote && npm run deploy`です。未適用のD1マイグレーションを先に実行し、成功時のみWorkersを公開します。2026-10-19に0003・0006・0008の自動適用と公開成功をログで確認済みです。新しいDB変更では `migrations/` の連番SQLと既存データの保全を確認し、Console手動適用や履歴の手動編集を通常運用にしません。Previewから本番D1へ適用しないでください。詳細は `README.md` を正本とし、Pagesへの切替や不要な手動デプロイは行いません。`docs/`は静的配信対象外です。
 4. Workers Buildsと公開URLの必要な応答・表示を確認します。GitHub Actionsの有無だけで公開を判断しません。権限・認証環境が足りない部分は未確認とします。
 5. 技術説明は`README.md`、実装確認は`docs/implementation-status.md`、人物・制作仕様は`docs/shiori/`の担当文書だけを更新します。この指示へ変化しやすい実装一覧を複写しません。
 
