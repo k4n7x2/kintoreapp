@@ -61,7 +61,7 @@ test("private v2 gallery items and home image paths are aligned", () => {
     const path = "/assets/shiori/home/v2/shiori-private-home-" + id + "-r1.webp";
     assert.equal(group.items.find(item=>item.id===id).versions.current,path);
   }
-  assert.match(app,/home\\/v2\\/shiori-private-home-/);
+  assert.ok(app.includes("/assets/shiori/home/v2/shiori-private-home-"));
   assert.match(css,/data-outfit="private-v2"/);
   assert.match(app,/privateExpressionMode === "random"/);
 });
