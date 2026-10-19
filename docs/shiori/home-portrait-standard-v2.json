@@ -1,35 +1,9 @@
 {
   "schemaVersion": 1,
   "standardId": "home-portrait-v2-trial",
-  "status": "candidate-remeasured-review-pending",
+  "status": "candidate-private-five-selected-calibration-pending",
   "revisionDate": "2026-10-19",
-  "selection": "User confirmed exact prior trial source and requested unification within the visual-production project; formal replacement of v1 not yet approved",
-  "masterSource": {
-    "uploadName": "11621.webp",
-    "priorTrialName": "11577.webp",
-    "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
-    "dimensions": [
-      1086,
-      1448
-    ],
-    "format": "WEBP",
-    "decodedMode": "RGBA",
-    "verifiedCurrentSession": true,
-    "verifiedByteIdentityWithPriorTrialSHA": true,
-    "registeredAsGitHubReference": false,
-    "generationToolInputVerified": false,
-    "edgePixelCountAlphaGreaterThan32": {
-      "top": 38,
-      "left": 38,
-      "right": 318,
-      "bottom": 945
-    },
-    "sourceOfTruth": "project attachment for image-tool input; GitHub tracks specs and provenance, no automatic synchronization",
-    "gitHubMatchingPublicAsset": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp",
-    "gitHubBlobSha": "2684bf59ba281ceca9ce468030c807239ea2a665",
-    "gitHubPixelAndByteIdentityVerified": true,
-    "note": "Exact source binary already exists as the deployed gym/smile WebP at the fixed main SHA; a formal docs/shiori/reference master designation and image-tool input verification remain separate work."
-  },
+  "selection": "User chose all five existing private outfit portraits as the v2 reference family for future home portraits; formal v2 geometric calibration and app deployment remain pending.",
   "scope": {
     "include": [
       "home-screen normal-proportion close-up portraits",
@@ -50,33 +24,8 @@
       "height": 1448,
       "lock": true
     },
-    "anchors": {
-      "screenLeftEyeOutlineCenter": [
-        425,
-        447
-      ],
-      "screenRightEyeOutlineCenter": [
-        585,
-        355
-      ],
-      "eyeMidpoint": [
-        505,
-        401
-      ],
-      "eyeSeparationApproxPx": 184.56,
-      "chinTip": [
-        594,
-        587
-      ],
-      "topHairVisibleYApprox": 0,
-      "faceGuideBox": [
-        335,
-        240,
-        715,
-        590
-      ]
-    },
-    "measurementQuality": "Historical trial visual estimates rechecked with separately prepared 20px and 10px coordinate-grid crops of the exact source WebP. Repeat is by one analyst, not two blind independent reviewers; still NOT calibrated. Candidate axes have several-pixel uncertainty.",
+    "anchors": {},
+    "measurementQuality": "Private normal and all five expressions selected as visual standard; stable head landmarks NOT independently measured. STEP 5 eye/eyelid/chin values are nonbinding diagnostics.",
     "headTiltApproxDegrees": 30,
     "pose": "tilted head; hand touching hair; close-up upper body",
     "edgePolicy": {
@@ -87,55 +36,102 @@
       "forbidUnnaturalFaceEyeHandHairClipping": true
     },
     "annotationStatus": {
-      "method": "historical visual approximation plus new enlarged 10px-grid check",
-      "reviewPasses": 2,
-      "blindIndependentReviewers": 1,
-      "screenLeftEyeOutlineCenterCandidateRanges": {
-        "x": [
-          423,
-          427
+      "status": "head-stable-landmarks-not-yet-annotated_for_private-reference-family",
+      "needed": [
+        "ear-root",
+        "hair-accessory-attachment-if-unchanged",
+        "stable-hair/head-silhouette",
+        "head scale and angle"
+      ],
+      "note": "Eyes and chin are expression-dependent. Prior estimated gym smile eye/chin anchors are archived, no longer active. Release checker intentionally refuses while reference geometry is absent."
+    },
+    "legacyGymSmileUncalibrated": {
+      "geometryAnchors": {
+        "screenLeftEyeOutlineCenter": [
+          425,
+          447
         ],
-        "y": [
-          445,
-          451
+        "screenRightEyeOutlineCenter": [
+          585,
+          355
+        ],
+        "eyeMidpoint": [
+          505,
+          401
+        ],
+        "eyeSeparationApproxPx": 184.56,
+        "chinTip": [
+          594,
+          587
+        ],
+        "topHairVisibleYApprox": 0,
+        "faceGuideBox": [
+          335,
+          240,
+          715,
+          590
         ]
       },
-      "screenRightEyeOutlineCenterCandidateRanges": {
-        "x": [
-          581,
-          588
-        ],
-        "y": [
-          351,
-          358
-        ]
+      "geometryAnnotationStatus": {
+        "method": "historical visual approximation plus new enlarged 10px-grid check",
+        "reviewPasses": 2,
+        "blindIndependentReviewers": 1,
+        "screenLeftEyeOutlineCenterCandidateRanges": {
+          "x": [
+            423,
+            427
+          ],
+          "y": [
+            445,
+            451
+          ]
+        },
+        "screenRightEyeOutlineCenterCandidateRanges": {
+          "x": [
+            581,
+            588
+          ],
+          "y": [
+            351,
+            358
+          ]
+        },
+        "chinTipCandidateRanges": {
+          "x": [
+            590,
+            597
+          ],
+          "y": [
+            583,
+            591
+          ]
+        },
+        "uncertainty": "Manual, eye-outline landmark boundaries partly obscured by eyelashes and hair; independent reviewer sign-off required.",
+        "oldCandidates": {
+          "left": [
+            423,
+            448
+          ],
+          "right": [
+            583,
+            356
+          ],
+          "chin": [
+            592,
+            585
+          ]
+        },
+        "next": "Independent source-image landmark annotations and user visual sign-off; preserve calibrationPending gate."
       },
-      "chinTipCandidateRanges": {
-        "x": [
-          590,
-          597
-        ],
-        "y": [
-          583,
-          591
-        ]
+      "proposedThresholds": {
+        "eyeMidpointPerAxisPx": 6,
+        "eyeSeparationPercent": 2,
+        "chinTipPerAxisPx": 8,
+        "faceGuideBoxStrict": false,
+        "status": "proposal-not-yet-certified"
       },
-      "uncertainty": "Manual, eye-outline landmark boundaries partly obscured by eyelashes and hair; independent reviewer sign-off required.",
-      "oldCandidates": {
-        "left": [
-          423,
-          448
-        ],
-        "right": [
-          583,
-          356
-        ],
-        "chin": [
-          592,
-          585
-        ]
-      },
-      "next": "Independent source-image landmark annotations and user visual sign-off; preserve calibrationPending gate."
+      "status": "deprecated-single-gym-reference-candidates; not eligible for v2 PASS",
+      "source": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp"
     }
   },
   "proposedThresholdsAfterCalibration": {
@@ -143,15 +139,15 @@
     "eyeSeparationPercent": 2,
     "chinTipPerAxisPx": 8,
     "faceGuideBoxStrict": false,
-    "status": "proposal-not-yet-certified"
+    "status": "obsolete-legacy-gym-scheme-not-applicable-to-expression-aware-private-family"
   },
   "requirements": {
-    "basePortrait": "use actual source/reference images",
-    "samePoseExpression": "alter only face expression parts; preserve hair/body/pose/outfit",
-    "outfitChange": "preserve head scale/placement; keep natural physique",
+    "basePortrait": "Use actual private five reference images as primary layout and expression references; use official character master, style and physique refs for their assigned components.",
+    "samePoseExpression": "Preserve stable head/ear/hair/flower placement, scale and torso while allowing brow, eyelid, gaze, cheeks, mouth and natural jaw expression changes.",
+    "outfitChange": "Keep head scale/camera framing consistent with private five; clothing/torso silhouette is garment dependent, not a reason to enforce private fabric pixels.",
     "pngSource": "1086x1448 transparent",
     "githubCopy": "lossy WebP quality85 preserve alpha/dimensions",
-    "qa": "human review and Android checks required"
+    "qa": "Fail closed while stable head anchors uncalibrated; automatically check dimensions/alpha/provenance; human expression-aware stable head review and Android test required."
   },
   "transition": {
     "v1Preserved": true,
@@ -186,6 +182,50 @@
       "gymPlayfulChinStep4Y": 584,
       "step5Y": 605,
       "note": "correction candidate, second independent reviewer pending"
-    }
+    },
+    "referenceFamily": "docs/shiori/home-portrait-v2-private-reference-family.json",
+    "userSelection": "Private five selected for composition and allowable expression variation; STEP4 and STEP5 comparison to gym smile is historical only",
+    "releaseGate": "geometry.anchors deliberately empty to preclude inadvertent certification against legacy gym smile values"
+  },
+  "primaryReferenceSet": {
+    "id": "shiori-home-portrait-v2-private-five",
+    "manifestPath": "docs/shiori/home-portrait-v2-private-reference-family.json",
+    "representative": "public/assets/shiori/home/v2/shiori-private-home-normal-r1.webp",
+    "fiveExpressions": [
+      "normal",
+      "thinking",
+      "surprised",
+      "smile",
+      "playful"
+    ],
+    "status": "user-selected-reference-set_not-pixel-calibrated",
+    "geometryEvaluation": "Expression-dependent eye, eyebrow, mouth and chin changes are allowed. Head framing must be checked with stable regions only; do not reject based solely on changing eye-aperture center or chin."
+  },
+  "historicalGymSource": {
+    "uploadName": "11621.webp",
+    "priorTrialName": "11577.webp",
+    "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
+    "dimensions": [
+      1086,
+      1448
+    ],
+    "format": "WEBP",
+    "decodedMode": "RGBA",
+    "verifiedCurrentSession": true,
+    "verifiedByteIdentityWithPriorTrialSHA": true,
+    "registeredAsGitHubReference": false,
+    "generationToolInputVerified": false,
+    "edgePixelCountAlphaGreaterThan32": {
+      "top": 38,
+      "left": 38,
+      "right": 318,
+      "bottom": 945
+    },
+    "sourceOfTruth": "project attachment for image-tool input; GitHub tracks specs and provenance, no automatic synchronization",
+    "gitHubMatchingPublicAsset": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp",
+    "gitHubBlobSha": "2684bf59ba281ceca9ce468030c807239ea2a665",
+    "gitHubPixelAndByteIdentityVerified": true,
+    "note": "Exact source binary already exists as the deployed gym/smile WebP at the fixed main SHA; a formal docs/shiori/reference master designation and image-tool input verification remain separate work.",
+    "role": "historical v2 trial source and old smile composition only; NO LONGER PRIMARY REFERENCE"
   }
 }
