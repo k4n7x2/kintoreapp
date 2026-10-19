@@ -1,0 +1,90 @@
+{
+  "title": "朝倉栞 私服ホーム表情差分 5枚（v2試作）",
+  "status": "user-approved-for-github-trial-storage; not released",
+  "source": "conversation-created RGBA PNGs",
+  "spec": "docs/shiori/proposals/home-portrait-standard-v2-trial.md",
+  "registry": "trial-only",
+  "canvas": [
+    1086,
+    1448
+  ],
+  "conversion": "lossy WEBP quality 85, preserve alpha, no resize/no trim",
+  "scene": "not assigned by user: do not place into home/town/College public asset folder without selecting situation/wardrobe ID",
+  "versions": "independent of current 941x1672 Home Portrait Standard v1",
+  "production": false,
+  "gitSourceMain": "64743267bf250e897ffdfc327a119920cf4c7239",
+  "files": [
+    {
+      "expression": "normal",
+      "file": "shiori-private-home-normal-r1.webp",
+      "gitBlobSHA": "27f6e49dce05a46765213ca968372cdefe72587f",
+      "sha256": "3601b2ff8dce26edf0e555b58ad403aac3896a0137140c0c21bfced09e3bd2da",
+      "bytes": 246548,
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "format": "WEBP",
+      "alpha": true
+    },
+    {
+      "expression": "smile",
+      "file": "shiori-private-home-smile-r1.webp",
+      "gitBlobSHA": "5b8038c32a8368c76a0d090d04a0a99db0889009",
+      "sha256": "9411deda6103e5f9cdf0e9d5f48d65dddb1ace766e1d4d4f0ce406cad443e4a9",
+      "bytes": 199912,
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "format": "WEBP",
+      "alpha": true
+    },
+    {
+      "expression": "thinking",
+      "file": "shiori-private-home-thinking-r1.webp",
+      "gitBlobSHA": "a2ba4eaa0f42161333fcee4a6119451293277d91",
+      "sha256": "aaad7a89707b98f42538825c85db33ec381dfaafe98a782ace9cf2e1412c344f",
+      "bytes": 206782,
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "format": "WEBP",
+      "alpha": true
+    },
+    {
+      "expression": "surprised",
+      "file": "shiori-private-home-surprised-r1.webp",
+      "gitBlobSHA": "44dede4aac99fa4e8893932e618bd2d2e7d24f2e",
+      "sha256": "2a40dcd6907560ddc5ba246d0b3955d00baecc27020debccbc712eeae871e518",
+      "bytes": 212460,
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "format": "WEBP",
+      "alpha": true
+    },
+    {
+      "expression": "playful",
+      "file": "shiori-private-home-playful-r1.webp",
+      "gitBlobSHA": "e7d64d3cc049be2db249a5f3d810e33a3fe861cb",
+      "sha256": "a972349a49ecf7d8c04b8327902aeadd6d7394cc1fbccb980358edf502a1eaa0",
+      "bytes": 211132,
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "format": "WEBP",
+      "alpha": true
+    }
+  ],
+  "testNotes": [
+    "source RGBA PNGs confirmed to be 1086x1448",
+    "five output WebPs reopened and format, dimensions, alpha verified",
+    "GitHub blobs SHA compared exactly to locally calculated git hash-object",
+    "overlay comparison previously reviewed by user; no independent face-landmark signoff or Android render",
+    "smile is latest wider-smile revision, not earlier batch version"
+  ]
+}
