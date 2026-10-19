@@ -9,6 +9,7 @@ const galleryDescription = document.getElementById("gallery-description");
 const galleryViewModes = document.getElementById("gallery-view-modes");
 const galleryVersionControls = document.getElementById("gallery-version-controls");
 const galleryCanvases = document.getElementById("gallery-canvases");
+const galleryTryHome = document.getElementById("gallery-try-home");
 const galleryModeButtons = [...galleryPage.querySelectorAll("[data-gallery-mode]")];
 const galleryVersionButtons = [...galleryPage.querySelectorAll("[data-gallery-version]")];
 
@@ -85,6 +86,7 @@ function renderGallery() {
   });
   galleryItems.replaceChildren(...itemButtons);
 
+  galleryTryHome.hidden = group.id !== "private-v2";
   galleryTitle.textContent = group.label + " · " + item.label +
     (item.adoptedVersion ? (item.adoptedVersion === "current" ? "（採用済み）" : "（採用：修正前）") : "");
   galleryViewModes.hidden = !comparable;
@@ -109,11 +111,13 @@ function renderGallery() {
       galleryFrame(item, version, comparable ? (version === "before" ? "修正前" : "修正後") : (item.adoptedVersion ? "採用版" : "登録素材"))
     );
   }
-  galleryDescription.textContent = comparable
-    ? (isSideBySide
-      ? "左右にスクロールして比較できます。画像の透明余白や人物位置は補正していません。"
-      : "修正前・修正後を同じ表示枠で切り替えられます。透明余白や人物位置は補正していません。")
-    : "採用済みの画像です。旧差分は整理済みです。";
+  galleryDescription.textContent = group.id === "private-v2"
+    ? "試験素材（未正式採用）。1086 × 1448 px、5表情共通の表示枠です。閲覧のみではホームに反映されません。"
+    : comparable
+      ? (isSideBySide
+        ? "左右にスクロールして比較できます。画像の透明余白や人物位置は補正していません。"
+        : "修正前・修正後を同じ表示枠で切り替えられます。透明余白や人物位置は補正していません。")
+      : "採用済みの画像です。旧差分は整理済みです。";
 }
 
 async function loadGallery() {
@@ -165,6 +169,20 @@ galleryVersionButtons.forEach((button) => button.addEventListener("click", () =>
   selectedVersion = button.dataset.galleryVersion;
   renderGallery();
 }));
+
+galleryTryHome.addEventListener("click", () => {
+  if (selectedGroupId !== "private-v2" ||
+      !galleryCatalog?.groups.find(({ id }) => id === "private-v2")?.items.some(({ id }) => id === selectedItemId)) return;
+  galleryDescription.textContent = "試験画像5枚を確認中…";
+  window.dispatchEvent(new CustomEvent("shiori:try-private-v2", {
+    detail: { expression: selectedItemId }
+  }));
+});
+window.addEventListener("shiori:private-v2-result", (event) => {
+  if (!event.detail?.ok && selectedGroupId === "private-v2") {
+    galleryDescription.textContent = "試験素材の読み込み検査に失敗しました。ホームの衣装は変更していません。";
+  }
+});
 
 // Opening an authenticated gallery is the only trigger for the first asset request.
 // No images are fetched during login or on unrelated screens.

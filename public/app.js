@@ -2173,6 +2173,10 @@ const shioriHomeArt = shioriHomeTouch.querySelector(".character-layer__art");
 // 衣装切り替えの試験用状態。端末やD1へ保存せず、ログイン時は既存衣装に戻す。
 const outfitSelect = byId("shiori-outfit");
 const outfitStatus = byId("shiori-outfit-status");
+const privateExpressionWrap = byId("shiori-private-expression-wrap");
+const privateExpressionSelect = byId("shiori-private-expression");
+const privateTrialStatus = byId("shiori-private-trial-status");
+const privateTrialOption = outfitSelect.querySelector('option[value="private-v2"]');
 // 衣装／表情は固定素材。現行ジム立ち絵は第1話の採用 normal を共用し、
 // ホームでのジム用表情自動切り替えはまだ行わない。部屋着は従来どおり均等抽選。
 // 画像ごとの補正値は CSS 変数へ流し、ホームの承認済み距離感を保つ。
@@ -2221,8 +2225,29 @@ const homePortraits = {
         size, { ...roomwearLayout[size], ...(overrides[size] || {}) }
       ])
     )
-  }))
+  })),
+  // 1086×1448、5枚共通の試験レイアウト。表情別補正は定義しない。
+  "private-v2": [
+    { id: "normal", label: "通常", outfit: "private-v2",
+      src: "/assets/shiori/home/v2/shiori-private-home-normal-r1.webp",
+      width: 1086, height: 1448, layout: null },
+    { id: "smile", label: "笑顔", outfit: "private-v2",
+      src: "/assets/shiori/home/v2/shiori-private-home-smile-r1.webp",
+      width: 1086, height: 1448, layout: null },
+    { id: "thinking", label: "考える", outfit: "private-v2",
+      src: "/assets/shiori/home/v2/shiori-private-home-thinking-r1.webp",
+      width: 1086, height: 1448, layout: null },
+    { id: "surprised", label: "驚き", outfit: "private-v2",
+      src: "/assets/shiori/home/v2/shiori-private-home-surprised-r1.webp",
+      width: 1086, height: 1448, layout: null },
+    { id: "playful", label: "いたずら", outfit: "private-v2",
+      src: "/assets/shiori/home/v2/shiori-private-home-playful-r1.webp",
+      width: 1086, height: 1448, layout: null }
+  ]
 };
+let privateExpressionMode = "random";
+let privateTrialReady = false;
+let privateTrialCheck = null;
 let currentOutfit = "training";
 let currentPortrait = null;
 const failedHomePortraits = new Set();
@@ -2233,10 +2258,14 @@ function applyHomePortrait(variant) {
   shioriHomeTouch.dataset.outfit = variant.outfit;
   shioriHomeTouch.dataset.variant = variant.id;
   for (const size of ["base", "narrow", "short"]) {
-    const layout = variant.layout[size];
-    shioriHomeTouch.style.setProperty(`--home-character-scale-${size}`, String(layout.scale));
-    shioriHomeTouch.style.setProperty(`--home-character-origin-${size}`, layout.origin);
-    shioriHomeTouch.style.setProperty(`--home-character-bottom-${size}`, layout.bottom);
+    const layout = variant.layout?.[size];
+    for (const [key, value] of Object.entries({
+      scale: layout?.scale, origin: layout?.origin, bottom: layout?.bottom
+    })) {
+      const property = `--home-character-${key}-${size}`;
+      if (value === undefined) shioriHomeTouch.style.removeProperty(property);
+      else shioriHomeTouch.style.setProperty(property, String(value));
+    }
   }
   shioriHomeArt.width = variant.width;
   shioriHomeArt.height = variant.height;
@@ -2244,7 +2273,9 @@ function applyHomePortrait(variant) {
   outfitSelect.value = currentOutfit;
   outfitStatus.textContent = variant.outfit === "roomwear"
     ? `部屋着・${variant.label}を表示中（表情はランダム）。`
-    : "トレーニングウェアを表示中。";
+    : variant.outfit === "private-v2"
+      ? `私服・v2試験版：${variant.label}（${privateExpressionMode === "random" ? "ランダム" : "固定"}）。正式採用ではありません。`
+      : "トレーニングウェアを表示中。";
 }
 
 // 直前と同じ差分を避ける。表情をセリフから選ぶ機能は現時点では持たせない。
@@ -2256,28 +2287,92 @@ function refreshOutfit({ reroll = false } = {}) {
     candidates = homePortraits.training;
     currentPortrait = null;
   }
-  const canReuse = !reroll && currentPortrait?.outfit === currentOutfit
-    && candidates.some((variant) => variant.id === currentPortrait.id);
-  if (!canReuse) {
-    const alternatives = candidates.filter((variant) => variant.id !== currentPortrait?.id
-      || variant.outfit !== currentPortrait?.outfit);
-    const pool = alternatives.length ? alternatives : candidates;
-    currentPortrait = pool[Math.floor(Math.random() * pool.length)];
+  const fixed = currentOutfit === "private-v2" && privateExpressionMode !== "random"
+    ? candidates.find((variant) => variant.id === privateExpressionMode)
+    : null;
+  if (fixed) {
+    currentPortrait = fixed;
+  } else {
+    const canReuse = !reroll && currentPortrait?.outfit === currentOutfit
+      && candidates.some((variant) => variant.id === currentPortrait.id);
+    if (!canReuse) {
+      const alternatives = candidates.filter((variant) => variant.id !== currentPortrait?.id
+        || variant.outfit !== currentPortrait?.outfit);
+      const pool = alternatives.length ? alternatives : candidates;
+      currentPortrait = pool[Math.floor(Math.random() * pool.length)];
+    }
   }
   applyHomePortrait(currentPortrait);
 }
 
-function selectOutfit(next) {
-  if (!authorized || !(next in homePortraits)) return;
+function selectOutfit(next, fixedExpression = null) {
+  if (!authorized || !Object.hasOwn(homePortraits, next)) return;
+  if (next === "private-v2" && !privateTrialReady) return;
   currentOutfit = next;
+  privateExpressionMode = next === "private-v2" &&
+    homePortraits["private-v2"].some(({ id }) => id === fixedExpression)
+    ? fixedExpression : "random";
+  privateExpressionSelect.value = privateExpressionMode;
+  privateExpressionWrap.hidden = next !== "private-v2";
+  if (next === "private-v2") setSceneLocation("room");
   refreshOutfit({ reroll: true });
 }
 
+function verifyPrivateTrialAssets() {
+  if (privateTrialReady) return Promise.resolve(true);
+  if (privateTrialCheck) return privateTrialCheck;
+  privateTrialOption.disabled = true;
+  privateTrialStatus.textContent = "私服・v2試験素材を確認中…";
+  privateTrialCheck = Promise.all(homePortraits["private-v2"].map(({ src }) => new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image.naturalWidth === 1086 && image.naturalHeight === 1448);
+    image.onerror = () => resolve(false);
+    image.src = src;
+  }))).then((checks) => {
+    // 5枚すべて読み込み成功・1086×1448の場合だけ選択肢を解放する。
+    privateTrialReady = checks.every(Boolean);
+    if (privateTrialReady) {
+      for (const {src} of homePortraits["private-v2"]) failedHomePortraits.delete(src);
+    }
+    privateTrialOption.disabled = !privateTrialReady;
+    privateTrialStatus.textContent = privateTrialReady
+      ? "私服・v2試験素材5枚の読み込みを確認。正式採用前の試験素材です。"
+      : "私服試験素材が不足または破損しています。衣装選択は利用できません。";
+    return privateTrialReady;
+  }).finally(() => { privateTrialCheck = null; });
+  return privateTrialCheck;
+}
+
 outfitSelect.addEventListener("change", () => selectOutfit(outfitSelect.value));
+privateExpressionSelect.addEventListener("change", () => {
+  if (!authorized || currentOutfit !== "private-v2") return;
+  const next = privateExpressionSelect.value;
+  if (next !== "random" && !homePortraits["private-v2"].some(({ id }) => id === next)) return;
+  privateExpressionMode = next;
+  refreshOutfit({ reroll: true });
+});
+window.addEventListener("shiori:try-private-v2", async (event) => {
+  if (!authorized || !homePortraits["private-v2"].some(({ id }) => id === event.detail?.expression)) return;
+  const ok = await verifyPrivateTrialAssets();
+  if (!authorized) return;
+  window.dispatchEvent(new CustomEvent("shiori:private-v2-result", { detail: { ok } }));
+  if (!ok) return;
+  selectOutfit("private-v2", event.detail.expression);
+  setScreen("home");
+});
 shioriHomeArt.addEventListener("error", () => {
-  if (currentOutfit !== "roomwear" || !currentPortrait
+  if (!["roomwear", "private-v2"].includes(currentOutfit) || !currentPortrait
     || currentPortrait.src !== shioriHomeArt.getAttribute("src")) return;
   failedHomePortraits.add(currentPortrait.src);
+  if (currentOutfit === "private-v2") {
+    // 実表示に失敗した私服は、表情別CSS修正せず既存衣装へ戻す。
+    privateTrialReady = false;
+    privateTrialOption.disabled = true;
+    privateTrialStatus.textContent = "私服試験画像を読み込めませんでした。再確認が必要です。";
+    selectOutfit("training");
+    outfitStatus.textContent = "私服試験画像を読み込めず、トレーニングウェアへ戻しました。";
+    return;
+  }
   const remaining = homePortraits.roomwear.some(({ src }) => !failedHomePortraits.has(src));
   refreshOutfit({ reroll: true });
   if (!remaining) {
@@ -2291,7 +2386,10 @@ function setDevPanelOpen(open, restoreFocus = true) {
   devPanel.hidden = !open;
   devPanelToggle.setAttribute("aria-expanded", String(open));
   devPanelToggle.setAttribute("aria-label", open ? "開発設定を閉じる" : "開発設定を開く");
-  if (open) outfitSelect.focus({ preventScroll: true });
+  if (open) {
+    void verifyPrivateTrialAssets();
+    outfitSelect.focus({ preventScroll: true });
+  }
   else if (restoreFocus && authorized && activePage === "home") devPanelToggle.focus({ preventScroll: true });
 }
 devPanelToggle.addEventListener("click", () => setDevPanelOpen(devPanel.hidden));
@@ -2506,7 +2604,10 @@ shioriHomeTouch.addEventListener("click", () => {
   // 同じアニメーションを連続タップでも先頭から再生する。
   void shioriHomeArt.offsetWidth;
   shioriHomeTouch.classList.add("is-poked");
-  if (currentOutfit === "roomwear") refreshOutfit({ reroll: true });
+  if (currentOutfit === "roomwear" ||
+      (currentOutfit === "private-v2" && privateExpressionMode === "random")) {
+    refreshOutfit({ reroll: true });
+  }
   showHomeGreeting();
 });
 // ネイティブのボタン押下ハイライトを避けつつ、キーボードでの操作性は維持する。
@@ -2612,7 +2713,11 @@ function setScreen(screen, pushHistory = true) {
   document.body.classList.toggle("is-record", screen === "record");
   document.body.classList.toggle("is-sd-page", ["record", "calendar", "analysis"].includes(screen));
   if (screen === "home") {
-    if (previousPage !== "home" && currentOutfit === "roomwear") refreshOutfit({ reroll: true });
+    if (previousPage !== "home" &&
+        (currentOutfit === "roomwear" ||
+          (currentOutfit === "private-v2" && privateExpressionMode === "random"))) {
+      refreshOutfit({ reroll: true });
+    }
     if (previousPage !== "home" || homeDialogue.hidden) showHomeGreeting();
   } else {
     ++greetingRequestId;
@@ -2711,6 +2816,9 @@ function setAuthenticated(next) {
       sceneLocation = randomSceneLocation();
       sceneTime = null;
       currentOutfit = "training";
+      privateExpressionMode = "random";
+      privateExpressionSelect.value = "random";
+      privateExpressionWrap.hidden = true;
       currentPortrait = null;
       failedHomePortraits.clear();
     }
@@ -2726,6 +2834,9 @@ function setAuthenticated(next) {
     delete sceneBackground.dataset.time;
     sceneStatus.textContent = "";
     currentOutfit = "training";
+    privateExpressionMode = "random";
+    privateExpressionSelect.value = "random";
+    privateExpressionWrap.hidden = true;
     currentPortrait = null;
     failedHomePortraits.clear();
     refreshOutfit();

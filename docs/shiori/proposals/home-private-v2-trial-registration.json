@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "status": "trial-unapproved",
+  "name": "Private home outfit v2 integration — not Home Portrait Standard v2 certification",
+  "scene": "home",
+  "outfitId": "v2",
+  "publicRoot": "public/assets/shiori/home/v2",
+  "sourceCommit": "0226dfd862f91e00b2ffeed58552d1afd8814f39",
+  "sourceManifest": "docs/shiori/proposals/home-portrait-v2-trial-assets/manifest.json",
+  "sourcePR": 28,
+  "canvas": [
+    1086,
+    1448
+  ],
+  "retainAlpha": true,
+  "requireLandmarkCertification": false,
+  "displayPolicy": "five common CSS rules; no variant-specific corrections",
+  "assets": [
+    {
+      "expression": "normal",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-normal-r1.webp",
+      "gitBlobSHA": "27f6e49dce05a46765213ca968372cdefe72587f",
+      "sha256": "3601b2ff8dce26edf0e555b58ad403aac3896a0137140c0c21bfced09e3bd2da",
+      "bytes": 246548
+    },
+    {
+      "expression": "smile",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-smile-r1.webp",
+      "gitBlobSHA": "5b8038c32a8368c76a0d090d04a0a99db0889009",
+      "sha256": "9411deda6103e5f9cdf0e9d5f48d65dddb1ace766e1d4d4f0ce406cad443e4a9",
+      "bytes": 199912
+    },
+    {
+      "expression": "thinking",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-thinking-r1.webp",
+      "gitBlobSHA": "a2ba4eaa0f42161333fcee4a6119451293277d91",
+      "sha256": "aaad7a89707b98f42538825c85db33ec381dfaafe98a782ace9cf2e1412c344f",
+      "bytes": 206782
+    },
+    {
+      "expression": "surprised",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-surprised-r1.webp",
+      "gitBlobSHA": "44dede4aac99fa4e8893932e618bd2d2e7d24f2e",
+      "sha256": "2a40dcd6907560ddc5ba246d0b3955d00baecc27020debccbc712eeae871e518",
+      "bytes": 212460
+    },
+    {
+      "expression": "playful",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-playful-r1.webp",
+      "gitBlobSHA": "e7d64d3cc049be2db249a5f3d810e33a3fe861cb",
+      "sha256": "a972349a49ecf7d8c04b8327902aeadd6d7394cc1fbccb980358edf502a1eaa0",
+      "bytes": 211132
+    }
+  ]
+}

@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261019-weekly-template-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261019-private-v2-trial-v1">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261019-weekly-template-v1"></script>
-  <link rel="stylesheet" href="/gallery.css?v=20261017-gallery-v1">
-  <script type="module" src="/gallery.js?v=20261018-remove-legacy-r1-v1"></script>
+  <script type="module" src="/app.js?v=20261019-private-v2-trial-v1"></script>
+  <link rel="stylesheet" href="/gallery.css?v=20261019-private-v2-trial-v1">
+  <script type="module" src="/gallery.js?v=20261019-private-v2-trial-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -461,10 +461,11 @@
 
         <section class="app-page" id="page-gallery" data-page="gallery" aria-labelledby="gallery-heading" hidden>
           <div class="page-heading"><h1 id="gallery-heading">ギャラリー</h1></div>
-          <p class="gallery-intro">栞の採用済み素材を確認。第1話の通常表情のみ修正前後を比較できます。</p>
+          <p class="gallery-intro">栞の採用済み素材と試験素材を確認。第1話の通常表情のみ修正前後を比較できます。</p>
           <div id="gallery-groups" class="gallery-group-tabs" role="group" aria-label="素材の分類">
             <button type="button" data-gallery-group="story" aria-pressed="true">ジム・第1話</button>
             <button type="button" data-gallery-group="home" aria-pressed="false">部屋着</button>
+            <button type="button" data-gallery-group="private-v2" aria-pressed="false">私服・v2試験</button>
             <button type="button" data-gallery-group="sd" aria-pressed="false">SD</button>
           </div>
           <div id="gallery-asset-list" class="gallery-asset-list" role="group" aria-label="表情を選ぶ"></div>
@@ -484,9 +485,10 @@
               <button type="button" data-gallery-version="after" aria-pressed="false">修正後</button>
             </div>
             <div id="gallery-canvases" class="gallery-canvases" aria-label="選択した画像"></div>
+            <button type="button" id="gallery-try-home" class="gallery-try-home" hidden>この表情をホームで試す</button>
             <p id="gallery-description" class="gallery-description" role="status" aria-live="polite">ギャラリーを読み込み中…</p>
           </section>
-          <p class="gallery-intro">ここでの切り替えは閲覧専用です。正式採用画像や物語内の表示には影響しません。</p>
+          <p class="gallery-intro">閲覧だけではホーム表示を変更しません。私服試験版は「ホームで試す」の操作時のみ一時反映し、正式採用にはなりません。</p>
         </section>
 
         <section class="app-page" id="page-settings" data-page="settings" aria-labelledby="settings-heading" hidden>
@@ -621,9 +623,9 @@
       <div class="dev-panel-fields scene-settings-panel">
         <div><label for="shiori-outfit">衣装</label>
           <select id="shiori-outfit" aria-describedby="shiori-outfit-status">
-            <option value="casual" disabled>私服（準備中）</option>
             <option value="training" selected>トレーニングウェア</option>
             <option value="roomwear">部屋着</option>
+            <option value="private-v2" disabled>私服・v2試験版</option>
           </select>
         </div>
         <div><label for="scene-location">場所</label>
@@ -639,6 +641,18 @@
           </select>
         </div>
       </div>
+      <div id="shiori-private-expression-wrap" class="private-v2-expression" hidden>
+        <label for="shiori-private-expression">私服の表情（検品用）</label>
+        <select id="shiori-private-expression">
+          <option value="random">ランダム</option>
+          <option value="normal">normal・通常</option>
+          <option value="smile">smile・笑顔</option>
+          <option value="thinking">thinking・考える</option>
+          <option value="surprised">surprised・驚き</option>
+          <option value="playful">playful・いたずら</option>
+        </select>
+      </div>
+      <p id="shiori-private-trial-status" class="scene-status" role="status" aria-live="polite">私服・v2試験版（素材未確認）</p>
       <p id="scene-status" class="scene-status" role="status" aria-live="polite"></p>
       <p id="shiori-outfit-status" class="visually-hidden" role="status" aria-live="polite"></p>
       <div class="dev-panel-actions">

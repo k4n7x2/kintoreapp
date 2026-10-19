@@ -104,6 +104,48 @@
       ]
     },
     {
+      "id": "private-v2",
+      "label": "私服・v2試験",
+      "status": "trial-unapproved",
+      "items": [
+        {
+          "id": "normal",
+          "label": "通常",
+          "versions": {
+            "current": "/assets/shiori/home/v2/shiori-private-home-normal-r1.webp"
+          }
+        },
+        {
+          "id": "smile",
+          "label": "笑顔",
+          "versions": {
+            "current": "/assets/shiori/home/v2/shiori-private-home-smile-r1.webp"
+          }
+        },
+        {
+          "id": "thinking",
+          "label": "考える",
+          "versions": {
+            "current": "/assets/shiori/home/v2/shiori-private-home-thinking-r1.webp"
+          }
+        },
+        {
+          "id": "surprised",
+          "label": "驚き",
+          "versions": {
+            "current": "/assets/shiori/home/v2/shiori-private-home-surprised-r1.webp"
+          }
+        },
+        {
+          "id": "playful",
+          "label": "いたずら",
+          "versions": {
+            "current": "/assets/shiori/home/v2/shiori-private-home-playful-r1.webp"
+          }
+        }
+      ]
+    },
+    {
       "id": "sd",
       "label": "SD",
       "items": [
