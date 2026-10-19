@@ -1,13 +1,18 @@
-// Gym Wi-Fi presence changes the home scene only. No attendance or workout records.
+// Outfit is a function of the effective scene. Wi-Fi can change the scene,
+// and a manual scene preview takes precedence. Never combine mismatched clothes.
 export const REGULAR_SCENE_LOCATIONS = Object.freeze(["city", "campus", "room"]);
+export const SCENE_OUTFITS = Object.freeze({
+  gym: "training",
+  city: "private-v2",
+  campus: "private-v2",
+  room: "roomwear"
+});
 
-export function resolveGymVisuals({ connected = false, preview = false, scene = "room", outfit = "roomwear" } = {}) {
+export function resolveGymVisuals({ connected = false, preview = false, scene = "room" } = {}) {
   const automatic = connected === true && preview !== true;
-  return {
-    automatic,
-    scene: automatic ? "gym" : scene,
-    outfit: automatic ? "training" : outfit
-  };
+  const requestedScene = Object.hasOwn(SCENE_OUTFITS, scene) ? scene : "room";
+  const effectiveScene = automatic ? "gym" : requestedScene;
+  return { automatic, scene: effectiveScene, outfit: SCENE_OUTFITS[effectiveScene] };
 }
 
 // Use server timestamps to calculate a lease duration; local device clock can be inaccurate.
