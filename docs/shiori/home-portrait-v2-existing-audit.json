@@ -1,0 +1,649 @@
+{
+  "name": "Existing v2 close-up portrait comparative diagnostics",
+  "referenceCommit": "f7148b56734f76faef386c97b4482c9c3e2f3508",
+  "status": "diagnostic-not-calibrated",
+  "faceRegionExcludedFromDrawDifference": [
+    330,
+    265,
+    725,
+    630
+  ],
+  "assets": {
+    "gym/normal": {
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-normal-alt1-before.webp",
+      "sha256": "d433ad6698a3524695109a29db302ea0869f5478f9fc61bcd242b710e761eda7",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        0,
+        3,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 0,
+        "bottom": 955,
+        "left": 35,
+        "right": 345
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            432.66,
+            441.99
+          ],
+          "pixels": 586
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            610.4,
+            352.28
+          ],
+          "pixels": 679
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            737.4,
+            259.05
+          ],
+          "pixels": 596
+        }
+      }
+    },
+    "gym/thinking": {
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-thinking-alt1.webp",
+      "sha256": "79248911e72b84e165949eb4e6029c37a022369d8fc5b691fbe25a50791b4ac5",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        0,
+        16,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 0,
+        "bottom": 939,
+        "left": 19,
+        "right": 333
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            429.21,
+            465.7
+          ],
+          "pixels": 620
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            604.39,
+            371.1
+          ],
+          "pixels": 719
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            720.4,
+            276.65
+          ],
+          "pixels": 665
+        }
+      }
+    },
+    "gym/surprised": {
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-surprised-alt1.webp",
+      "sha256": "9ec6a5ffc964563894db1142eec3b66e740ce0eb9ffc84ee28b7411d25450f8d",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        0,
+        11,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 0,
+        "bottom": 937,
+        "left": 8,
+        "right": 352
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            428.79,
+            457.46
+          ],
+          "pixels": 951
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            602.04,
+            366.4
+          ],
+          "pixels": 1001
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            725.22,
+            269.44
+          ],
+          "pixels": 1056
+        }
+      }
+    },
+    "gym/smile": {
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp",
+      "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        0,
+        0,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 38,
+        "bottom": 945,
+        "left": 38,
+        "right": 318
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            431.63,
+            440.41
+          ],
+          "pixels": 562
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            604.87,
+            350.79
+          ],
+          "pixels": 680
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            727.86,
+            259.97
+          ],
+          "pixels": 696
+        }
+      }
+    },
+    "gym/playful": {
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-playful-alt1.webp",
+      "sha256": "5fd2c4f9429366fee6c13e9aaf2319ac304bb44b9e977887a19451bc55dbfa24",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        0,
+        8,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 0,
+        "bottom": 988,
+        "left": 16,
+        "right": 313
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            429.19,
+            466.57
+          ],
+          "pixels": 620
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            605.87,
+            363.51
+          ],
+          "pixels": 796
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            723.9,
+            261.77
+          ],
+          "pixels": 642
+        }
+      }
+    },
+    "private/normal": {
+      "path": "public/assets/shiori/home/v2/shiori-private-home-normal-r1.webp",
+      "sha256": "3601b2ff8dce26edf0e555b58ad403aac3896a0137140c0c21bfced09e3bd2da",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        1,
+        0,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 46,
+        "bottom": 1029,
+        "left": 0,
+        "right": 254
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            433.6,
+            440.37
+          ],
+          "pixels": 753
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            604.11,
+            352.06
+          ],
+          "pixels": 811
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            728.01,
+            259.65
+          ],
+          "pixels": 890
+        }
+      }
+    },
+    "private/thinking": {
+      "path": "public/assets/shiori/home/v2/shiori-private-home-thinking-r1.webp",
+      "sha256": "aaad7a89707b98f42538825c85db33ec381dfaafe98a782ace9cf2e1412c344f",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        0,
+        0,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 48,
+        "bottom": 1046,
+        "left": 8,
+        "right": 263
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            436.55,
+            436.24
+          ],
+          "pixels": 664
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            608.31,
+            346.85
+          ],
+          "pixels": 735
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            729.49,
+            259.04
+          ],
+          "pixels": 892
+        }
+      }
+    },
+    "private/surprised": {
+      "path": "public/assets/shiori/home/v2/shiori-private-home-surprised-r1.webp",
+      "sha256": "2a40dcd6907560ddc5ba246d0b3955d00baecc27020debccbc712eeae871e518",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        0,
+        0,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 46,
+        "bottom": 1044,
+        "left": 36,
+        "right": 225
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            434.96,
+            433.47
+          ],
+          "pixels": 946
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            603.79,
+            344.7
+          ],
+          "pixels": 1161
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            730.38,
+            259.79
+          ],
+          "pixels": 579
+        }
+      }
+    },
+    "private/smile": {
+      "path": "public/assets/shiori/home/v2/shiori-private-home-smile-r1.webp",
+      "sha256": "9411deda6103e5f9cdf0e9d5f48d65dddb1ace766e1d4d4f0ce406cad443e4a9",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        0,
+        0,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 47,
+        "bottom": 1057,
+        "left": 23,
+        "right": 237
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            433.26,
+            439.24
+          ],
+          "pixels": 692
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            604.15,
+            350.86
+          ],
+          "pixels": 771
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            728.17,
+            261.22
+          ],
+          "pixels": 760
+        }
+      }
+    },
+    "private/playful": {
+      "path": "public/assets/shiori/home/v2/shiori-private-home-playful-r1.webp",
+      "sha256": "a972349a49ecf7d8c04b8327902aeadd6d7394cc1fbccb980358edf502a1eaa0",
+      "format": "WEBP",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "native_alpha": true,
+      "has_fully_transparent_pixels": true,
+      "bbox_alpha_gt32": [
+        0,
+        0,
+        1086,
+        1448
+      ],
+      "edge_contact_pixels_alpha_gt32": {
+        "top": 47,
+        "bottom": 1040,
+        "left": 27,
+        "right": 250
+      },
+      "anchors_color_proxies": {
+        "screen_left_iris_proxy": {
+          "detected": true,
+          "xy": [
+            433.55,
+            439.32
+          ],
+          "pixels": 587
+        },
+        "screen_right_iris_proxy": {
+          "detected": true,
+          "xy": [
+            606.46,
+            352.97
+          ],
+          "pixels": 586
+        },
+        "flower_proxy": {
+          "detected": true,
+          "xy": [
+            729.61,
+            256.49
+          ],
+          "pixels": 734
+        }
+      }
+    }
+  },
+  "groupComparisons": {
+    "gym/thinking vs normal": {
+      "mask_iou": 0.9517,
+      "outside_face_union_pixels": 993230,
+      "outside_face_changed_pixels_mean_rgb_gt35": 161645,
+      "outside_face_changed_percent": 16.27,
+      "interpretation": "heuristic, includes shading and re-drawing, NOT direct eye anchor or anatomical validation"
+    },
+    "gym/surprised vs normal": {
+      "mask_iou": 0.9559,
+      "outside_face_union_pixels": 1005420,
+      "outside_face_changed_pixels_mean_rgb_gt35": 166817,
+      "outside_face_changed_percent": 16.59,
+      "interpretation": "heuristic, includes shading and re-drawing, NOT direct eye anchor or anatomical validation"
+    },
+    "gym/smile vs normal": {
+      "mask_iou": 0.9792,
+      "outside_face_union_pixels": 984316,
+      "outside_face_changed_pixels_mean_rgb_gt35": 101082,
+      "outside_face_changed_percent": 10.27,
+      "interpretation": "heuristic, includes shading and re-drawing, NOT direct eye anchor or anatomical validation"
+    },
+    "gym/playful vs normal": {
+      "mask_iou": 0.9638,
+      "outside_face_union_pixels": 999170,
+      "outside_face_changed_pixels_mean_rgb_gt35": 153320,
+      "outside_face_changed_percent": 15.34,
+      "interpretation": "heuristic, includes shading and re-drawing, NOT direct eye anchor or anatomical validation"
+    },
+    "private/thinking vs normal": {
+      "mask_iou": 0.983,
+      "outside_face_union_pixels": 1002877,
+      "outside_face_changed_pixels_mean_rgb_gt35": 94308,
+      "outside_face_changed_percent": 9.4,
+      "interpretation": "heuristic, includes shading and re-drawing, NOT direct eye anchor or anatomical validation"
+    },
+    "private/surprised vs normal": {
+      "mask_iou": 0.9734,
+      "outside_face_union_pixels": 1003761,
+      "outside_face_changed_pixels_mean_rgb_gt35": 108884,
+      "outside_face_changed_percent": 10.85,
+      "interpretation": "heuristic, includes shading and re-drawing, NOT direct eye anchor or anatomical validation"
+    },
+    "private/smile vs normal": {
+      "mask_iou": 0.9727,
+      "outside_face_union_pixels": 1003743,
+      "outside_face_changed_pixels_mean_rgb_gt35": 110711,
+      "outside_face_changed_percent": 11.03,
+      "interpretation": "heuristic, includes shading and re-drawing, NOT direct eye anchor or anatomical validation"
+    },
+    "private/playful vs normal": {
+      "mask_iou": 0.9763,
+      "outside_face_union_pixels": 1001886,
+      "outside_face_changed_pixels_mean_rgb_gt35": 125872,
+      "outside_face_changed_percent": 12.56,
+      "interpretation": "heuristic, includes shading and re-drawing, NOT direct eye anchor or anatomical validation"
+    }
+  },
+  "warnings": [],
+  "crossGroupColorCentroidProxyDelta": {
+    "normal": {
+      "screen_left_iris_proxy": [
+        0.94,
+        -1.62
+      ],
+      "screen_right_iris_proxy": [
+        -6.29,
+        -0.22
+      ],
+      "flower_proxy": [
+        -9.39,
+        0.6
+      ]
+    },
+    "thinking": {
+      "screen_left_iris_proxy": [
+        7.34,
+        -29.46
+      ],
+      "screen_right_iris_proxy": [
+        3.92,
+        -24.25
+      ],
+      "flower_proxy": [
+        9.09,
+        -17.61
+      ]
+    },
+    "surprised": {
+      "screen_left_iris_proxy": [
+        6.17,
+        -23.99
+      ],
+      "screen_right_iris_proxy": [
+        1.75,
+        -21.7
+      ],
+      "flower_proxy": [
+        5.16,
+        -9.65
+      ]
+    },
+    "smile": {
+      "screen_left_iris_proxy": [
+        1.63,
+        -1.17
+      ],
+      "screen_right_iris_proxy": [
+        -0.72,
+        0.07
+      ],
+      "flower_proxy": [
+        0.31,
+        1.25
+      ]
+    },
+    "playful": {
+      "screen_left_iris_proxy": [
+        4.36,
+        -27.25
+      ],
+      "screen_right_iris_proxy": [
+        0.59,
+        -10.54
+      ],
+      "flower_proxy": [
+        5.71,
+        -5.28
+      ]
+    }
+  },
+  "auditRun": "https://github.com/k4n7x2/kintoreapp/actions/runs/39270169765",
+  "userMaster": {
+    "uploadedSource": "11621.webp",
+    "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
+    "sameBytesAsGitHubAsset": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp",
+    "verifiedGitBlobSha": "2684bf59ba281ceca9ce468030c807239ea2a665",
+    "status": "GitHub deployed asset matches bytes; not a docs/shiori/reference formal baseline, image generation tool input not verified"
+  },
+  "limitations": [
+    "Purple-pixel centroid is not a precise eye outline or head anchor",
+    "Outside-face pixel difference does not prove individual anatomical misalignment",
+    "No source PNG originals for pixel-perfect edit verification",
+    "No automated face identity grading or real Android device check",
+    "This is a quantitative diagnostic, not certified v2 conformance"
+  ]
+}
