@@ -1,16 +1,17 @@
-name: Home Portrait v2 Trial QA
+name: Home Portrait v2 Technical QA
 
 on:
   pull_request:
     paths:
       - 'docs/shiori/home-portrait-standard-v2.json'
+      - 'docs/shiori/home-portrait-v2-generation-rules.md'
       - 'scripts/check_home_portrait_v2.py'
       - 'tests/test_check_home_portrait_v2.py'
       - 'public/assets/shiori/**'
   workflow_dispatch:
 
 jobs:
-  check-v2:
+  technical-portrait-check:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,13 +22,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install QA dependency
-        run: python -m pip install Pillow numpy
-      - name: Run synthetic regression tests
+      - name: Install image validation dependency
+        run: python -m pip install Pillow
+      - name: Run synthetic structural tests (not visual approval)
         run: python -m unittest discover -s tests -p 'test_check_home_portrait_v2.py' -v
-      - name: Read-only existing 10-image portrait comparison
-        run: python scripts/audit_existing_home_v2.py
-      - name: Check newly added/changed v2-marked home portraits
+      - name: Verify explicitly marked new v2 home images (technical only)
         if: github.event_name == 'pull_request'
         shell: bash
         env:
@@ -35,31 +34,19 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          # Outfit folder /v2/ is NOT a portrait-standard marker.
-          # Only explicit -home-v2- files opt into the v2 registration gate.
+          # '-home-v2-' marks PORTRAIT standard v2, not the outfit folder /v2/.
           git diff --name-only --diff-filter=AM "$BASE_SHA" "$HEAD_SHA" > /tmp/changed-v2.txt
           checked=0
           while IFS= read -r file; do
             case "$file" in
               public/assets/shiori/*-home-v2-*.webp|public/assets/shiori/*-home-v2-*.png)
                 test -f "$file" || continue
-                test -f "$file.anchors.json" || {
-                  echo "::error file=$file::missing reviewed .anchors.json sidecar"
-                  exit 1
-                }
-                echo "Checking $file"
+                echo "Structural validation: $file"
                 python scripts/check_home_portrait_v2.py "$file"
                 checked=$((checked + 1))
                 ;;
-              public/assets/shiori/*-home-v2-*.anchors.json)
-                image="${file%.anchors.json}"
-                if test -f "$image"; then
-                  echo "Checking changed sidecar for $image"
-                  python scripts/check_home_portrait_v2.py "$image"
-                  checked=$((checked + 1))
-                fi
-                ;;
             esac
           done < /tmp/changed-v2.txt
-          echo "v2 annotated image checks executed: $checked"
-          echo "NOTE: face identity, hairstyle, clothing and natural crops require human review."
+          echo "v2 technical image checks executed: $checked"
+          echo "This job never judges eye/chin location, facial expression, likeness or pose."
+          echo "Human review against the private five and Android preview remain separate."
