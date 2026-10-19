@@ -2124,8 +2124,7 @@ function currentGymVisuals() {
   return resolveGymVisuals({
     connected: gymPresenceActive,
     preview: gymPreviewOverride,
-    scene: sceneLocation,
-    outfit: currentOutfit
+    scene: sceneLocation
   });
 }
 function isGymModeActive() { return currentGymVisuals().automatic; }
@@ -2201,8 +2200,13 @@ function refreshScene() {
 function setSceneLocation(nextLocation) {
   if (!authorized || !sceneLocations.includes(nextLocation)) return;
   sceneLocation = nextLocation;
+  if (!["city", "campus"].includes(nextLocation)) {
+    privateExpressionMode = "random";
+    privateExpressionSelect.value = "random";
+  }
   startManualGymPreview();
   refreshScene();
+  refreshOutfit({ reroll: true });
 }
 sceneLocationSelect.addEventListener("change", () => setSceneLocation(sceneLocationSelect.value));
 byId("scene-reroll").addEventListener("click", () => {
@@ -2238,13 +2242,12 @@ const homeDialogue = byId("shiori-home-dialogue");
 const shioriHomeTouch = byId("shiori-home-touch");
 const shioriHomeArt = shioriHomeTouch.querySelector(".character-layer__art");
 
-// 衣装切り替えの試験用状態。端末やD1へ保存せず、ログイン時は既存衣装に戻す。
+// 衣装は場所から一意に決定する。表情の試験指定のみメモリに保持する。
 const outfitSelect = byId("shiori-outfit");
 const outfitStatus = byId("shiori-outfit-status");
 const privateExpressionWrap = byId("shiori-private-expression-wrap");
 const privateExpressionSelect = byId("shiori-private-expression");
 const privateTrialStatus = byId("shiori-private-trial-status");
-const privateTrialOption = outfitSelect.querySelector('option[value="private-v2"]');
 // 衣装／表情は既存の固定素材を使用する。
 // ジムは第1話の採用済み5表情、部屋着は7表情をホームでもランダム切替する。
 // 画像ごとの補正値は CSS 変数へ流し、ホームの承認済み距離感を保つ。
@@ -2323,7 +2326,6 @@ const homePortraits = {
 let privateExpressionMode = "random";
 let privateTrialReady = false;
 let privateTrialCheck = null;
-let currentOutfit = "roomwear";
 let currentPortrait = null;
 const failedHomePortraits = new Set();
 
@@ -2356,6 +2358,8 @@ function applyHomePortrait(variant) {
 // 直前と同じ差分を避ける。表情をセリフから選ぶ機能は現時点では持たせない。
 function refreshOutfit({ reroll = false } = {}) {
   const activeOutfit = currentGymVisuals().outfit;
+  outfitSelect.value = activeOutfit;
+  privateExpressionWrap.hidden = activeOutfit !== "private-v2";
   let candidates = homePortraits[activeOutfit]
     .filter((variant) => !failedHomePortraits.has(variant.src));
   if (!candidates.length) {
@@ -2383,16 +2387,13 @@ function refreshOutfit({ reroll = false } = {}) {
   applyHomePortrait(currentPortrait);
 }
 
-function selectOutfit(next, fixedExpression = null) {
-  if (!authorized || !Object.hasOwn(homePortraits, next)) return;
-  if (next === "private-v2" && !privateTrialReady) return;
-  currentOutfit = next;
-  privateExpressionMode = next === "private-v2" &&
-    homePortraits["private-v2"].some(({ id }) => id === fixedExpression)
-    ? fixedExpression : "random";
-  privateExpressionSelect.value = privateExpressionMode;
-  privateExpressionWrap.hidden = next !== "private-v2";
-  if (next === "private-v2") sceneLocation = "room";
+// ギャラリーからの「ホームで試す」は私服に対応する街プレビューへ移る。
+function previewPrivateExpression(expression) {
+  if (!authorized || !privateTrialReady ||
+      !homePortraits["private-v2"].some(({ id }) => id === expression)) return;
+  if (!["city", "campus"].includes(sceneLocation)) sceneLocation = "city";
+  privateExpressionMode = expression;
+  privateExpressionSelect.value = expression;
   startManualGymPreview();
   refreshScene();
   refreshOutfit({ reroll: true });
@@ -2401,7 +2402,6 @@ function selectOutfit(next, fixedExpression = null) {
 function verifyPrivateTrialAssets() {
   if (privateTrialReady) return Promise.resolve(true);
   if (privateTrialCheck) return privateTrialCheck;
-  privateTrialOption.disabled = true;
   privateTrialStatus.textContent = "私服・v2試験素材を確認中…";
   privateTrialCheck = Promise.all(homePortraits["private-v2"].map(({ src }) => new Promise((resolve) => {
     const image = new Image();
@@ -2414,18 +2414,16 @@ function verifyPrivateTrialAssets() {
     if (privateTrialReady) {
       for (const {src} of homePortraits["private-v2"]) failedHomePortraits.delete(src);
     }
-    privateTrialOption.disabled = !privateTrialReady;
     privateTrialStatus.textContent = privateTrialReady
       ? "私服・v2試験素材5枚の読み込みを確認。正式採用前の試験素材です。"
-      : "私服試験素材が不足または破損しています。衣装選択は利用できません。";
+      : "私服試験素材が不足または破損しています。ギャラリーからの試験操作は利用できません。";
     return privateTrialReady;
   }).finally(() => { privateTrialCheck = null; });
   return privateTrialCheck;
 }
 
-outfitSelect.addEventListener("change", () => selectOutfit(outfitSelect.value));
 privateExpressionSelect.addEventListener("change", () => {
-  if (!authorized || currentOutfit !== "private-v2") return;
+  if (!authorized || currentGymVisuals().outfit !== "private-v2") return;
   const next = privateExpressionSelect.value;
   if (next !== "random" && !homePortraits["private-v2"].some(({ id }) => id === next)) return;
   privateExpressionMode = next;
@@ -2438,7 +2436,7 @@ window.addEventListener("shiori:try-private-v2", async (event) => {
   if (!authorized) return;
   window.dispatchEvent(new CustomEvent("shiori:private-v2-result", { detail: { ok } }));
   if (!ok) return;
-  selectOutfit("private-v2", event.detail.expression);
+  previewPrivateExpression(event.detail.expression);
   setScreen("home");
 });
 shioriHomeArt.addEventListener("error", () => {
@@ -2446,21 +2444,20 @@ shioriHomeArt.addEventListener("error", () => {
   if (!["training", "roomwear", "private-v2"].includes(outfit) || !currentPortrait
     || currentPortrait.outfit !== outfit || currentPortrait.src !== shioriHomeArt.getAttribute("src")) return;
   failedHomePortraits.add(currentPortrait.src);
-  if (currentOutfit === "private-v2") {
-    // 実表示に失敗した私服は、表情別CSS修正せず既存衣装へ戻す。
+  const failedOutfit = currentPortrait.outfit;
+  if (failedOutfit === "private-v2") {
     privateTrialReady = false;
-    privateTrialOption.disabled = true;
-    privateTrialStatus.textContent = "私服試験画像を読み込めませんでした。再確認が必要です。";
-    selectOutfit("roomwear");
-    outfitStatus.textContent = "私服試験画像を読み込めず、部屋着へ戻しました。";
-    return;
+    privateExpressionMode = "random";
+    privateExpressionSelect.value = "random";
+    privateTrialStatus.textContent = "私服画像の読み込みに失敗しました。利用可能な別表情を試します。";
   }
-  const remaining = homePortraits[outfit].some(({ src }) => !failedHomePortraits.has(src));
   refreshOutfit({ reroll: true });
-  if (!remaining && outfit === "roomwear") {
-    outfitStatus.textContent = "部屋着の画像を読み込めませんでした。ジム以外ではトレーニングウェアを表示しません。";
-  } else if (!remaining && outfit === "training") {
-    outfitStatus.textContent = "トレーニングウェア5表情を読み込めませんでした。";
+  if (!currentPortrait) {
+    outfitStatus.textContent = failedOutfit === "private-v2"
+      ? "私服の画像を読み込めませんでした。場所に合わない衣装へは切り替えません。"
+      : failedOutfit === "training"
+        ? "トレーニングウェア5表情を読み込めませんでした。"
+        : "部屋着の画像を読み込めませんでした。場所に合わない衣装へは切り替えません。";
   }
 });
 const devPanel = byId("dev-settings-panel");
@@ -2472,7 +2469,7 @@ function setDevPanelOpen(open, restoreFocus = true) {
   devPanelToggle.setAttribute("aria-label", open ? "開発設定を閉じる" : "開発設定を開く");
   if (open) {
     void verifyPrivateTrialAssets();
-    outfitSelect.focus({ preventScroll: true });
+    sceneLocationSelect.focus({ preventScroll: true });
   }
   else if (restoreFocus && authorized && activePage === "home") devPanelToggle.focus({ preventScroll: true });
 }
@@ -2490,16 +2487,15 @@ byId("dev-settings-reset").addEventListener("click", () => {
   sceneTimeOverride = "auto";
   gymPreviewOverride = false;
   sceneLocation = randomSceneLocation();
-  currentOutfit = "roomwear";
   privateExpressionMode = "random";
   privateExpressionSelect.value = "random";
   privateExpressionWrap.hidden = true;
   refreshScene();
   refreshOutfit({ reroll: true });
   if (activePage === "home") showHomeGreeting();
-  byId("dev-settings-feedback").textContent = "自動連動に戻しました。ジム以外では部屋着と通常背景を表示します。";
+  byId("dev-settings-feedback").textContent = "自動連動に戻しました。衣装は場所に合わせて切り替わります。";
 });
-[sceneLocationSelect, sceneTimeSelect, outfitSelect].forEach((control) => {
+[sceneLocationSelect, sceneTimeSelect].forEach((control) => {
   control.addEventListener("change", () => { byId("dev-settings-feedback").textContent = ""; });
 });
 byId("scene-reroll").addEventListener("click", () => { byId("dev-settings-feedback").textContent = ""; });
@@ -2939,7 +2935,6 @@ function setAuthenticated(next) {
       loadExerciseNames();
       sceneLocation = randomSceneLocation();
       sceneTime = null;
-      currentOutfit = "roomwear";
       privateExpressionMode = "random";
       privateExpressionSelect.value = "random";
       privateExpressionWrap.hidden = true;
@@ -2958,7 +2953,6 @@ function setAuthenticated(next) {
     delete sceneBackground.dataset.location;
     delete sceneBackground.dataset.time;
     sceneStatus.textContent = "";
-    currentOutfit = "roomwear";
     privateExpressionMode = "random";
     privateExpressionSelect.value = "random";
     privateExpressionWrap.hidden = true;
