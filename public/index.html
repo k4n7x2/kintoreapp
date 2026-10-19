@@ -8,7 +8,7 @@
   <title>ログイン</title>
   <link rel="stylesheet" href="/styles.css?v=20261019-private-v2-match-training-v3">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261019-private-v2-trial-v1"></script>
+  <script type="module" src="/app.js?v=20261019-gym-presence-auto-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261019-private-v2-trial-v1">
   <script type="module" src="/gallery.js?v=20261019-private-v2-trial-v1"></script>
 </head>
@@ -81,7 +81,7 @@
             <div class="character-scene character-scene--home" data-character-scene="home">
               <div id="character-layer-home" class="character-layer character-layer--home" data-character-layer="home">
                 <div id="shiori-home-touch" class="character-layer__touch" role="button" tabindex="0" aria-label="栞に話しかける（セリフを変える）" aria-controls="shiori-home-dialogue">
-                  <img class="character-layer__art" src="/assets/shiori/gim/v1/shiori-gim-story-normal-alt1-before.webp" alt="" aria-hidden="true" draggable="false" width="1086" height="1448" decoding="async">
+                  <img class="character-layer__art" src="/assets/shiori/home/v1/shiori-home-roomwear-normal-r1.webp" alt="" aria-hidden="true" draggable="false" width="941" height="1672" decoding="async">
                 </div>
                 <div id="shiori-home-dialogue" class="character-layer__dialogue" role="status" aria-live="polite" aria-atomic="true" hidden></div>
               </div>
@@ -623,8 +623,8 @@
       <div class="dev-panel-fields scene-settings-panel">
         <div><label for="shiori-outfit">衣装</label>
           <select id="shiori-outfit" aria-describedby="shiori-outfit-status">
-            <option value="training" selected>トレーニングウェア</option>
-            <option value="roomwear">部屋着</option>
+            <option value="training">トレーニングウェア</option>
+            <option value="roomwear" selected>部屋着</option>
             <option value="private-v2" disabled>私服・v2試験版</option>
           </select>
         </div>
@@ -659,7 +659,7 @@
         <button type="button" id="scene-reroll" class="scene-reroll">場所をランダムに</button>
         <button type="button" id="dev-settings-reset" class="scene-reroll">リセット</button>
       </div>
-      <p id="scene-time-hint" class="scene-hint">変更はその場で反映・再読み込みでリセット。時間帯は背景のみ。</p>
+      <p id="scene-time-hint" class="scene-hint">通常はWi-Fiに応じて自動切替。衣装・場所を手動変更すると開発プレビューを優先し、「リセット」で自動へ戻ります。時間帯は背景のみ。</p>
       <p id="dev-settings-feedback" class="visually-hidden" role="status" aria-live="polite"></p>
     </section>
     <footer id="app-footer" hidden>kintoreapp · Build your own rhythm.</footer>
