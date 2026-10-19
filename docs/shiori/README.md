@@ -17,7 +17,9 @@
 
 ## ホーム用近接構図の統一試作（v2・1086×1448）
 
-2026-10-19のユーザー添付 `11621.webp` は従来のv2試作元 `11577.webp` とSHA-256が完全一致。構図と人物倍率の試験基準は[Home Portrait Standard v2統一制作仕様案](home-portrait-standard-v2.md)・[暫定座標JSON](home-portrait-standard-v2.json)に集約する。v1（941×1672）の正式規格・既存アプリ実装は維持。v2の精密座標校正・正式採用は未完了で、GitHubにある資料URLだけでは画像制作ツールへの入力成功を意味しない。**既存画像10枚の検査と構図マスターのGitHub実体確認**は[比較監査](home-portrait-v2-existing-audit.md)を参照。基準添付とバイナリ一致する画像は `public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp`。[STEP 5 目・顎の再注釈監査](home-portrait-v2-step5-review.md)で、ジム3表情の顔全体の移動疑いと旧監査との不整合を記録。まだ校正済みの顔座標はなく、全10枚の正式合格は保留。構図の元画像がGitHubにない、という旧試作記録は訂正された。
+**新しい選定：私服5枚をまとめてホームv2の制作参照セットとする。** [私服5枚の画像パスと実ファイルSHA](home-portrait-v2-private-reference-family.json)を固定し、`normal` は配置・倍率の代表、`thinking`／`surprised`／`smile`／`playful`は自然な表情変化の参照とする。判定方法と旧ジムsmile資料との境界は[基準変更記録](home-portrait-v2-private-baseline-decision.md)／[v2制作仕様](home-portrait-standard-v2.md)で管理。
+
+従来の添付`11621.webp`／ジム用`smile-alt1`は**過去の試作基準として保存するのみ**で、新規v2の主参照にはしない。[旧10枚比較監査](home-portrait-v2-existing-audit.md)や[STEP 5](home-portrait-v2-step5-review.md)は当時の基準での履歴。**顔の安定アンカーは未校正、既存10枚の座標合格も未確認。** 正式v1（941×1672）、既存アプリCSS、人物の正式参照3枚は維持。GitHubの存在・目視確認と画像制作ツールへの入力成功は別扱い。
 
 ## 正式画像とプロジェクト添付
 
