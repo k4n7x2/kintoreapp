@@ -3,6 +3,14 @@
 確認日：2026-10-16 JST。今回の機能拡張の確認元：main `eaecebe692af1607459783c6614e038d36df0bdd`。既存画像や認証方式の変更なし。
 この文書は確認時点の記録。今後は最新mainと再照合する。**以下の「現在の実装」を現行の要約とし、後半の履歴は各変更時点の記録として読む。** 技術・APIの詳細は[README](../README.md)、分担は[共通案内](project-guide.md)。
 
+## 2026-10-19 Cloudflare D1自動マイグレーションの本番運用確認
+
+- 確認対象：GitHub `main` `64743267bf250e897ffdfc327a119920cf4c7239`／本番Worker `kintoreapp`／D1 `kintore-db`（ID `08e556f8-8c88-47af-bac8-5c3ac4ed2903`）。ユーザー提供のCloudflare Dashboardスクリーンショットと2026-10-19のWorkers Buildsログを根拠とする。
+- 本番のCloudflare Workers Builds設定はDeploy command `npm run db:migrate:remote && npm run deploy`、ビルド用APIトークンにAccount/D1 Edit権限。GitHubソースへ新しい実行コードは加えていない。設定はCloudflare Dashboardで管理する。
+- 過去にConsoleから手動適用していた0001・0002・0004・0005・0007は、本番テーブル・列などを照合して `d1_migrations` に適用済み履歴を登録。0001由来の不足インデックス2件を追加後、5ファイルの履歴が存在することを確認した。
+- Cloudflare Buildログ（2026-10-19 10:51 UTC）：未適用の `0003_exercise_catalog.sql`、`0006_gym_machine_catalog.sql`、`0008_weekly_menu_templates.sql` がすべて成功。続いてWorker `kintoreapp` が `https://kintoreapp.q7m4vx9.workers.dev` へデプロイされ、`Success! Build completed.` を確認。Worker Version IDは `d9c1ecea-fa8a-4c7f-bcca-77bb94e3292b`。
+- **確認済み**：本番D1の3ファイル適用・Workers公開・コマンド順序。**未確認**：適用後の全テーブル件数・実データの差分監査、Android実機での0003/0006/0008機能操作、将来の新規SQLの実行。今回のGitHub作業は文書更新のみであり、本番D1操作・手動デプロイは実施しない。正式な運用手順は [README](../README.md) を参照。
+
 ## 2026-10-18 記録画面の日別ステータス2行化
 
 - 作業開始main：`506d966316be91722e46f4f0f66d2954cc0b4e44`。Androidの記録画面で重複していた「来館していない」「予定あり・編集」と2個の予定スイッチを撤去し、日付の直下へ**予定（未設定／ジム／休息の排他的3択）＋来館実績（独立したチェック）**を配置した。来館未登録時は「来館記録なし」と表現し、非来館を断定しない。
