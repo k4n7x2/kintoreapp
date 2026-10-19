@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "id": "shiori-home-portrait-v2-private-five",
-  "status": "user-selected-aesthetic-and-layout-reference-set; anatomical calibration pending",
-  "userDecision": "Use all five existing private outfit expressions as the reference family, rather than gym smile. Treat expression-dependent changes as acceptable where visually natural.",
+  "status": "user-selected-five-reference-images-for-generation; no-coordinate-gating",
+  "userDecision": "Use the five private portraits as production references for composition and expressive freedom; do not use mechanical face-coordinate acceptance thresholds.",
   "sourceCommit": "f7148b56734f76faef386c97b4482c9c3e2f3508",
   "sourceType": "Existing deployed WebP bytes in GitHub, NOT an image generation tool input",
   "primaryFamily": "private-v2-five",
@@ -18,26 +18,7 @@
         1448
       ],
       "alphaVerified": true,
-      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508",
-      "auditMeasurementOnly": {
-        "eyeLidCenterMidpoint": [
-          515.75,
-          396.25
-        ],
-        "eyeCanthusMidpoint": [
-          509.5,
-          407.5
-        ],
-        "chinTip": [
-          599,
-          589
-        ],
-        "eyeApertureHeight": {
-          "left": 53,
-          "right": 62
-        },
-        "status": "uncalibrated-visual-proxy-not-pass-condition"
-      }
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
     },
     {
       "id": "thinking",
@@ -49,26 +30,7 @@
         1448
       ],
       "alphaVerified": true,
-      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508",
-      "auditMeasurementOnly": {
-        "eyeLidCenterMidpoint": [
-          516.75,
-          394.75
-        ],
-        "eyeCanthusMidpoint": [
-          511.5,
-          399.25
-        ],
-        "chinTip": [
-          604,
-          587
-        ],
-        "eyeApertureHeight": {
-          "left": 52,
-          "right": 57
-        },
-        "status": "uncalibrated-visual-proxy-not-pass-condition"
-      }
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
     },
     {
       "id": "surprised",
@@ -80,26 +42,7 @@
         1448
       ],
       "alphaVerified": true,
-      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508",
-      "auditMeasurementOnly": {
-        "eyeLidCenterMidpoint": [
-          516.5,
-          392
-        ],
-        "eyeCanthusMidpoint": [
-          509.25,
-          398.5
-        ],
-        "chinTip": [
-          605,
-          580
-        ],
-        "eyeApertureHeight": {
-          "left": 64,
-          "right": 72
-        },
-        "status": "uncalibrated-visual-proxy-not-pass-condition"
-      }
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
     },
     {
       "id": "smile",
@@ -111,26 +54,7 @@
         1448
       ],
       "alphaVerified": true,
-      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508",
-      "auditMeasurementOnly": {
-        "eyeLidCenterMidpoint": [
-          516.25,
-          398
-        ],
-        "eyeCanthusMidpoint": [
-          509.5,
-          407.75
-        ],
-        "chinTip": [
-          599,
-          586
-        ],
-        "eyeApertureHeight": {
-          "left": 52,
-          "right": 60
-        },
-        "status": "uncalibrated-visual-proxy-not-pass-condition"
-      }
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
     },
     {
       "id": "playful",
@@ -142,26 +66,7 @@
         1448
       ],
       "alphaVerified": true,
-      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508",
-      "auditMeasurementOnly": {
-        "eyeLidCenterMidpoint": [
-          517.25,
-          397.75
-        ],
-        "eyeCanthusMidpoint": [
-          509.25,
-          407.25
-        ],
-        "chinTip": [
-          600,
-          585
-        ],
-        "eyeApertureHeight": {
-          "left": 56,
-          "right": 59
-        },
-        "status": "uncalibrated-visual-proxy-not-pass-condition"
-      }
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
     }
   ],
   "allowedExpressionDifferences": [
@@ -199,10 +104,17 @@
     "role": "former composition master, now retained only for source history and comparisons; NOT current primary baseline"
   },
   "commitGate": {
-    "status": "not-calibrated",
+    "status": "production-rule-selected_not-deployed",
     "formalV2Promotion": false,
     "existingAssetsReplaced": false,
     "sourceImagesReencoded": false,
     "cssChanged": false
+  },
+  "referenceRole": "private normal represents close-up camera distance, head size and framing; other four demonstrate natural face expression changes",
+  "reviewPolicy": {
+    "machine": "check image format, 1086x1448 dimensions, actual alpha, and decodability only",
+    "visual": "compare overall framing and identity with all five; allow eyelid, brow, iris, mouth, cheek and natural jaw changes",
+    "android": "check switching in a common viewport before app adoption",
+    "landmarkThresholds": "not used"
   }
 }
