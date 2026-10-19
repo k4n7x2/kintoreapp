@@ -218,3 +218,11 @@ npm run db:migrate:local
 - 本番Deploy commandには2026-10-19からD1マイグレーション処理を含めている。mainのWorkers Builds成功ログとD1の適用履歴を確認し、コードの反映だけでテーブル・データが正しいと断定しない。DBを初期化しない。
 - 0002未適用時は予定・来館欄に準備が必要と表示し、既存のトレーニング記録の読み出しと入力は継続する。本番DBの適用と実機検証は別途必要。
 - 編集中のフォームは画面間移動では維持されるが、再読み込み・ログアウトで破棄される。個人データをブラウザの永続ストレージへ保存しない。
+
+
+## ジムWi-Fi在席状態（MacroDroid連携・第1段階）
+
+- `POST /api/integrations/macrodroid/gym-presence` は専用Bearer Secret `GYM_PRESENCE_TOKEN` でWi-Fiの接続・切断イベントを受け付ける。通常のCookie認証・同一Origin書き込みとは独立した限定的な入口で、予定・来館実績・トレーニング記録は更新しない。
+- `GET /api/gym-presence` は従来のログインCookieで認証した個人用の状態取得。30分の期限付きフラグを返す。ブラウザの永続Storageへ保存しない。
+- `migrations/0009_gym_presence.sql` は専用の単一行テーブルを追加するのみ。既存の0001～0008のテーブル・行を変更しない。
+- **この段階ではAPIだけ**。ホームの衣装・背景・専用セリフ切替は次の段階で接続する。Secret・MacroDroidの設定手順、エラーと実機確認は [MacroDroid接続ガイド](docs/gym-presence-macrodroid.md) を参照。
