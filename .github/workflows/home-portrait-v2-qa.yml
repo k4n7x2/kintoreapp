@@ -27,8 +27,6 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_check_home_portrait_v2.py' -v
       - name: Read-only existing 10-image portrait comparison
         run: python scripts/audit_existing_home_v2.py
-      - name: Inspect anonymous STEP5 eye and chin panels
-        run: python scripts/step5_blind_review_panels.py
       - name: Check newly added/changed v2-marked home portraits
         if: github.event_name == 'pull_request'
         shell: bash
