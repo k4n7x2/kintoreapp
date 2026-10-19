@@ -44,7 +44,7 @@ test("private v2 trial images retain exact PR #28 blobs, canvas and alpha", () =
     const height = 1 + binary.readUIntLE(27, 3);
     assert.deepEqual([width,height], [1086,1448], id + " dimensions");
     const objectSha = createHash("sha1")
-      .update("blob " + binary.length + "\\0")
+      .update("blob " + binary.length).update(Buffer.from([0]))
       .update(binary).digest("hex");
     assert.equal(objectSha, sha, id + " original Git blob SHA");
   }

@@ -2331,9 +2331,12 @@ function verifyPrivateTrialAssets() {
   }))).then((checks) => {
     // 5枚すべて読み込み成功・1086×1448の場合だけ選択肢を解放する。
     privateTrialReady = checks.every(Boolean);
+    if (privateTrialReady) {
+      for (const {src} of homePortraits["private-v2"]) failedHomePortraits.delete(src);
+    }
     privateTrialOption.disabled = !privateTrialReady;
     privateTrialStatus.textContent = privateTrialReady
-      ? "私服・v2試験素材5枚の読み込みを確認。未認証の正式採用素材です。"
+      ? "私服・v2試験素材5枚の読み込みを確認。正式採用前の試験素材です。"
       : "私服試験素材が不足または破損しています。衣装選択は利用できません。";
     return privateTrialReady;
   }).finally(() => { privateTrialCheck = null; });
