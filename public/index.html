@@ -8,7 +8,7 @@
   <title>ログイン</title>
   <link rel="stylesheet" href="/styles.css?v=20261019-private-v2-match-training-v3">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261019-gym-presence-auto-v1"></script>
+  <script type="module" src="/app.js?v=20261019-location-outfit-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261019-private-v2-trial-v1">
   <script type="module" src="/gallery.js?v=20261019-private-v2-trial-v1"></script>
 </head>
@@ -488,7 +488,7 @@
             <button type="button" id="gallery-try-home" class="gallery-try-home" hidden>この表情をホームで試す</button>
             <p id="gallery-description" class="gallery-description" role="status" aria-live="polite">ギャラリーを読み込み中…</p>
           </section>
-          <p class="gallery-intro">閲覧だけではホーム表示を変更しません。私服試験版は「ホームで試す」の操作時のみ一時反映し、正式採用にはなりません。</p>
+          <p class="gallery-intro">閲覧だけではホーム表示を変更しません。私服試験版は街・大学の衣装として表示します。ギャラリーの「ホームで試す」では一時的に街の背景で表情を確認できます。正式採用にはなりません。</p>
         </section>
 
         <section class="app-page" id="page-settings" data-page="settings" aria-labelledby="settings-heading" hidden>
@@ -621,11 +621,11 @@
         <button type="button" id="dev-settings-close" class="header-icon-button" aria-label="開発設定を閉じる">×</button>
       </div>
       <div class="dev-panel-fields scene-settings-panel">
-        <div><label for="shiori-outfit">衣装</label>
-          <select id="shiori-outfit" aria-describedby="shiori-outfit-status">
+        <div><label for="shiori-outfit">衣装（場所に連動）</label>
+          <select id="shiori-outfit" aria-describedby="shiori-outfit-status" disabled>
             <option value="training">トレーニングウェア</option>
             <option value="roomwear" selected>部屋着</option>
-            <option value="private-v2" disabled>私服・v2試験版</option>
+            <option value="private-v2">私服・v2試験版</option>
           </select>
         </div>
         <div><label for="scene-location">場所</label>
@@ -659,7 +659,7 @@
         <button type="button" id="scene-reroll" class="scene-reroll">場所をランダムに</button>
         <button type="button" id="dev-settings-reset" class="scene-reroll">リセット</button>
       </div>
-      <p id="scene-time-hint" class="scene-hint">通常はWi-Fiに応じて自動切替。衣装・場所を手動変更すると開発プレビューを優先し、「リセット」で自動へ戻ります。時間帯は背景のみ。</p>
+      <p id="scene-time-hint" class="scene-hint">衣装は場所に連動（ジム＝トレーニング／街・大学＝私服／部屋＝部屋着）。場所の手動変更中はWi-Fiより開発プレビューを優先し、「リセット」で自動へ戻ります。時間帯は背景のみ。</p>
       <p id="dev-settings-feedback" class="visually-hidden" role="status" aria-live="polite"></p>
     </section>
     <footer id="app-footer" hidden>kintoreapp · Build your own rhythm.</footer>
