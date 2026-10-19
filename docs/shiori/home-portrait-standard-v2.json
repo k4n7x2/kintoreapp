@@ -164,6 +164,15 @@
   "qaEvidence": {
     "existingTenAssetAudit": "docs/shiori/home-portrait-v2-existing-audit.json",
     "humanReadableAudit": "docs/shiori/home-portrait-v2-existing-audit.md",
-    "status": "read-only quantitative diagnostics complete, anatomical eye/chin landmarks and Android review pending"
+    "status": "not calibrated: single-reviewer coordinate-grid estimates with ±8–12 px eye uncertainty",
+    "step4ManualLandmarks": "docs/shiori/home-portrait-v2-step4-landmarks.json",
+    "step4Report": "docs/shiori/home-portrait-v2-step4-landmarks.md",
+    "coordinateConflict": {
+      "previousTrialEyeSeparationPx": 184.56,
+      "step4CandidateEyeSeparationPx": 198.34,
+      "rightEyeXPreviously": 585,
+      "rightEyeXStep4Candidate": 601,
+      "decision": "Do not overwrite trial anchors until independently repeat-annotated"
+    }
   }
 }
