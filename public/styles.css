@@ -3200,39 +3200,8 @@ body.is-authenticated.is-sd-page #app-screen {
   .weekly-setup-day select {font-size:11px;}
 }
 
-/* 私服 v2 試験専用。1086×1448の5表情を同一位置に表示する。
-   部屋着より顔が約28 CSS px上に見えるため私服だけ下げる。
-   既存のトレーニング／部屋着の倍率・原点・下端補正は変更しない。 */
-#page-home .character-layer__touch[data-outfit="private-v2"] {
-  width: 100%;
-  right: -10px;
-  bottom: -58px;
-  max-height: 100%;
-  --home-character-scale: 1.14;
-  --home-character-origin: right bottom;
-}
-#page-home .character-layer__touch[data-outfit="private-v2"] .character-layer__art {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-  object-position: right bottom;
-}
-@media (max-width: 380px) {
-  #page-home .character-layer__touch[data-outfit="private-v2"] {
-    right: -10px;
-    bottom: -54px;
-    --home-character-scale: 1.14;
-    --home-character-origin: right bottom;
-  }
-}
-@media (max-height: 640px) {
-  body.is-authenticated.is-home #page-home .character-layer__touch[data-outfit="private-v2"] {
-    right: -10px;
-    bottom: -50px;
-    --home-character-scale: 1.06;
-    --home-character-origin: right bottom;
-  }
-}
+/* 私服v2の5表情は既存トレーニングウェアと同じ1086×1448キャンバス。
+   専用のbottom・scale・画像高を設けず、ホーム共通CSSの位置／倍率を適用する。 */
 .private-v2-expression:not([hidden]) {
   display: flex;
   align-items: center;
