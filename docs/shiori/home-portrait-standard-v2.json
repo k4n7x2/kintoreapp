@@ -173,6 +173,19 @@
       "rightEyeXPreviously": 585,
       "rightEyeXStep4Candidate": 601,
       "decision": "Do not overwrite trial anchors until independently repeat-annotated"
+    },
+    "step5FirstPass": "docs/shiori/home-portrait-v2-step5-blind-pass.json",
+    "step5Comparison": "docs/shiori/home-portrait-v2-step5-comparison.json",
+    "step5Review": "docs/shiori/home-portrait-v2-step5-review.md",
+    "step5EvidenceRun": "https://github.com/k4n7x2/kintoreapp/actions/runs/39275559673",
+    "step5Status": "tentative 5px-grid annotated canthi / lid / chin only; blind-order single analyst; calibration not completed",
+    "step5AnchorAmbiguity": {
+      "earlierTrialRightEyeX": 585,
+      "step5RightLidCenterX": 604,
+      "description": "incompatible tentative landmark definitions and partial occlusion; do not promote",
+      "gymPlayfulChinStep4Y": 584,
+      "step5Y": 605,
+      "note": "correction candidate, second independent reviewer pending"
     }
   }
 }
