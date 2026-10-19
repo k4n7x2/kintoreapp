@@ -27,9 +27,9 @@ GitHubは正式画像の管理先、ChatGPTプロジェクト添付は画像ツ�
 
 ## ホーム立ち絵v2の制作基準（2026-10-20選定）
 
-ユーザー指示で、**1086×1448のv2ホーム用立ち絵の主参照は既存の私服5表情一式**とする。[参照画像パス・SHA](shiori/home-portrait-v2-private-reference-family.json)、[基準変更記録](shiori/home-portrait-v2-private-baseline-decision.md)、[v2仕様](shiori/home-portrait-standard-v2.md)を参照。構図の代表は私服`normal`、表情の自然な可動域は私服`thinking`／`surprised`／`smile`／`playful`とする。旧ジムsmileの試作画像は履歴であり、現在のv2主参照ではない。
+ユーザー指示で、**1086×1448のv2ホーム用立ち絵の主参照は既存の私服5表情一式**とする。[参照画像パス・SHA](shiori/home-portrait-v2-private-reference-family.json)、[基準変更記録](shiori/home-portrait-v2-private-baseline-decision.md)、[制作時の共通ルール](shiori/home-portrait-v2-generation-rules.md)、[v2仕様](shiori/home-portrait-standard-v2.md)を参照。構図の代表は私服`normal`、表情の自然な可動域は私服`thinking`／`surprised`／`smile`／`playful`とする。旧ジムsmileの試作画像は履歴であり、現在のv2主参照ではない。
 
-目・眉・口・顎先の表情変化を座標エラーとして一律拒否しない。頭部の安定した輪郭・耳の根元・花飾り付近を複数比較し、**安定アンカーの校正が終わるまで画像規格への合格を出さない**。正式なv1規格・既存素材・CSS・本番は変更していない。GitHub上の5画像の存在を画像ツールへの入力成功と混同しない。
+**目・眉・口・顎先の位置を機械的な座標へ一致させない。** 構図・頭部の見かけの大きさ・髪／花飾り・姿勢の連続性は制作時の参照指示に組み込み、出力後に私服5枚との目視比較で評価する。Pythonは1086×1448・実形式・透過など技術要件だけ検査し、機械合格をビジュアル合格と呼ばない。正式なv1規格・既存素材・CSS・本番は変更していない。GitHub上の5画像の存在を画像ツールへの入力成功と混同しない。
 
 ## 制作と検査
 
