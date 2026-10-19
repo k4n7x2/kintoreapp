@@ -27,8 +27,6 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_check_home_portrait_v2.py' -v
       - name: Read-only existing 10-image portrait comparison
         run: python scripts/audit_existing_home_v2.py
-      - name: Prepare ephemeral landmark-inspection crops
-        run: python scripts/audit_home_v2_review_crops.py
       - name: Check newly added/changed v2-marked home portraits
         if: github.event_name == 'pull_request'
         shell: bash
