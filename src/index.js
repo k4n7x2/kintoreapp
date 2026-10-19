@@ -2,6 +2,7 @@ import { handleRepeatAPI } from "./workout-repeat.js";
 import { handleCalendarAPI } from "./calendar-api.js";
 import { handlePlanResetAPI } from "./plan-reset.js";
 import { handleTrainingSetupAPI } from "./training-setup.js";
+import { readGymPresence, writeGymPresence } from "./gym-presence.js";
 // 個人用ログイン。パスワードはCloudflare Secret APP_PASSWORDにのみ保存。
 // パスワードも筋トレ記録もGitHub/ブラウザStorageには保存しない。
 const encoder = new TextEncoder();
@@ -267,8 +268,18 @@ export default {
         });
       }
 
+      // External automation uses only a dedicated bearer token, never the login cookie.
+      if (url.pathname === "/api/integrations/macrodroid/gym-presence") {
+        if (method !== "POST") return respond({ error: "method_not_allowed" }, 405);
+        return writeGymPresence(request, env, respond);
+      }
+
       if (!(await isAuthenticated(request, env))) {
         return respond({ error: "authentication_required" }, 401);
+      }
+      if (url.pathname === "/api/gym-presence") {
+        if (method !== "GET") return respond({ error: "method_not_allowed" }, 405);
+        return readGymPresence(env.DB, respond);
       }
       if (url.pathname === "/api/session" && method === "GET") {
         return respond({ authenticated: true });

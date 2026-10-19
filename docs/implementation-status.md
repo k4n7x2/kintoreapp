@@ -1,5 +1,13 @@
 # 実装状況の確認記録
 
+## 2026-10-19 MacroDroidジム在席API（作業ブランチ／未公開）
+
+- 作業開始時main：`4aa04cdddea13f072a578a834ecd9db398bcec81`。ブランチ `feat/macrodroid-gym-presence-api` に、専用Bearer Secretを使うPOST通知とログイン認証付きGET状態取得を追加。来館・予定・休息・種目実績から完全に独立。
+- 30分期限付き状態を `migrations/0009_gym_presence.sql` の新規単一行D1テーブルで管理。古い接続・切断イベント、重複イベントで新しい状態を上書きしない。SecretをGitHubへ保存しない。
+- テスト `tests/gym-presence.test.js` を追加。画面での衣装・背景・セリフ切替は**この段階では未接続**。プレビュー／本番D1への適用、Workers公開、MacroDroid実機は未実施。合流後に通常のProduction Workers Builds経由で0009適用が必要。
+- 手順は `docs/gym-presence-macrodroid.md`。従来の個人用API・ログイン・既存データ・衣装画像は変更していない。
+
+
 確認日：2026-10-16 JST。今回の機能拡張の確認元：main `eaecebe692af1607459783c6614e038d36df0bdd`。既存画像や認証方式の変更なし。
 この文書は確認時点の記録。今後は最新mainと再照合する。**以下の「現在の実装」を現行の要約とし、後半の履歴は各変更時点の記録として読む。** 技術・APIの詳細は[README](../README.md)、分担は[共通案内](project-guide.md)。
 
