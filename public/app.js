@@ -2338,30 +2338,31 @@ function applyHomePortrait(variant) {
   shioriHomeArt.width = variant.width;
   shioriHomeArt.height = variant.height;
   if (shioriHomeArt.getAttribute("src") !== variant.src) shioriHomeArt.src = variant.src;
-  outfitSelect.value = currentOutfit;
+  outfitSelect.value = currentGymVisuals().outfit;
   outfitStatus.textContent = variant.outfit === "roomwear"
     ? `部屋着・${variant.label}を表示中（表情はランダム）。`
     : variant.outfit === "private-v2"
       ? `私服・v2試験版：${variant.label}（${privateExpressionMode === "random" ? "ランダム" : "固定"}）。正式採用ではありません。`
-      : "トレーニングウェアを表示中。";
+      : isGymModeActive() ? "トレーニングウェアを表示中（ジムWi-Fi連動）。" : "トレーニングウェアを表示中（開発プレビュー）。";
 }
 
 // 直前と同じ差分を避ける。表情をセリフから選ぶ機能は現時点では持たせない。
 function refreshOutfit({ reroll = false } = {}) {
-  let candidates = homePortraits[currentOutfit]
+  const activeOutfit = currentGymVisuals().outfit;
+  let candidates = homePortraits[activeOutfit]
     .filter((variant) => !failedHomePortraits.has(variant.src));
   if (!candidates.length) {
     currentOutfit = "training";
     candidates = homePortraits.training;
     currentPortrait = null;
   }
-  const fixed = currentOutfit === "private-v2" && privateExpressionMode !== "random"
+  const fixed = activeOutfit === "private-v2" && privateExpressionMode !== "random"
     ? candidates.find((variant) => variant.id === privateExpressionMode)
     : null;
   if (fixed) {
     currentPortrait = fixed;
   } else {
-    const canReuse = !reroll && currentPortrait?.outfit === currentOutfit
+    const canReuse = !reroll && currentPortrait?.outfit === activeOutfit
       && candidates.some((variant) => variant.id === currentPortrait.id);
     if (!canReuse) {
       const alternatives = candidates.filter((variant) => variant.id !== currentPortrait?.id
@@ -2382,7 +2383,9 @@ function selectOutfit(next, fixedExpression = null) {
     ? fixedExpression : "random";
   privateExpressionSelect.value = privateExpressionMode;
   privateExpressionWrap.hidden = next !== "private-v2";
-  if (next === "private-v2") setSceneLocation("room");
+  if (next === "private-v2") sceneLocation = "room";
+  startManualGymPreview();
+  refreshScene();
   refreshOutfit({ reroll: true });
 }
 
@@ -2417,6 +2420,7 @@ privateExpressionSelect.addEventListener("change", () => {
   const next = privateExpressionSelect.value;
   if (next !== "random" && !homePortraits["private-v2"].some(({ id }) => id === next)) return;
   privateExpressionMode = next;
+  startManualGymPreview();
   refreshOutfit({ reroll: true });
 });
 window.addEventListener("shiori:try-private-v2", async (event) => {
@@ -2472,9 +2476,16 @@ document.addEventListener("keydown", (event) => {
 byId("dev-settings-reset").addEventListener("click", () => {
   if (!authorized) return;
   sceneTimeOverride = "auto";
-  setSceneLocation(randomSceneLocation());
-  selectOutfit("training");
-  byId("dev-settings-feedback").textContent = "衣装をトレーニングウェア、時間帯を自動に戻し、場所を再抽選しました。";
+  gymPreviewOverride = false;
+  sceneLocation = randomSceneLocation();
+  currentOutfit = "roomwear";
+  privateExpressionMode = "random";
+  privateExpressionSelect.value = "random";
+  privateExpressionWrap.hidden = true;
+  refreshScene();
+  refreshOutfit({ reroll: true });
+  if (activePage === "home") showHomeGreeting();
+  byId("dev-settings-feedback").textContent = "自動連動に戻しました。ジム以外では部屋着と通常背景を表示します。";
 });
 [sceneLocationSelect, sceneTimeSelect, outfitSelect].forEach((control) => {
   control.addEventListener("change", () => { byId("dev-settings-feedback").textContent = ""; });
@@ -2482,6 +2493,8 @@ byId("dev-settings-reset").addEventListener("click", () => {
 byId("scene-reroll").addEventListener("click", () => { byId("dev-settings-feedback").textContent = ""; });
 let greetingData = null;
 let greetingLoading = null;
+let gymGreetingData = null;
+let gymGreetingLoading = null;
 let screenDialogueData = null;
 let screenDialogueLoading = null;
 let sdTouchDialogueLoading = null; // エラーも保持する（再試行ループを防止）。
@@ -2509,6 +2522,27 @@ async function ensureGreetingData() {
       .finally(() => { greetingLoading = null; });
   }
   return greetingLoading;
+}
+
+// Wi-Fi接続が確定した場合にだけ使う試験セリフ。正式な台本採用とは区別する。
+async function ensureGymGreetingData() {
+  if (gymGreetingData) return gymGreetingData;
+  if (!gymGreetingLoading) {
+    gymGreetingLoading = fetch("/data/shiori-gym-greetings-v0.1.json", { cache: "force-cache" })
+      .then(response => {
+        if (!response.ok) throw new Error("gym_greetings_unavailable");
+        return response.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data?.anytime) || !data.anytime.some(line => typeof line === "string" && line.trim())) {
+          throw new Error("invalid_gym_greetings");
+        }
+        gymGreetingData = data;
+        return data;
+      })
+      .finally(() => { gymGreetingLoading = null; });
+  }
+  return gymGreetingLoading;
 }
 
 // 記録／カレンダー専用115本は初回のみ読み込み、ユーザーの記録は保持しない。
@@ -2672,8 +2706,9 @@ shioriHomeTouch.addEventListener("click", () => {
   // 同じアニメーションを連続タップでも先頭から再生する。
   void shioriHomeArt.offsetWidth;
   shioriHomeTouch.classList.add("is-poked");
-  if (currentOutfit === "roomwear" ||
-      (currentOutfit === "private-v2" && privateExpressionMode === "random")) {
+  const outfit = currentGymVisuals().outfit;
+  if (outfit === "roomwear" ||
+      (outfit === "private-v2" && privateExpressionMode === "random")) {
     refreshOutfit({ reroll: true });
   }
   showHomeGreeting();
@@ -2699,23 +2734,27 @@ function greetingTimeSlot(hour) {
 async function showHomeGreeting() {
   const requestId = ++greetingRequestId;
   try {
-    await ensureGreetingData();
+    const inGym = isGymModeActive();
+    if (inGym) await ensureGymGreetingData();
+    else await ensureGreetingData();
     if (!authorized || activePage !== "home" || requestId !== greetingRequestId) return;
 
     const slot = greetingTimeSlot(new Date().getHours());
-    const candidates = [greetingData?.[slot], greetingData?.anytime]
+    const candidates = (inGym
+      ? [gymGreetingData?.[slot], gymGreetingData?.anytime]
+      : [greetingData?.[slot], greetingData?.anytime])
       .flat()
       .filter((line) => typeof line === "string" && line.trim());
     const alternatives = candidates.filter((line) => line !== lastHomeGreeting);
     const pool = alternatives.length ? alternatives : candidates;
-    const line = pool.length ? pool[Math.floor(Math.random() * pool.length)] : "あ、来た。今日はどうする？";
+    const line = pool.length ? pool[Math.floor(Math.random() * pool.length)] : (isGymModeActive() ? "あ、来た。今日は何からやる？" : "あ、来た。今日はどうする？");
     lastHomeGreeting = line;
     homeDialogue.textContent = line;
     homeDialogue.hidden = false;
   } catch {
     if (!authorized || activePage !== "home" || requestId !== greetingRequestId) return;
     // 読み込み失敗時にも、未確認の実績などを語らない短い一言だけ表示する。
-    homeDialogue.textContent = "あ、来た。今日はどうする？";
+    homeDialogue.textContent = isGymModeActive() ? "あ、来た。今日は何からやる？" : "あ、来た。今日はどうする？";
     homeDialogue.hidden = false;
   }
 }
@@ -2782,8 +2821,8 @@ function setScreen(screen, pushHistory = true) {
   document.body.classList.toggle("is-sd-page", ["record", "calendar", "analysis"].includes(screen));
   if (screen === "home") {
     if (previousPage !== "home" &&
-        (currentOutfit === "roomwear" ||
-          (currentOutfit === "private-v2" && privateExpressionMode === "random"))) {
+        (currentGymVisuals().outfit === "roomwear" ||
+          (currentGymVisuals().outfit === "private-v2" && privateExpressionMode === "random"))) {
       refreshOutfit({ reroll: true });
     }
     if (previousPage !== "home" || homeDialogue.hidden) showHomeGreeting();
@@ -2858,6 +2897,11 @@ function setAuthenticated(next) {
   if (!next) closeRepeatSheet(false);
   const wasAuthorized = authorized;
   if (!next || !wasAuthorized) {
+    ++gymPresenceRequestId;
+    gymPresencePending = null;
+    gymPresenceActive = false;
+    gymPresenceLeaseUntil = 0;
+    gymPreviewOverride = false;
     sceneTimeOverride = "auto";
     sceneTimeSelect.value = "auto";
     byId("dev-settings-feedback").textContent = "";
@@ -2883,7 +2927,7 @@ function setAuthenticated(next) {
       loadExerciseNames();
       sceneLocation = randomSceneLocation();
       sceneTime = null;
-      currentOutfit = "training";
+      currentOutfit = "roomwear";
       privateExpressionMode = "random";
       privateExpressionSelect.value = "random";
       privateExpressionWrap.hidden = true;
@@ -2894,6 +2938,7 @@ function setAuthenticated(next) {
     refreshOutfit();
     authStatus.textContent = "ログイン済み（自分専用）";
     setScreen("home", false);
+    void refreshGymPresence();
   } else {
     sceneLocation = null;
     sceneTime = null;
@@ -2901,7 +2946,7 @@ function setAuthenticated(next) {
     delete sceneBackground.dataset.location;
     delete sceneBackground.dataset.time;
     sceneStatus.textContent = "";
-    currentOutfit = "training";
+    currentOutfit = "roomwear";
     privateExpressionMode = "random";
     privateExpressionSelect.value = "random";
     privateExpressionWrap.hidden = true;
