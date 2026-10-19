@@ -62,6 +62,8 @@ test("private v2 gallery items and home image paths are aligned", () => {
     assert.equal(group.items.find(item=>item.id===id).versions.current,path);
   }
   assert.ok(app.includes("/assets/shiori/home/v2/shiori-private-home-"));
-  assert.match(css,/data-outfit="private-v2"/);
+  // Private v2 uses the shared home scaling; the obsolete outfit-specific selector was removed.
+  assert.match(css,/--home-character-scale: var\(--home-character-scale-base, 1\.14\)/);
+  assert.doesNotMatch(css,/\[data-outfit="private-v2"\]/);
   assert.match(app,/privateExpressionMode === "random"/);
 });
