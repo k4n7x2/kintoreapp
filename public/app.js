@@ -2245,8 +2245,8 @@ const privateExpressionWrap = byId("shiori-private-expression-wrap");
 const privateExpressionSelect = byId("shiori-private-expression");
 const privateTrialStatus = byId("shiori-private-trial-status");
 const privateTrialOption = outfitSelect.querySelector('option[value="private-v2"]');
-// 衣装／表情は固定素材。現行ジム立ち絵は第1話の採用 normal を共用し、
-// ホームでのジム用表情自動切り替えはまだ行わない。部屋着は従来どおり均等抽選。
+// 衣装／表情は既存の固定素材を使用する。
+// ジムは第1話の採用済み5表情、部屋着は7表情をホームでもランダム切替する。
 // 画像ごとの補正値は CSS 変数へ流し、ホームの承認済み距離感を保つ。
 const trainingLayout = {
   base: { scale: 1.14, origin: "right bottom", bottom: "0px" },
@@ -2271,16 +2271,23 @@ const roomwearVariantDefinitions = [
 ];
 // layout を各差分に独立して用意。必要になれば該当する差分だけ調整する。
 // 例: { id: "shy", label: "照れ", overrides: { base: { bottom: "-175px" } } }
+const trainingVariantDefinitions = [
+  { id: "normal", label: "通常", file: "normal-alt1-before" },
+  { id: "thinking", label: "考える", file: "thinking-alt1" },
+  { id: "surprised", label: "驚き", file: "surprised-alt1" },
+  { id: "smile", label: "笑顔", file: "smile-alt1" },
+  { id: "playful", label: "いたずら", file: "playful-alt1" }
+];
 const homePortraits = {
-  training: [{
-    id: "training-default",
-    label: "トレーニングウェア",
+  training: trainingVariantDefinitions.map(({ id, label, file }) => ({
+    id,
+    label,
     outfit: "training",
-    src: "/assets/shiori/gim/v1/shiori-gim-story-normal-alt1-before.webp",
+    src: `/assets/shiori/gim/v1/shiori-gim-story-${file}.webp`,
     width: 1086,
     height: 1448,
     layout: trainingLayout
-  }],
+  })),
   roomwear: roomwearVariantDefinitions.map(({ id, label, overrides = {} }) => ({
     id,
     label,
@@ -2343,7 +2350,7 @@ function applyHomePortrait(variant) {
     ? `部屋着・${variant.label}を表示中（表情はランダム）。`
     : variant.outfit === "private-v2"
       ? `私服・v2試験版：${variant.label}（${privateExpressionMode === "random" ? "ランダム" : "固定"}）。正式採用ではありません。`
-      : isGymModeActive() ? "トレーニングウェアを表示中（ジムWi-Fi連動）。" : "トレーニングウェアを表示中（開発プレビュー）。";
+      : `トレーニングウェア・${variant.label}を表示中（${isGymModeActive() ? "ジムWi-Fi連動" : "開発プレビュー"}、表情はランダム）。`;
 }
 
 // 直前と同じ差分を避ける。表情をセリフから選ぶ機能は現時点では持たせない。
@@ -2435,8 +2442,9 @@ window.addEventListener("shiori:try-private-v2", async (event) => {
   setScreen("home");
 });
 shioriHomeArt.addEventListener("error", () => {
-  if (!["roomwear", "private-v2"].includes(currentGymVisuals().outfit) || !currentPortrait
-    || currentPortrait.src !== shioriHomeArt.getAttribute("src")) return;
+  const outfit = currentGymVisuals().outfit;
+  if (!["training", "roomwear", "private-v2"].includes(outfit) || !currentPortrait
+    || currentPortrait.outfit !== outfit || currentPortrait.src !== shioriHomeArt.getAttribute("src")) return;
   failedHomePortraits.add(currentPortrait.src);
   if (currentOutfit === "private-v2") {
     // 実表示に失敗した私服は、表情別CSS修正せず既存衣装へ戻す。
@@ -2447,10 +2455,12 @@ shioriHomeArt.addEventListener("error", () => {
     outfitStatus.textContent = "私服試験画像を読み込めず、部屋着へ戻しました。";
     return;
   }
-  const remaining = homePortraits.roomwear.some(({ src }) => !failedHomePortraits.has(src));
+  const remaining = homePortraits[outfit].some(({ src }) => !failedHomePortraits.has(src));
   refreshOutfit({ reroll: true });
-  if (!remaining) {
+  if (!remaining && outfit === "roomwear") {
     outfitStatus.textContent = "部屋着の画像を読み込めませんでした。ジム以外ではトレーニングウェアを表示しません。";
+  } else if (!remaining && outfit === "training") {
+    outfitStatus.textContent = "トレーニングウェア5表情を読み込めませんでした。";
   }
 });
 const devPanel = byId("dev-settings-panel");
@@ -2709,7 +2719,7 @@ shioriHomeTouch.addEventListener("click", () => {
   void shioriHomeArt.offsetWidth;
   shioriHomeTouch.classList.add("is-poked");
   const outfit = currentGymVisuals().outfit;
-  if (outfit === "roomwear" ||
+  if (outfit === "roomwear" || outfit === "training" ||
       (outfit === "private-v2" && privateExpressionMode === "random")) {
     refreshOutfit({ reroll: true });
   }
@@ -2823,7 +2833,7 @@ function setScreen(screen, pushHistory = true) {
   document.body.classList.toggle("is-sd-page", ["record", "calendar", "analysis"].includes(screen));
   if (screen === "home") {
     if (previousPage !== "home" &&
-        (currentGymVisuals().outfit === "roomwear" ||
+        (["roomwear", "training"].includes(currentGymVisuals().outfit) ||
           (currentGymVisuals().outfit === "private-v2" && privateExpressionMode === "random"))) {
       refreshOutfit({ reroll: true });
     }
