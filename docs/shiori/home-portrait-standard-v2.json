@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "standardId": "home-portrait-v2-trial",
-  "status": "candidate-anchoring-pending",
+  "status": "candidate-remeasured-review-pending",
   "revisionDate": "2026-10-19",
   "selection": "User confirmed exact prior trial source and requested unification within the visual-production project; formal replacement of v1 not yet approved",
   "masterSource": {
@@ -48,21 +48,21 @@
     },
     "anchors": {
       "screenLeftEyeOutlineCenter": [
-        423,
-        448
+        425,
+        447
       ],
       "screenRightEyeOutlineCenter": [
-        583,
-        356
+        585,
+        355
       ],
       "eyeMidpoint": [
-        503,
-        402
+        505,
+        401
       ],
       "eyeSeparationApproxPx": 184.56,
       "chinTip": [
-        592,
-        585
+        594,
+        587
       ],
       "topHairVisibleYApprox": 0,
       "faceGuideBox": [
@@ -72,7 +72,7 @@
         590
       ]
     },
-    "measurementQuality": "manual approximate, not independently repeated; NOT calibrated or eligible for strict pass/fail",
+    "measurementQuality": "Historical trial visual estimates rechecked with separately prepared 20px and 10px coordinate-grid crops of the exact source WebP. Repeat is by one analyst, not two blind independent reviewers; still NOT calibrated. Candidate axes have several-pixel uncertainty.",
     "headTiltApproxDegrees": 30,
     "pose": "tilted head; hand touching hair; close-up upper body",
     "edgePolicy": {
@@ -81,13 +81,65 @@
       "allowContactAllFourEdges": true,
       "noAutomaticTrimming": true,
       "forbidUnnaturalFaceEyeHandHairClipping": true
+    },
+    "annotationStatus": {
+      "method": "historical visual approximation plus new enlarged 10px-grid check",
+      "reviewPasses": 2,
+      "blindIndependentReviewers": 1,
+      "screenLeftEyeOutlineCenterCandidateRanges": {
+        "x": [
+          423,
+          427
+        ],
+        "y": [
+          445,
+          451
+        ]
+      },
+      "screenRightEyeOutlineCenterCandidateRanges": {
+        "x": [
+          581,
+          588
+        ],
+        "y": [
+          351,
+          358
+        ]
+      },
+      "chinTipCandidateRanges": {
+        "x": [
+          590,
+          597
+        ],
+        "y": [
+          583,
+          591
+        ]
+      },
+      "uncertainty": "Manual, eye-outline landmark boundaries partly obscured by eyelashes and hair; independent reviewer sign-off required.",
+      "oldCandidates": {
+        "left": [
+          423,
+          448
+        ],
+        "right": [
+          583,
+          356
+        ],
+        "chin": [
+          592,
+          585
+        ]
+      },
+      "next": "Independent source-image landmark annotations and user visual sign-off; preserve calibrationPending gate."
     }
   },
   "proposedThresholdsAfterCalibration": {
     "eyeMidpointPerAxisPx": 6,
     "eyeSeparationPercent": 2,
     "chinTipPerAxisPx": 8,
-    "faceGuideBoxStrict": false
+    "faceGuideBoxStrict": false,
+    "status": "proposal-not-yet-certified"
   },
   "requirements": {
     "basePortrait": "use actual source/reference images",
