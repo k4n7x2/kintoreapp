@@ -17,9 +17,9 @@
 
 ## ホーム用近接構図の統一試作（v2・1086×1448）
 
-**新しい選定：私服5枚をまとめてホームv2の制作参照セットとする。** [私服5枚の画像パスと実ファイルSHA](home-portrait-v2-private-reference-family.json)を固定し、`normal` は配置・倍率の代表、`thinking`／`surprised`／`smile`／`playful`は自然な表情変化の参照とする。判定方法と旧ジムsmile資料との境界は[基準変更記録](home-portrait-v2-private-baseline-decision.md)／[v2制作仕様](home-portrait-standard-v2.md)で管理。
+**新しい選定：私服5枚をまとめてホームv2の制作参照セットとする。** [私服5枚の画像パスと実ファイルSHA](home-portrait-v2-private-reference-family.json)を固定し、`normal` は配置・倍率の代表、`thinking`／`surprised`／`smile`／`playful`は自然な表情変化の参照とする。**制作時に守るルール**は[ホームv2制作ルール](home-portrait-v2-generation-rules.md)。旧ジムsmile資料との境界は[基準変更記録](home-portrait-v2-private-baseline-decision.md)／[v2仕様](home-portrait-standard-v2.md)で管理。
 
-従来の添付`11621.webp`／ジム用`smile-alt1`は**過去の試作基準として保存するのみ**で、新規v2の主参照にはしない。[旧10枚比較監査](home-portrait-v2-existing-audit.md)や[STEP 5](home-portrait-v2-step5-review.md)は当時の基準での履歴。**顔の安定アンカーは未校正、既存10枚の座標合格も未確認。** 正式v1（941×1672）、既存アプリCSS、人物の正式参照3枚は維持。GitHubの存在・目視確認と画像制作ツールへの入力成功は別扱い。
+従来の添付`11621.webp`／ジム用`smile-alt1`は**過去の試作基準として保存するのみ**で、新規v2の主参照にはしない。[旧10枚比較監査](home-portrait-v2-existing-audit.md)や[STEP 5](home-portrait-v2-step5-review.md)は当時の基準での履歴。**眼・顎の機械座標検査は廃止。旧計測値は監査履歴のみ。** 新しい立ち絵は制作時の構図指定と、完成後の技術検査・目視検品で評価する。 正式v1（941×1672）、既存アプリCSS、人物の正式参照3枚は維持。GitHubの存在・目視確認と画像制作ツールへの入力成功は別扱い。
 
 ## 正式画像とプロジェクト添付
 
