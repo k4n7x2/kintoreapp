@@ -122,3 +122,10 @@ python scripts/check_home_portrait_v2.py public/assets/shiori/town/v2/shiori-tow
 ```
 
 数値は**基準値の例**であって新作の実測値ではない。`reviewed: false` のままでは合格せず、人の確認と実画像ハッシュ照合を必須とする。
+
+## STEP 5｜再注釈の到達点（2026-10-19）
+
+- 前回の眼・顎座標を検査パネルに表示せず、匿名コード・5px方眼で全10枚の**目頭・目尻・上下まぶた・顎の一次候補**を記録。[再注釈データ](home-portrait-v2-step5-blind-pass.json)／[STEP 4比較](home-portrait-v2-step5-comparison.json)／[監査レポート](home-portrait-v2-step5-review.md)。
+- ジムthinking・surprised・playfulは眼角・顎も下へ移動している可能性が高い。surprisedには眼開口の自然な拡大も含まれる。**旧STEP 4でplayfulの顎Y差を-1pxとした判断は再注釈値+17pxと矛盾**しており、旧結果を正確な合格判定に流用しない。
+- 旧v2 JSONの右眼中心X=585と再注釈のまぶた中心X≈604は測点の定義差・検出誤差を含んで食い違う。従来の候補値を`calibrated`へ変更せず、別監査者による原画像へのブラインド再計測を要する。
+- 現段階で**確定したのは画像サイズ、SHA、同一参照実体の存在まで**。全10枚の座標合格・画像修正・Android実機検査・v2正式採用は未完了。
