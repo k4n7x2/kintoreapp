@@ -8,9 +8,9 @@
   <title>ログイン</title>
   <link rel="stylesheet" href="/styles.css?v=20261019-private-v2-match-training-v3">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261019-training-five-location-outfit-v1"></script>
-  <link rel="stylesheet" href="/gallery.css?v=20261019-private-v2-trial-v1">
-  <script type="module" src="/gallery.js?v=20261019-private-v2-trial-v1"></script>
+  <script type="module" src="/app.js?v=20261020-daily-private-v1"></script>
+  <link rel="stylesheet" href="/gallery.css?v=20261020-daily-private-v1">
+  <script type="module" src="/gallery.js?v=20261020-daily-private-v1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -465,7 +465,8 @@
           <div id="gallery-groups" class="gallery-group-tabs" role="group" aria-label="素材の分類">
             <button type="button" data-gallery-group="story" aria-pressed="true">ジム・第1話</button>
             <button type="button" data-gallery-group="home" aria-pressed="false">部屋着</button>
-            <button type="button" data-gallery-group="private-v2" aria-pressed="false">私服・v2試験</button>
+            <button type="button" data-gallery-group="private-v1" aria-pressed="false">私服v1</button>
+            <button type="button" data-gallery-group="private-v2" aria-pressed="false">私服v2</button>
             <button type="button" data-gallery-group="sd" aria-pressed="false">SD</button>
           </div>
           <div id="gallery-asset-list" class="gallery-asset-list" role="group" aria-label="表情を選ぶ"></div>
@@ -488,7 +489,7 @@
             <button type="button" id="gallery-try-home" class="gallery-try-home" hidden>この表情をホームで試す</button>
             <p id="gallery-description" class="gallery-description" role="status" aria-live="polite">ギャラリーを読み込み中…</p>
           </section>
-          <p class="gallery-intro">閲覧だけではホーム表示を変更しません。私服試験版は街・大学の衣装として表示します。ギャラリーの「ホームで試す」では一時的に街の背景で表情を確認できます。正式採用にはなりません。</p>
+          <p class="gallery-intro">閲覧だけではホーム表示を変更しません。街・大学の私服は日本時間の日付でVer固定です。「ホームで試す」は当日の衣装Verの表情にのみ適用できます。</p>
         </section>
 
         <section class="app-page" id="page-settings" data-page="settings" aria-labelledby="settings-heading" hidden>
@@ -625,7 +626,8 @@
           <select id="shiori-outfit" aria-describedby="shiori-outfit-status" disabled>
             <option value="training">トレーニングウェア</option>
             <option value="roomwear" selected>部屋着</option>
-            <option value="private-v2">私服・v2試験版</option>
+            <option value="private-v1">私服v1（本日固定）</option>
+            <option value="private-v2">私服v2（本日固定）</option>
           </select>
         </div>
         <div><label for="scene-location">場所</label>
@@ -652,14 +654,14 @@
           <option value="playful">playful・いたずら</option>
         </select>
       </div>
-      <p id="shiori-private-trial-status" class="scene-status" role="status" aria-live="polite">私服・v2試験版（素材未確認）</p>
+      <p id="shiori-private-trial-status" class="scene-status" role="status" aria-live="polite">当日の私服素材は未確認</p>
       <p id="scene-status" class="scene-status" role="status" aria-live="polite"></p>
       <p id="shiori-outfit-status" class="visually-hidden" role="status" aria-live="polite"></p>
       <div class="dev-panel-actions">
         <button type="button" id="scene-reroll" class="scene-reroll">場所をランダムに</button>
         <button type="button" id="dev-settings-reset" class="scene-reroll">リセット</button>
       </div>
-      <p id="scene-time-hint" class="scene-hint">衣装は場所に連動（ジム＝トレーニング／街・大学＝私服／部屋＝部屋着）。場所の手動変更中はWi-Fiより開発プレビューを優先し、「リセット」で自動へ戻ります。時間帯は背景のみ。</p>
+      <p id="scene-time-hint" class="scene-hint">衣装は場所に連動（ジム＝トレーニング／街・大学＝私服／部屋＝部屋着）。場所の手動変更中はWi-Fiより開発プレビューを優先し、「リセット」で自動へ戻ります。私服Verは日本時間の日付で固定され、手動変更できません。時間帯は背景のみ。</p>
       <p id="dev-settings-feedback" class="visually-hidden" role="status" aria-live="polite"></p>
     </section>
     <footer id="app-footer" hidden>kintoreapp · Build your own rhythm.</footer>
