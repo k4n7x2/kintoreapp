@@ -99,3 +99,4 @@
   cursor: pointer;
 }
 #page-gallery .gallery-try-home:active { background: var(--surface); }
+#page-gallery .gallery-try-home:disabled { opacity: .58; cursor: not-allowed; }

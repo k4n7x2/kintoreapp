@@ -1,5 +1,6 @@
 /* Static asset gallery. Never changes story variants, approved assets, or user data. */
 "use strict";
+import { dailyPrivateOutfit, isPrivateOutfit } from "./daily-private-outfit.js?v=20261020-daily-private-v1";
 
 const galleryPage = document.getElementById("page-gallery");
 const galleryGroups = [...galleryPage.querySelectorAll("[data-gallery-group]")];
@@ -86,7 +87,12 @@ function renderGallery() {
   });
   galleryItems.replaceChildren(...itemButtons);
 
-  galleryTryHome.hidden = group.id !== "private-v2";
+  const privateGroup = isPrivateOutfit(group.id);
+  galleryTryHome.hidden = !privateGroup;
+  galleryTryHome.disabled = privateGroup && group.id !== dailyPrivateOutfit();
+  galleryTryHome.textContent = galleryTryHome.disabled
+    ? "今日は別の私服Verです（閲覧のみ）"
+    : "この表情をホームで試す";
   galleryTitle.textContent = group.label + " · " + item.label +
     (item.adoptedVersion ? (item.adoptedVersion === "current" ? "（採用済み）" : "（採用：修正前）") : "");
   galleryViewModes.hidden = !comparable;
@@ -111,13 +117,15 @@ function renderGallery() {
       galleryFrame(item, version, comparable ? (version === "before" ? "修正前" : "修正後") : (item.adoptedVersion ? "採用版" : "登録素材"))
     );
   }
-  galleryDescription.textContent = group.id === "private-v2"
-    ? "試験素材（未正式採用）。1086 × 1448 px、5表情共通の表示枠です。閲覧のみではホームに反映されません。"
+  galleryDescription.textContent = privateGroup
+    ? (group.id === dailyPrivateOutfit()
+      ? "本日の私服Verです。5表情を確認できます。閲覧だけではホームの表情は変わりません。"
+      : "本日の衣装とは異なるVerです。ギャラリー閲覧はできますが、ホームへは適用できません。")
     : comparable
       ? (isSideBySide
         ? "左右にスクロールして比較できます。画像の透明余白や人物位置は補正していません。"
         : "修正前・修正後を同じ表示枠で切り替えられます。透明余白や人物位置は補正していません。")
-      : "採用済みの画像です。旧差分は整理済みです。";
+      : "採用済みの画像です。旧差分は整理済みです.";
 }
 
 async function loadGallery() {
@@ -171,18 +179,22 @@ galleryVersionButtons.forEach((button) => button.addEventListener("click", () =>
 }));
 
 galleryTryHome.addEventListener("click", () => {
-  if (selectedGroupId !== "private-v2" ||
-      !galleryCatalog?.groups.find(({ id }) => id === "private-v2")?.items.some(({ id }) => id === selectedItemId)) return;
-  galleryDescription.textContent = "試験画像5枚を確認中…";
-  window.dispatchEvent(new CustomEvent("shiori:try-private-v2", {
-    detail: { expression: selectedItemId }
+  if (!isPrivateOutfit(selectedGroupId) || selectedGroupId !== dailyPrivateOutfit() ||
+      !galleryCatalog?.groups.find(({ id }) => id === selectedGroupId)?.items.some(({ id }) => id === selectedItemId)) {
+    renderGallery();
+    return;
+  }
+  galleryDescription.textContent = "当日の私服5表情を確認中…";
+  window.dispatchEvent(new CustomEvent("shiori:try-private", {
+    detail: { outfit: selectedGroupId, expression: selectedItemId }
   }));
 });
-window.addEventListener("shiori:private-v2-result", (event) => {
-  if (!event.detail?.ok && selectedGroupId === "private-v2") {
-    galleryDescription.textContent = "試験素材の読み込み検査に失敗しました。ホームの衣装は変更していません。";
+window.addEventListener("shiori:private-result", (event) => {
+  if (!event.detail?.ok && isPrivateOutfit(selectedGroupId)) {
+    galleryDescription.textContent = "当日の衣装ではないか、素材を確認できません。ホームの衣装は変更していません。";
   }
 });
+window.addEventListener("shiori:daily-private-changed", () => renderGallery());
 
 // Opening an authenticated gallery is the only trigger for the first asset request.
 // No images are fetched during login or on unrelated screens.

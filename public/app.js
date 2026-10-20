@@ -1,7 +1,9 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
-import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js";
+import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js?v=20261020-daily-private-v1";
+import { tokyoDateKey, dailyPrivateOutfit, isPrivateOutfit, millisecondsUntilNextTokyoMidnight } from "./daily-private-outfit.js?v=20261020-daily-private-v1";
+import { choosePortraitVariant } from "./home-portrait-selection.js?v=20261020-daily-private-v1";
 const now = new Date();
 let shownYear = now.getFullYear();
 let shownMonth = now.getMonth();
@@ -2184,6 +2186,7 @@ function randomSceneLocation(excludeCurrent = false) {
 }
 function refreshScene() {
   if (!authorized || !sceneLocation) return;
+  syncDailyPrivateOutfit();
   const location = currentGymVisuals().scene;
   const time = sceneTimeOverride === "auto" ? sceneTimeSlot(new Date().getHours()) : sceneTimeOverride;
   if (time !== sceneTime || sceneBackground.dataset.location !== location) {
@@ -2242,7 +2245,7 @@ const homeDialogue = byId("shiori-home-dialogue");
 const shioriHomeTouch = byId("shiori-home-touch");
 const shioriHomeArt = shioriHomeTouch.querySelector(".character-layer__art");
 
-// 衣装は場所から一意に決定する。表情の試験指定のみメモリに保持する。
+// 衣装種別は場所から、私服Verは日本時間の日付から決定する。検品用には表情だけを一時指定する。
 const outfitSelect = byId("shiori-outfit");
 const outfitStatus = byId("shiori-outfit-status");
 const privateExpressionWrap = byId("shiori-private-expression-wrap");
@@ -2304,27 +2307,23 @@ const homePortraits = {
       ])
     )
   })),
-  // 1086×1448、5枚共通の試験レイアウト。表情別補正は定義しない。
-  "private-v2": [
-    { id: "normal", label: "通常", outfit: "private-v2",
-      src: "/assets/shiori/home/v2/shiori-private-home-normal-r1.webp",
-      width: 1086, height: 1448, layout: null },
-    { id: "smile", label: "笑顔", outfit: "private-v2",
-      src: "/assets/shiori/home/v2/shiori-private-home-smile-r1.webp",
-      width: 1086, height: 1448, layout: null },
-    { id: "thinking", label: "考える", outfit: "private-v2",
-      src: "/assets/shiori/home/v2/shiori-private-home-thinking-r1.webp",
-      width: 1086, height: 1448, layout: null },
-    { id: "surprised", label: "驚き", outfit: "private-v2",
-      src: "/assets/shiori/home/v2/shiori-private-home-surprised-r1.webp",
-      width: 1086, height: 1448, layout: null },
-    { id: "playful", label: "いたずら", outfit: "private-v2",
-      src: "/assets/shiori/home/v2/shiori-private-home-playful-r1.webp",
-      width: 1086, height: 1448, layout: null }
-  ]
+  // v1 is the original private set stored in home/v2. Preserve the files in place.
+  // Both 1086x1448 sets share the same home layout, without per-expression offsets.
+  "private-v1": ["normal", "smile", "thinking", "surprised", "playful"].map((id) => ({
+    id, label: ({ normal: "通常", smile: "笑顔", thinking: "考える", surprised: "驚き", playful: "いたずら" })[id],
+    outfit: "private-v1",
+    src: `/assets/shiori/home/v2/shiori-private-home-${id}-r1.webp`,
+    width: 1086, height: 1448, layout: null
+  })),
+  "private-v2": ["normal", "smile", "thinking", "surprised", "playful"].map((id) => ({
+    id, label: ({ normal: "通常", smile: "笑顔", thinking: "考える", surprised: "驚き", playful: "いたずら" })[id],
+    outfit: "private-v2",
+    src: `/assets/shiori/town/v2/shiori-town-home-${id}-r1.webp`,
+    width: 1086, height: 1448, layout: null
+  }))
 };
 let privateExpressionMode = "random";
-let privateTrialReady = false;
+let privateTrialReady = null;
 let privateTrialCheck = null;
 let currentPortrait = null;
 const failedHomePortraits = new Set();
@@ -2350,8 +2349,8 @@ function applyHomePortrait(variant) {
   outfitSelect.value = currentGymVisuals().outfit;
   outfitStatus.textContent = variant.outfit === "roomwear"
     ? `部屋着・${variant.label}を表示中（表情はランダム）。`
-    : variant.outfit === "private-v2"
-      ? `私服・v2試験版：${variant.label}（${privateExpressionMode === "random" ? "ランダム" : "固定"}）。正式採用ではありません。`
+    : isPrivateOutfit(variant.outfit)
+      ? `私服${variant.outfit.endsWith("v1") ? "v1" : "v2"}（本日固定）・${variant.label}（表情${privateExpressionMode === "random" ? "ランダム" : "検品指定"}）。`
       : `トレーニングウェア・${variant.label}を表示中（${isGymModeActive() ? "ジムWi-Fi連動" : "開発プレビュー"}、表情はランダム）。`;
 }
 
@@ -2359,38 +2358,46 @@ function applyHomePortrait(variant) {
 function refreshOutfit({ reroll = false } = {}) {
   const activeOutfit = currentGymVisuals().outfit;
   outfitSelect.value = activeOutfit;
-  privateExpressionWrap.hidden = activeOutfit !== "private-v2";
-  let candidates = homePortraits[activeOutfit]
+  privateExpressionWrap.hidden = !isPrivateOutfit(activeOutfit);
+  const candidates = homePortraits[activeOutfit]
     .filter((variant) => !failedHomePortraits.has(variant.src));
   if (!candidates.length) {
-    // If non-gym art fails, never show training clothes outside the gym by accident.
+    // Never use a different clothing version as an image-error fallback.
     currentPortrait = null;
     shioriHomeArt.removeAttribute("src");
     outfitStatus.textContent = "この衣装の画像を読み込めませんでした。";
     return;
   }
-  const fixed = activeOutfit === "private-v2" && privateExpressionMode !== "random"
+  const fixed = isPrivateOutfit(activeOutfit) && privateExpressionMode !== "random"
     ? candidates.find((variant) => variant.id === privateExpressionMode)
     : null;
-  if (fixed) {
-    currentPortrait = fixed;
-  } else {
-    const canReuse = !reroll && currentPortrait?.outfit === activeOutfit
-      && candidates.some((variant) => variant.id === currentPortrait.id);
-    if (!canReuse) {
-      const alternatives = candidates.filter((variant) => variant.id !== currentPortrait?.id
-        || variant.outfit !== currentPortrait?.outfit);
-      const pool = alternatives.length ? alternatives : candidates;
-      currentPortrait = pool[Math.floor(Math.random() * pool.length)];
-    }
-  }
+  currentPortrait = fixed || choosePortraitVariant(candidates, currentPortrait, reroll);
   applyHomePortrait(currentPortrait);
 }
 
+let lastPrivateDayKey = tokyoDateKey();
+function syncDailyPrivateOutfit() {
+  const today = tokyoDateKey();
+  if (today === lastPrivateDayKey) return;
+  lastPrivateDayKey = today;
+  privateExpressionMode = "random";
+  privateExpressionSelect.value = "random";
+  privateTrialReady = null;
+  if (authorized) refreshOutfit({ reroll: true });
+  window.dispatchEvent(new Event("shiori:daily-private-changed"));
+}
+function scheduleTokyoMidnight() {
+  setTimeout(() => {
+    syncDailyPrivateOutfit();
+    scheduleTokyoMidnight();
+  }, millisecondsUntilNextTokyoMidnight() + 100);
+}
+scheduleTokyoMidnight();
+
 // ギャラリーからの「ホームで試す」は私服に対応する街プレビューへ移る。
-function previewPrivateExpression(expression) {
-  if (!authorized || !privateTrialReady ||
-      !homePortraits["private-v2"].some(({ id }) => id === expression)) return;
+function previewPrivateExpression(expression, outfit) {
+  if (!authorized || outfit !== dailyPrivateOutfit() ||
+      privateTrialReady !== outfit || !homePortraits[outfit]?.some(({ id }) => id === expression)) return;
   if (!["city", "campus"].includes(sceneLocation)) sceneLocation = "city";
   privateExpressionMode = expression;
   privateExpressionSelect.value = expression;
@@ -2399,62 +2406,70 @@ function previewPrivateExpression(expression) {
   refreshOutfit({ reroll: true });
 }
 
-function verifyPrivateTrialAssets() {
-  if (privateTrialReady) return Promise.resolve(true);
+function verifyPrivateTrialAssets(outfit = dailyPrivateOutfit()) {
+  if (outfit !== dailyPrivateOutfit() || !isPrivateOutfit(outfit)) return Promise.resolve(false);
+  if (privateTrialReady === outfit) return Promise.resolve(true);
   if (privateTrialCheck) return privateTrialCheck;
-  privateTrialStatus.textContent = "私服・v2試験素材を確認中…";
-  privateTrialCheck = Promise.all(homePortraits["private-v2"].map(({ src }) => new Promise((resolve) => {
+  privateTrialStatus.textContent = "当日の私服素材を確認中…";
+  privateTrialCheck = Promise.all(homePortraits[outfit].map(({ src }) => new Promise((resolve) => {
     const image = new Image();
     image.onload = () => resolve(image.naturalWidth === 1086 && image.naturalHeight === 1448);
     image.onerror = () => resolve(false);
     image.src = src;
   }))).then((checks) => {
-    // 5枚すべて読み込み成功・1086×1448の場合だけ選択肢を解放する。
-    privateTrialReady = checks.every(Boolean);
-    if (privateTrialReady) {
-      for (const {src} of homePortraits["private-v2"]) failedHomePortraits.delete(src);
+    const ok = checks.every(Boolean) && outfit === dailyPrivateOutfit();
+    privateTrialReady = ok ? outfit : null;
+    if (ok) {
+      for (const { src } of homePortraits[outfit]) failedHomePortraits.delete(src);
     }
-    privateTrialStatus.textContent = privateTrialReady
-      ? "私服・v2試験素材5枚の読み込みを確認。正式採用前の試験素材です。"
-      : "私服試験素材が不足または破損しています。ギャラリーからの試験操作は利用できません。";
-    return privateTrialReady;
+    privateTrialStatus.textContent = ok
+      ? "当日の私服5表情を確認しました。衣装Verは日本時間の日付で固定されています。"
+      : "私服素材が不足または破損しています。ギャラリーからの試験操作は利用できません。";
+    return ok;
   }).finally(() => { privateTrialCheck = null; });
   return privateTrialCheck;
 }
 
 privateExpressionSelect.addEventListener("change", () => {
-  if (!authorized || currentGymVisuals().outfit !== "private-v2") return;
+  const activeOutfit = currentGymVisuals().outfit;
+  if (!authorized || !isPrivateOutfit(activeOutfit)) return;
   const next = privateExpressionSelect.value;
-  if (next !== "random" && !homePortraits["private-v2"].some(({ id }) => id === next)) return;
+  if (next !== "random" && !homePortraits[activeOutfit].some(({ id }) => id === next)) return;
   privateExpressionMode = next;
   startManualGymPreview();
   refreshOutfit({ reroll: true });
 });
-window.addEventListener("shiori:try-private-v2", async (event) => {
-  if (!authorized || !homePortraits["private-v2"].some(({ id }) => id === event.detail?.expression)) return;
-  const ok = await verifyPrivateTrialAssets();
-  if (!authorized) return;
-  window.dispatchEvent(new CustomEvent("shiori:private-v2-result", { detail: { ok } }));
+window.addEventListener("shiori:try-private", async (event) => {
+  const outfit = event.detail?.outfit;
+  const expression = event.detail?.expression;
+  if (!authorized || outfit !== dailyPrivateOutfit() ||
+      !homePortraits[outfit]?.some(({ id }) => id === expression)) {
+    window.dispatchEvent(new CustomEvent("shiori:private-result", { detail: { ok: false } }));
+    return;
+  }
+  const ok = await verifyPrivateTrialAssets(outfit);
+  if (!authorized || outfit !== dailyPrivateOutfit()) return;
+  window.dispatchEvent(new CustomEvent("shiori:private-result", { detail: { ok } }));
   if (!ok) return;
-  previewPrivateExpression(event.detail.expression);
+  previewPrivateExpression(expression, outfit);
   setScreen("home");
 });
 shioriHomeArt.addEventListener("error", () => {
   const outfit = currentGymVisuals().outfit;
-  if (!["training", "roomwear", "private-v2"].includes(outfit) || !currentPortrait
+  if (!homePortraits[outfit] || !currentPortrait
     || currentPortrait.outfit !== outfit || currentPortrait.src !== shioriHomeArt.getAttribute("src")) return;
   failedHomePortraits.add(currentPortrait.src);
   const failedOutfit = currentPortrait.outfit;
-  if (failedOutfit === "private-v2") {
-    privateTrialReady = false;
+  if (isPrivateOutfit(failedOutfit)) {
+    privateTrialReady = null;
     privateExpressionMode = "random";
     privateExpressionSelect.value = "random";
-    privateTrialStatus.textContent = "私服画像の読み込みに失敗しました。利用可能な別表情を試します。";
+    privateTrialStatus.textContent = "私服画像の読み込みに失敗しました。同じ衣装の別表情を試します。";
   }
   refreshOutfit({ reroll: true });
   if (!currentPortrait) {
-    outfitStatus.textContent = failedOutfit === "private-v2"
-      ? "私服の画像を読み込めませんでした。場所に合わない衣装へは切り替えません。"
+    outfitStatus.textContent = isPrivateOutfit(failedOutfit)
+      ? "当日の私服画像を読み込めませんでした。別Verには切り替えません。"
       : failedOutfit === "training"
         ? "トレーニングウェア5表情を読み込めませんでした。"
         : "部屋着の画像を読み込めませんでした。場所に合わない衣装へは切り替えません。";
@@ -2468,7 +2483,7 @@ function setDevPanelOpen(open, restoreFocus = true) {
   devPanelToggle.setAttribute("aria-expanded", String(open));
   devPanelToggle.setAttribute("aria-label", open ? "開発設定を閉じる" : "開発設定を開く");
   if (open) {
-    void verifyPrivateTrialAssets();
+    void verifyPrivateTrialAssets(dailyPrivateOutfit());
     sceneLocationSelect.focus({ preventScroll: true });
   }
   else if (restoreFocus && authorized && activePage === "home") devPanelToggle.focus({ preventScroll: true });
@@ -2714,9 +2729,10 @@ shioriHomeTouch.addEventListener("click", () => {
   // 同じアニメーションを連続タップでも先頭から再生する。
   void shioriHomeArt.offsetWidth;
   shioriHomeTouch.classList.add("is-poked");
+  syncDailyPrivateOutfit();
   const outfit = currentGymVisuals().outfit;
   if (outfit === "roomwear" || outfit === "training" ||
-      (outfit === "private-v2" && privateExpressionMode === "random")) {
+      (isPrivateOutfit(outfit) && privateExpressionMode === "random")) {
     refreshOutfit({ reroll: true });
   }
   showHomeGreeting();
@@ -2818,6 +2834,7 @@ function setScreen(screen, pushHistory = true) {
   if (repeatSheetOpen && screen !== "record") closeRepeatSheet(false);
   if (screen !== "settings") closeSettingsPlanReset();
   const previousPage = activePage;
+  syncDailyPrivateOutfit();
   if (screen !== "calendar") setCalendarMonthPicker(false);
   if (drawerOpen) setDrawerOpen(false);
   if (screen !== "home") setDevPanelOpen(false, false);
@@ -2830,7 +2847,7 @@ function setScreen(screen, pushHistory = true) {
   if (screen === "home") {
     if (previousPage !== "home" &&
         (["roomwear", "training"].includes(currentGymVisuals().outfit) ||
-          (currentGymVisuals().outfit === "private-v2" && privateExpressionMode === "random"))) {
+          (isPrivateOutfit(currentGymVisuals().outfit) && privateExpressionMode === "random"))) {
       refreshOutfit({ reroll: true });
     }
     if (previousPage !== "home" || homeDialogue.hidden) showHomeGreeting();

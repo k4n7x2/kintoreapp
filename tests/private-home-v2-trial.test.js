@@ -52,8 +52,8 @@ test("private v2 trial images retain exact PR #28 blobs, canvas and alpha", () =
 
 test("private v2 gallery items and home image paths are aligned", () => {
   const catalog = JSON.parse(readFileSync(new URL("../public/data/shiori-gallery.json", import.meta.url), "utf8"));
-  const group = catalog.groups.find(({ id }) => id === "private-v2");
-  assert.equal(group.status,"trial-unapproved");
+  const group = catalog.groups.find(({ id }) => id === "private-v1");
+  assert.equal(group.label,"私服v1（ラベンダー）");
   assert.deepEqual(group.items.map(({ id })=>id), files.map(({id})=>id));
   const app = readFileSync(new URL("../public/app.js", import.meta.url),"utf8");
   const css = readFileSync(new URL("../public/styles.css", import.meta.url),"utf8");

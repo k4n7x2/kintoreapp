@@ -1,18 +1,21 @@
+import { dailyPrivateOutfit } from "./daily-private-outfit.js?v=20261020-daily-private-v1";
+
 // Outfit is a function of the effective scene. Wi-Fi can change the scene,
 // and a manual scene preview takes precedence. Never combine mismatched clothes.
 export const REGULAR_SCENE_LOCATIONS = Object.freeze(["city", "campus", "room"]);
 export const SCENE_OUTFITS = Object.freeze({
   gym: "training",
-  city: "private-v2",
-  campus: "private-v2",
+  city: "private",
+  campus: "private",
   room: "roomwear"
 });
 
-export function resolveGymVisuals({ connected = false, preview = false, scene = "room" } = {}) {
+export function resolveGymVisuals({ connected = false, preview = false, scene = "room", at = new Date() } = {}) {
   const automatic = connected === true && preview !== true;
   const requestedScene = Object.hasOwn(SCENE_OUTFITS, scene) ? scene : "room";
   const effectiveScene = automatic ? "gym" : requestedScene;
-  return { automatic, scene: effectiveScene, outfit: SCENE_OUTFITS[effectiveScene] };
+  const kind = SCENE_OUTFITS[effectiveScene];
+  return { automatic, scene: effectiveScene, outfit: kind === "private" ? dailyPrivateOutfit(at) : kind };
 }
 
 // Use server timestamps to calculate a lease duration; local device clock can be inaccurate.
