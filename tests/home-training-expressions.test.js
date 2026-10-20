@@ -29,7 +29,7 @@ test("training portraits reuse all five adopted gym story assets", () => {
 test("training home rerolls on tap and revisit and handles image failures", () => {
   assert.match(app, /outfit === "roomwear" \|\| outfit === "training"/);
   assert.match(app, /\["roomwear", "training"\]\.includes\(currentGymVisuals\(\)\.outfit\)/);
-  assert.match(app, /\["training", "roomwear", "private-v2"\]\.includes\(outfit\)/);
+  assert.match(app, /homePortraits\[outfit\]/);
   assert.match(app, /failedHomePortraits\.add\(currentPortrait\.src\)/);
-  assert.match(app, /const alternatives = candidates\.filter/);
+  assert.match(app, /choosePortraitVariant\(candidates, currentPortrait, reroll\)/);
 });
