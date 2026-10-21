@@ -2315,8 +2315,8 @@ const homePortraits = {
     src: `/assets/shiori/home/v2/shiori-private-home-${id}-r1.webp`,
     width: 1086, height: 1448, layout: null
   })),
-  "private-v2": ["normal", "smile", "thinking", "surprised", "playful"].map((id) => ({
-    id, label: ({ normal: "通常", smile: "笑顔", thinking: "考える", surprised: "驚き", playful: "いたずら" })[id],
+  "private-v2": ["normal", "smile", "thinking", "surprised", "playful", "soft_smile", "closed_eye_smile", "sleepy", "shy"].map((id) => ({
+    id, label: ({ normal: "通常", smile: "笑顔", thinking: "考える", surprised: "驚き", playful: "いたずら", soft_smile: "優しい微笑み", closed_eye_smile: "目を閉じた笑顔", sleepy: "眠そう", shy: "控えめな照れ" })[id],
     outfit: "private-v2",
     src: `/assets/shiori/town/v2/shiori-town-home-${id}-r1.webp`,
     width: 1086, height: 1448, layout: null
