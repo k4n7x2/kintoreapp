@@ -4,6 +4,7 @@ import { resolveCalendarIcon } from "./calendar-status.js";
 import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js?v=20261020-daily-private-v1";
 import { tokyoDateKey, dailyPrivateOutfit, isPrivateOutfit, millisecondsUntilNextTokyoMidnight } from "./daily-private-outfit.js?v=20261020-daily-private-v1";
 import { choosePortraitVariant } from "./home-portrait-selection.js?v=20261020-daily-private-v1";
+import { pickDialogue, resolveDialoguePortrait } from "./shiori-dialogue-expression.js?v=20261022-v1";
 const now = new Date();
 let shownYear = now.getFullYear();
 let shownMonth = now.getMonth();
@@ -2329,6 +2330,7 @@ let privateExpressionMode = "random";
 let privateTrialReady = null;
 let privateTrialCheck = null;
 let currentPortrait = null;
+let currentHomeExpression = "normal";
 const failedHomePortraits = new Set();
 
 function applyHomePortrait(variant) {
@@ -2351,13 +2353,13 @@ function applyHomePortrait(variant) {
   if (shioriHomeArt.getAttribute("src") !== variant.src) shioriHomeArt.src = variant.src;
   outfitSelect.value = currentGymVisuals().outfit;
   outfitStatus.textContent = variant.outfit === "roomwear"
-    ? `部屋着・${variant.label}を表示中（表情はランダム）。`
+    ? `部屋着・${variant.label}を表示中（セリフ連動）。`
     : isPrivateOutfit(variant.outfit)
-      ? `私服${variant.outfit.endsWith("v1") ? "v1" : "v2"}（本日固定）・${variant.label}（表情${privateExpressionMode === "random" ? "ランダム" : "検品指定"}）。`
-      : `トレーニングウェア・${variant.label}を表示中（${isGymModeActive() ? "ジムWi-Fi連動" : "開発プレビュー"}、表情はランダム）。`;
+      ? `私服${variant.outfit.endsWith("v1") ? "v1" : "v2"}（本日固定）・${variant.label}（表情${privateExpressionMode === "random" ? "セリフ連動" : "検品指定"}）。`
+      : `トレーニングウェア・${variant.label}を表示中（${isGymModeActive() ? "ジムWi-Fi連動" : "開発プレビュー"}、表情はセリフ連動）。`;
 }
 
-// 直前と同じ差分を避ける。表情をセリフから選ぶ機能は現時点では持たせない。
+// 表情はセリフに固定し、衣装に差分がなければ代替表情を使う。
 function refreshOutfit({ reroll = false } = {}) {
   const activeOutfit = currentGymVisuals().outfit;
   outfitSelect.value = activeOutfit;
@@ -2374,7 +2376,7 @@ function refreshOutfit({ reroll = false } = {}) {
   const fixed = isPrivateOutfit(activeOutfit) && privateExpressionMode !== "random"
     ? candidates.find((variant) => variant.id === privateExpressionMode)
     : null;
-  currentPortrait = fixed || choosePortraitVariant(candidates, currentPortrait, reroll);
+  currentPortrait = fixed || resolveDialoguePortrait(currentHomeExpression, activeOutfit, homePortraits, failedHomePortraits);
   applyHomePortrait(currentPortrait);
 }
 
@@ -2722,7 +2724,7 @@ for (const page of ["record", "calendar", "analysis"]) {
   });
 }
 
-let lastHomeGreeting = "";
+let lastHomeGreetingId = "";
 let greetingRequestId = 0;
 
 // 画像へのタップ／キーボードの操作で、一言と控えめなリアクションを返す。
@@ -2733,11 +2735,6 @@ shioriHomeTouch.addEventListener("click", () => {
   void shioriHomeArt.offsetWidth;
   shioriHomeTouch.classList.add("is-poked");
   syncDailyPrivateOutfit();
-  const outfit = currentGymVisuals().outfit;
-  if (outfit === "roomwear" || outfit === "training" ||
-      (isPrivateOutfit(outfit) && privateExpressionMode === "random")) {
-    refreshOutfit({ reroll: true });
-  }
   showHomeGreeting();
 });
 // ネイティブのボタン押下ハイライトを避けつつ、キーボードでの操作性は維持する。
@@ -2767,22 +2764,23 @@ async function showHomeGreeting() {
     if (!authorized || activePage !== "home" || requestId !== greetingRequestId) return;
 
     const slot = greetingTimeSlot(new Date().getHours());
-    const candidates = (inGym
-      ? [gymGreetingData?.[slot], gymGreetingData?.anytime]
-      : [greetingData?.[slot], greetingData?.anytime])
-      .flat()
-      .filter((line) => typeof line === "string" && line.trim());
-    const alternatives = candidates.filter((line) => line !== lastHomeGreeting);
-    const pool = alternatives.length ? alternatives : candidates;
-    const line = pool.length ? pool[Math.floor(Math.random() * pool.length)] : (isGymModeActive() ? "あ、来た。今日は何からやる？" : "あ、来た。今日はどうする？");
-    lastHomeGreeting = line;
-    homeDialogue.textContent = line;
+    const groups = inGym
+      ? [["gym_anytime", gymGreetingData?.anytime]]
+      : [[slot, greetingData?.[slot]], ["anytime", greetingData?.anytime]];
+    const selected = pickDialogue(groups, Math.random, lastHomeGreetingId);
+    if (!authorized || activePage !== "home" || requestId !== greetingRequestId) return;
+    lastHomeGreetingId = selected?.id || "";
+    currentHomeExpression = selected?.expression || "normal";
+    homeDialogue.textContent = selected?.text || (inGym ? "あ、来た。今日は何からやる？" : "あ、来た。今日はどうする？");
     homeDialogue.hidden = false;
+    refreshOutfit();
   } catch {
     if (!authorized || activePage !== "home" || requestId !== greetingRequestId) return;
     // 読み込み失敗時にも、未確認の実績などを語らない短い一言だけ表示する。
+    currentHomeExpression = "normal";
     homeDialogue.textContent = isGymModeActive() ? "あ、来た。今日は何からやる？" : "あ、来た。今日はどうする？";
     homeDialogue.hidden = false;
+    refreshOutfit();
   }
 }
 
