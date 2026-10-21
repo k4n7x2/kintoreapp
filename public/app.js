@@ -2353,10 +2353,10 @@ function applyHomePortrait(variant) {
   if (shioriHomeArt.getAttribute("src") !== variant.src) shioriHomeArt.src = variant.src;
   outfitSelect.value = currentGymVisuals().outfit;
   outfitStatus.textContent = variant.outfit === "roomwear"
-    ? `部屋着・${variant.label}を表示中（表情はランダム）。`
+    ? `部屋着・${variant.label}を表示中（セリフ連動）。`
     : isPrivateOutfit(variant.outfit)
-      ? `私服${variant.outfit.endsWith("v1") ? "v1" : "v2"}（本日固定）・${variant.label}（表情${privateExpressionMode === "random" ? "ランダム" : "検品指定"}）。`
-      : `トレーニングウェア・${variant.label}を表示中（${isGymModeActive() ? "ジムWi-Fi連動" : "開発プレビュー"}、表情はランダム）。`;
+      ? `私服${variant.outfit.endsWith("v1") ? "v1" : "v2"}（本日固定）・${variant.label}（表情${privateExpressionMode === "random" ? "セリフ連動" : "検品指定"}）。`
+      : `トレーニングウェア・${variant.label}を表示中（${isGymModeActive() ? "ジムWi-Fi連動" : "開発プレビュー"}、表情はセリフ連動）。`;
 }
 
 // 表情はセリフに固定し、衣装に差分がなければ代替表情を使う。
