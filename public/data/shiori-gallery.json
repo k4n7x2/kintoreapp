@@ -182,6 +182,34 @@
           "versions": {
             "current": "/assets/shiori/town/v2/shiori-town-home-playful-r1.webp"
           }
+        },
+        {
+          "id": "soft_smile",
+          "label": "優しい微笑み",
+          "versions": {
+            "current": "/assets/shiori/town/v2/shiori-town-home-soft_smile-r1.webp"
+          }
+        },
+        {
+          "id": "closed_eye_smile",
+          "label": "目を閉じた笑顔",
+          "versions": {
+            "current": "/assets/shiori/town/v2/shiori-town-home-closed_eye_smile-r1.webp"
+          }
+        },
+        {
+          "id": "sleepy",
+          "label": "眠そう",
+          "versions": {
+            "current": "/assets/shiori/town/v2/shiori-town-home-sleepy-r1.webp"
+          }
+        },
+        {
+          "id": "shy",
+          "label": "控えめな照れ",
+          "versions": {
+            "current": "/assets/shiori/town/v2/shiori-town-home-shy-r1.webp"
+          }
         }
       ]
     },
