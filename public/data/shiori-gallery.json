@@ -45,6 +45,30 @@
             "current": "/assets/shiori/gim/v1/shiori-gim-story-playful-alt1.webp"
           },
           "adoptedVersion": "current"
+        },
+        {
+          "id": "soft_smile",
+          "label": "優しい微笑み",
+          "versions": {
+            "current": "/assets/shiori/gim/v1/shiori-gim-story-soft_smile-alt1.webp"
+          },
+          "adoptedVersion": "current"
+        },
+        {
+          "id": "wry_smile",
+          "label": "困り笑い",
+          "versions": {
+            "current": "/assets/shiori/gim/v1/shiori-gim-story-wry_smile-alt1.webp"
+          },
+          "adoptedVersion": "current"
+        },
+        {
+          "id": "closed_eye_smile",
+          "label": "目を閉じた笑顔",
+          "versions": {
+            "current": "/assets/shiori/gim/v1/shiori-gim-story-closed_eye_smile-alt1.webp"
+          },
+          "adoptedVersion": "current"
         }
       ]
     },
