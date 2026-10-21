@@ -2423,7 +2423,7 @@ function verifyPrivateTrialAssets(outfit = dailyPrivateOutfit()) {
       for (const { src } of homePortraits[outfit]) failedHomePortraits.delete(src);
     }
     privateTrialStatus.textContent = ok
-      ? "当日の私服5表情を確認しました。衣装Verは日本時間の日付で固定されています。"
+      ? `当日の私服${homePortraits[outfit].length}表情を確認しました。衣装Verは日本時間の日付で固定されています。`
       : "私服素材が不足または破損しています。ギャラリーからの試験操作は利用できません。";
     return ok;
   }).finally(() => { privateTrialCheck = null; });
