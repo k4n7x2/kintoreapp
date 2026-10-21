@@ -119,7 +119,7 @@ function renderGallery() {
   }
   galleryDescription.textContent = privateGroup
     ? (group.id === dailyPrivateOutfit()
-      ? "本日の私服Verです。5表情を確認できます。閲覧だけではホームの表情は変わりません。"
+      ? `本日の私服Verです。${group.items.length}表情を確認できます。閲覧だけではホームの表情は変わりません。`
       : "本日の衣装とは異なるVerです。ギャラリー閲覧はできますが、ホームへは適用できません。")
     : comparable
       ? (isSideBySide
@@ -184,7 +184,7 @@ galleryTryHome.addEventListener("click", () => {
     renderGallery();
     return;
   }
-  galleryDescription.textContent = "当日の私服5表情を確認中…";
+  galleryDescription.textContent = `当日の私服${galleryCatalog.groups.find(({ id }) => id === selectedGroupId).items.length}表情を確認中…`;
   window.dispatchEvent(new CustomEvent("shiori:try-private", {
     detail: { outfit: selectedGroupId, expression: selectedItemId }
   }));
