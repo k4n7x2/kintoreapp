@@ -55,7 +55,7 @@ test("expression rerolls independently and failed pictures never switch outfits"
   }
 });
 
-test("both five-expression sets are registered under correct immutable paths", () => {
+test("private v1 stays five while private v2 has nine immutable expressions", () => {
   const catalog=JSON.parse(readFileSync(new URL("../public/data/shiori-gallery.json",import.meta.url),"utf8"));
   const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
   const html=readFileSync(new URL("../public/index.html",import.meta.url),"utf8");
@@ -65,7 +65,9 @@ test("both five-expression sets are registered under correct immutable paths", (
   ]) {
     const group=catalog.groups.find(g=>g.id===id);
     assert.ok(group);
-    assert.deepEqual(group.items.map(i=>i.id),["normal","smile","thinking","surprised","playful"]);
+    assert.deepEqual(group.items.map(i=>i.id),id==="private-v2"
+      ? ["normal","smile","thinking","surprised","playful","soft_smile","closed_eye_smile","sleepy","shy"]
+      : ["normal","smile","thinking","surprised","playful"]);
     for (const item of group.items) {
       const path=`/assets/shiori/${folder}/${prefix}-${item.id}-r1.webp`;
       assert.equal(item.versions.current,path);
