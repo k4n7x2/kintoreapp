@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "id": "shiori-home-portrait-v2-private-five",
+  "status": "user-selected-five-reference-images-for-generation; no-coordinate-gating",
+  "userDecision": "Use the five private portraits as production references for composition and expressive freedom; do not use mechanical face-coordinate acceptance thresholds.",
+  "sourceCommit": "f7148b56734f76faef386c97b4482c9c3e2f3508",
+  "sourceType": "Existing deployed WebP bytes in GitHub, NOT an image generation tool input",
+  "primaryFamily": "private-v2-five",
+  "representative": "private/normal",
+  "referenceMembers": [
+    {
+      "id": "normal",
+      "role": "placement-representative-and-neutral-expression",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-normal-r1.webp",
+      "sha256": "3601b2ff8dce26edf0e555b58ad403aac3896a0137140c0c21bfced09e3bd2da",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "alphaVerified": true,
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
+    },
+    {
+      "id": "thinking",
+      "role": "valid-expression-reference",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-thinking-r1.webp",
+      "sha256": "aaad7a89707b98f42538825c85db33ec381dfaafe98a782ace9cf2e1412c344f",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "alphaVerified": true,
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
+    },
+    {
+      "id": "surprised",
+      "role": "valid-expression-reference",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-surprised-r1.webp",
+      "sha256": "2a40dcd6907560ddc5ba246d0b3955d00baecc27020debccbc712eeae871e518",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "alphaVerified": true,
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
+    },
+    {
+      "id": "smile",
+      "role": "valid-expression-reference",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-smile-r1.webp",
+      "sha256": "9411deda6103e5f9cdf0e9d5f48d65dddb1ace766e1d4d4f0ce406cad443e4a9",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "alphaVerified": true,
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
+    },
+    {
+      "id": "playful",
+      "role": "valid-expression-reference",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-playful-r1.webp",
+      "sha256": "a972349a49ecf7d8c04b8327902aeadd6d7394cc1fbccb980358edf502a1eaa0",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "alphaVerified": true,
+      "sourceGitHubMain": "f7148b56734f76faef386c97b4482c9c3e2f3508"
+    }
+  ],
+  "allowedExpressionDifferences": [
+    "eyebrow movement",
+    "eye aperture and eyelid movement",
+    "gaze and iris styling",
+    "cheek deformation",
+    "mouth opening, teeth, lip shape",
+    "subtle jaw change consistent with expression"
+  ],
+  "headPositionReviewLandmarks": [
+    "hair silhouette stable segments away from moving fringe",
+    "ear attachment/root where visible",
+    "hair accessory attachment and centroid where stable",
+    "stable head outline outside cheeks/eyes/mouth",
+    "shoulder/torso pose as secondary evidence"
+  ],
+  "notFixedWithoutCalibration": [
+    "eye aperture midpoint",
+    "iris-color centroid",
+    "mouth position",
+    "chin tip under open-mouth expression",
+    "unoccluded eye canthus if actually covered by hair"
+  ],
+  "comparisonPolicy": {
+    "referenceFamilyUse": "Compared artwork should preserve 1086x1448 and approximate camera distance/overall head framing of the five, not rigidly force expression-varying facial landmarks onto private normal.",
+    "privateToPrivate": "The five are examples of acceptable expression variation, not samples proven pixel-perfect.",
+    "gymToPrivate": "Use private family stable head framing as target; evaluate gym expression features as allowed changes; do not apply a blanket +/-6px eye midpoint threshold.",
+    "qa": "Size, format, alpha, byte provenance checked mechanically; human review must confirm stable-head landmarks and expression naturalness; no conformance PASS until independently validated anchors.",
+    "android": "Same CSS and viewport comparison pending."
+  },
+  "historicalSource": {
+    "path": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp",
+    "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
+    "role": "former composition master, now retained only for source history and comparisons; NOT current primary baseline"
+  },
+  "commitGate": {
+    "status": "production-rule-selected_not-deployed",
+    "formalV2Promotion": false,
+    "existingAssetsReplaced": false,
+    "sourceImagesReencoded": false,
+    "cssChanged": false
+  },
+  "referenceRole": "private normal represents close-up camera distance, head size and framing; other four demonstrate natural face expression changes",
+  "reviewPolicy": {
+    "machine": "check image format, 1086x1448 dimensions, actual alpha, and decodability only",
+    "visual": "compare overall framing and identity with all five; allow eyelid, brow, iris, mouth, cheek and natural jaw changes",
+    "android": "check switching in a common viewport before app adoption",
+    "landmarkThresholds": "not used"
+  }
+}

@@ -1,0 +1,816 @@
+{
+  "schemaVersion": 1,
+  "sourceMainSHA": "f7148b56734f76faef386c97b4482c9c3e2f3508",
+  "inspectionEvidence": "https://github.com/k4n7x2/kintoreapp/actions/runs/39275559673",
+  "prNumber": 38,
+  "masterId": "gym/smile",
+  "type": "analysis derived from one first-pass review and prior STEP4 estimates",
+  "status": "no-certified-pass",
+  "reproducibility": "Saved source landmarks in step5-blind-pass.json before loading STEP4. Measurement read only. Comparison computations deterministic.",
+  "risk": "Anonymizing file order and not overlaying previous points is not an independent reviewer; no blind duplicate annotation.",
+  "data": [
+    {
+      "id": "private/thinking",
+      "sha256": "aaad7a89707b98f42538825c85db33ec381dfaafe98a782ace9cf2e1412c344f",
+      "anonymousCode": "A1",
+      "eyeLidCenters": {
+        "left": [
+          432.5,
+          442
+        ],
+        "right": [
+          601,
+          347.5
+        ],
+        "midpoint": [
+          516.75,
+          394.75
+        ],
+        "eyeSeparationPx": 193.19
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          423.5,
+          449.5
+        ],
+        "right": [
+          599.5,
+          349
+        ],
+        "midpoint": [
+          511.5,
+          399.25
+        ],
+        "eyeSeparationPx": 202.67
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 52,
+        "right": 57
+      },
+      "chinTip": [
+        604,
+        587
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          3.5,
+          -3
+        ],
+        "rightEyeCenterDelta": [
+          -2,
+          0.5
+        ],
+        "chinDelta": [
+          0,
+          10
+        ],
+        "eyeSeparationDeltaPx": -6.51
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          -0.5,
+          -2
+        ],
+        "eyeCanthusMidpointDelta": [
+          1.25,
+          -10
+        ],
+        "chinDelta": [
+          5,
+          -1
+        ],
+        "eyeApertureChange": {
+          "left": -2,
+          "right": -2
+        },
+        "lidEyeDistanceDeltaPx": -5.34
+      }
+    },
+    {
+      "id": "gym/playful",
+      "sha256": "5fd2c4f9429366fee6c13e9aaf2319ac304bb44b9e977887a19451bc55dbfa24",
+      "anonymousCode": "A2",
+      "eyeLidCenters": {
+        "left": [
+          431.5,
+          471.5
+        ],
+        "right": [
+          602.5,
+          366.5
+        ],
+        "midpoint": [
+          517,
+          419
+        ],
+        "eyeSeparationPx": 200.66
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          418,
+          481.5
+        ],
+        "right": [
+          596.5,
+          368.5
+        ],
+        "midpoint": [
+          507.25,
+          425
+        ],
+        "eyeSeparationPx": 211.26
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 57,
+        "right": 59
+      },
+      "chinTip": [
+        609,
+        605
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          8.5,
+          -3.5
+        ],
+        "rightEyeCenterDelta": [
+          6.5,
+          3.5
+        ],
+        "chinDelta": [
+          9,
+          21
+        ],
+        "eyeSeparationDeltaPx": -5.43
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          -0.25,
+          22.25
+        ],
+        "eyeCanthusMidpointDelta": [
+          -3,
+          15.75
+        ],
+        "chinDelta": [
+          10,
+          17
+        ],
+        "eyeApertureChange": {
+          "left": 3,
+          "right": 0
+        },
+        "lidEyeDistanceDeltaPx": 2.13
+      }
+    },
+    {
+      "id": "private/normal",
+      "sha256": "3601b2ff8dce26edf0e555b58ad403aac3896a0137140c0c21bfced09e3bd2da",
+      "anonymousCode": "A3",
+      "eyeLidCenters": {
+        "left": [
+          430,
+          444.5
+        ],
+        "right": [
+          601.5,
+          348
+        ],
+        "midpoint": [
+          515.75,
+          396.25
+        ],
+        "eyeSeparationPx": 196.79
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          421.5,
+          457.5
+        ],
+        "right": [
+          597.5,
+          357.5
+        ],
+        "midpoint": [
+          509.5,
+          407.5
+        ],
+        "eyeSeparationPx": 202.43
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 53,
+        "right": 62
+      },
+      "chinTip": [
+        599,
+        589
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          1,
+          -2.5
+        ],
+        "rightEyeCenterDelta": [
+          0.5,
+          -3
+        ],
+        "chinDelta": [
+          1,
+          5
+        ],
+        "eyeSeparationDeltaPx": -0.19
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          -1.5,
+          -0.5
+        ],
+        "eyeCanthusMidpointDelta": [
+          -0.75,
+          -1.75
+        ],
+        "chinDelta": [
+          0,
+          1
+        ],
+        "eyeApertureChange": {
+          "left": -1,
+          "right": 3
+        },
+        "lidEyeDistanceDeltaPx": -1.74
+      }
+    },
+    {
+      "id": "gym/surprised",
+      "sha256": "9ec6a5ffc964563894db1142eec3b66e740ce0eb9ffc84ee28b7411d25450f8d",
+      "anonymousCode": "A4",
+      "eyeLidCenters": {
+        "left": [
+          430,
+          466
+        ],
+        "right": [
+          606,
+          363.5
+        ],
+        "midpoint": [
+          518,
+          414.75
+        ],
+        "eyeSeparationPx": 203.67
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          421,
+          475.5
+        ],
+        "right": [
+          597.5,
+          368.5
+        ],
+        "midpoint": [
+          509.25,
+          422
+        ],
+        "eyeSeparationPx": 206.4
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 68,
+        "right": 67
+      },
+      "chinTip": [
+        610,
+        612
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          7,
+          1
+        ],
+        "rightEyeCenterDelta": [
+          10,
+          1.5
+        ],
+        "chinDelta": [
+          8,
+          5
+        ],
+        "eyeSeparationDeltaPx": 2.33
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          0.75,
+          18
+        ],
+        "eyeCanthusMidpointDelta": [
+          -1,
+          12.75
+        ],
+        "chinDelta": [
+          11,
+          24
+        ],
+        "eyeApertureChange": {
+          "left": 14,
+          "right": 8
+        },
+        "lidEyeDistanceDeltaPx": 5.14
+      }
+    },
+    {
+      "id": "private/smile",
+      "sha256": "9411deda6103e5f9cdf0e9d5f48d65dddb1ace766e1d4d4f0ce406cad443e4a9",
+      "anonymousCode": "A5",
+      "eyeLidCenters": {
+        "left": [
+          429,
+          446
+        ],
+        "right": [
+          603.5,
+          350
+        ],
+        "midpoint": [
+          516.25,
+          398
+        ],
+        "eyeSeparationPx": 199.16
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          422,
+          458.5
+        ],
+        "right": [
+          597,
+          357
+        ],
+        "midpoint": [
+          509.5,
+          407.75
+        ],
+        "eyeSeparationPx": 202.3
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 52,
+        "right": 60
+      },
+      "chinTip": [
+        599,
+        586
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          0,
+          -2
+        ],
+        "rightEyeCenterDelta": [
+          0.5,
+          0
+        ],
+        "chinDelta": [
+          1,
+          4
+        ],
+        "eyeSeparationDeltaPx": -0.54
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          -1,
+          1.25
+        ],
+        "eyeCanthusMidpointDelta": [
+          -0.75,
+          -1.5
+        ],
+        "chinDelta": [
+          0,
+          -2
+        ],
+        "eyeApertureChange": {
+          "left": -2,
+          "right": 1
+        },
+        "lidEyeDistanceDeltaPx": 0.63
+      }
+    },
+    {
+      "id": "gym/normal",
+      "sha256": "d433ad6698a3524695109a29db302ea0869f5478f9fc61bcd242b710e761eda7",
+      "anonymousCode": "A6",
+      "eyeLidCenters": {
+        "left": [
+          430,
+          448
+        ],
+        "right": [
+          604.5,
+          351
+        ],
+        "midpoint": [
+          517.25,
+          399.5
+        ],
+        "eyeSeparationPx": 199.65
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          422.5,
+          460.5
+        ],
+        "right": [
+          599.5,
+          361.5
+        ],
+        "midpoint": [
+          511,
+          411
+        ],
+        "eyeSeparationPx": 202.81
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 56,
+        "right": 60
+      },
+      "chinTip": [
+        602,
+        591
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          2,
+          -1
+        ],
+        "rightEyeCenterDelta": [
+          -0.5,
+          -3
+        ],
+        "chinDelta": [
+          4,
+          2
+        ],
+        "eyeSeparationDeltaPx": -1.23
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          0,
+          2.75
+        ],
+        "eyeCanthusMidpointDelta": [
+          0.75,
+          1.75
+        ],
+        "chinDelta": [
+          3,
+          3
+        ],
+        "eyeApertureChange": {
+          "left": 2,
+          "right": 1
+        },
+        "lidEyeDistanceDeltaPx": 1.12
+      }
+    },
+    {
+      "id": "private/surprised",
+      "sha256": "2a40dcd6907560ddc5ba246d0b3955d00baecc27020debccbc712eeae871e518",
+      "anonymousCode": "A7",
+      "eyeLidCenters": {
+        "left": [
+          429,
+          441
+        ],
+        "right": [
+          604,
+          343
+        ],
+        "midpoint": [
+          516.5,
+          392
+        ],
+        "eyeSeparationPx": 200.57
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          422.5,
+          448.5
+        ],
+        "right": [
+          596,
+          348.5
+        ],
+        "midpoint": [
+          509.25,
+          398.5
+        ],
+        "eyeSeparationPx": 200.26
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 64,
+        "right": 72
+      },
+      "chinTip": [
+        605,
+        580
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          -2,
+          3
+        ],
+        "rightEyeCenterDelta": [
+          2,
+          4
+        ],
+        "chinDelta": [
+          0,
+          3
+        ],
+        "eyeSeparationDeltaPx": 2.98
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          -0.75,
+          -4.75
+        ],
+        "eyeCanthusMidpointDelta": [
+          -1,
+          -10.75
+        ],
+        "chinDelta": [
+          6,
+          -8
+        ],
+        "eyeApertureChange": {
+          "left": 10,
+          "right": 13
+        },
+        "lidEyeDistanceDeltaPx": 2.04
+      }
+    },
+    {
+      "id": "gym/smile",
+      "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
+      "anonymousCode": "A8",
+      "eyeLidCenters": {
+        "left": [
+          430.5,
+          445
+        ],
+        "right": [
+          604,
+          348.5
+        ],
+        "midpoint": [
+          517.25,
+          396.75
+        ],
+        "eyeSeparationPx": 198.53
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          422.5,
+          460
+        ],
+        "right": [
+          598,
+          358.5
+        ],
+        "midpoint": [
+          510.25,
+          409.25
+        ],
+        "eyeSeparationPx": 202.74
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 54,
+        "right": 59
+      },
+      "chinTip": [
+        599,
+        588
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          2.5,
+          -3
+        ],
+        "rightEyeCenterDelta": [
+          3,
+          -2.5
+        ],
+        "chinDelta": [
+          0,
+          3
+        ],
+        "eyeSeparationDeltaPx": 0.19
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          0,
+          0
+        ],
+        "eyeCanthusMidpointDelta": [
+          0,
+          0
+        ],
+        "chinDelta": [
+          0,
+          0
+        ],
+        "eyeApertureChange": {
+          "left": 0,
+          "right": 0
+        },
+        "lidEyeDistanceDeltaPx": 0
+      }
+    },
+    {
+      "id": "private/playful",
+      "sha256": "a972349a49ecf7d8c04b8327902aeadd6d7394cc1fbccb980358edf502a1eaa0",
+      "anonymousCode": "A9",
+      "eyeLidCenters": {
+        "left": [
+          430.5,
+          446
+        ],
+        "right": [
+          604,
+          349.5
+        ],
+        "midpoint": [
+          517.25,
+          397.75
+        ],
+        "eyeSeparationPx": 198.53
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          421.5,
+          456.5
+        ],
+        "right": [
+          597,
+          358
+        ],
+        "midpoint": [
+          509.25,
+          407.25
+        ],
+        "eyeSeparationPx": 201.25
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 56,
+        "right": 59
+      },
+      "chinTip": [
+        600,
+        585
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          1.5,
+          -2
+        ],
+        "rightEyeCenterDelta": [
+          1,
+          -1.5
+        ],
+        "chinDelta": [
+          1,
+          5
+        ],
+        "eyeSeparationDeltaPx": -0.68
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          0,
+          1
+        ],
+        "eyeCanthusMidpointDelta": [
+          -1,
+          -2
+        ],
+        "chinDelta": [
+          1,
+          -3
+        ],
+        "eyeApertureChange": {
+          "left": 2,
+          "right": 0
+        },
+        "lidEyeDistanceDeltaPx": 0
+      }
+    },
+    {
+      "id": "gym/thinking",
+      "sha256": "79248911e72b84e165949eb4e6029c37a022369d8fc5b691fbe25a50791b4ac5",
+      "anonymousCode": "A10",
+      "eyeLidCenters": {
+        "left": [
+          432,
+          474
+        ],
+        "right": [
+          604,
+          370
+        ],
+        "midpoint": [
+          518,
+          422
+        ],
+        "eyeSeparationPx": 201
+      },
+      "eyeCanthusCenters": {
+        "left": [
+          421,
+          483.5
+        ],
+        "right": [
+          596.5,
+          375.5
+        ],
+        "midpoint": [
+          508.75,
+          429.5
+        ],
+        "eyeSeparationPx": 206.07
+      },
+      "eyeOpeningVerticalPx": {
+        "left": 58,
+        "right": 66
+      },
+      "chinTip": [
+        607,
+        608
+      ],
+      "comparisonToStep4": {
+        "leftEyeCenterDelta": [
+          10,
+          0
+        ],
+        "rightEyeCenterDelta": [
+          6,
+          1
+        ],
+        "chinDelta": [
+          4,
+          5
+        ],
+        "eyeSeparationDeltaPx": -3.94
+      },
+      "status": "UNVERIFIED",
+      "toMaster": {
+        "eyeLidMidpointDelta": [
+          0.75,
+          25.25
+        ],
+        "eyeCanthusMidpointDelta": [
+          -1.5,
+          20.25
+        ],
+        "chinDelta": [
+          8,
+          20
+        ],
+        "eyeApertureChange": {
+          "left": 4,
+          "right": 7
+        },
+        "lidEyeDistanceDeltaPx": 2.47
+      }
+    }
+  ],
+  "calibration": {
+    "eligible": false,
+    "reason": "Unresolved medial/lateral eye-corner ambiguity, visibility limitations, discrepancy with old candidate anchors, no repeat independent second review or Android check",
+    "proposedStatus": "candidate-awaiting-independent-confirmation"
+  },
+  "qualitative": {
+    "suspectedWholeFaceShift": [
+      "gym/thinking",
+      "gym/surprised",
+      "gym/playful"
+    ],
+    "possibleExpressionApertureChange": [
+      "gym/surprised",
+      "private/surprised"
+    ],
+    "mildOrUncertain": [
+      "gym/normal",
+      "private/normal",
+      "private/thinking",
+      "private/smile",
+      "private/playful"
+    ]
+  }
+}

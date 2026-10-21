@@ -1,0 +1,531 @@
+{
+  "schemaVersion": 1,
+  "reportId": "shiori-home-portrait-v2-step4-review-20261019",
+  "scope": "10 existing main portraits, no image transformation or edits",
+  "sourceMainSHA": "f7148b56734f76faef386c97b4482c9c3e2f3508",
+  "targetPR": 38,
+  "targetBranch": "docs/home-portrait-v2-unification-20261019",
+  "master": {
+    "id": "gym/smile",
+    "path": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp",
+    "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
+    "sourceCanvas": [
+      1086,
+      1448
+    ]
+  },
+  "method": {
+    "reviewMode": "one reviewer, visual review of GitHub Actions in-memory crops of *existing* image bytes, fixed (unshifted) 10px coordinate grid",
+    "sourceEvidence": "https://github.com/k4n7x2/kintoreapp/actions/runs/39272597617",
+    "cropScript": "scripts/audit_home_v2_review_crops.py",
+    "cropSourceROIs": {
+      "screenLeftEye": [
+        320,
+        370,
+        520,
+        520
+      ],
+      "screenRightEye": [
+        520,
+        270,
+        700,
+        440
+      ],
+      "chin": [
+        490,
+        480,
+        700,
+        660
+      ]
+    },
+    "coordinates": "source pixel coordinate origin upper-left; no per-image CSS correction",
+    "eyeDefinition": "candidate midpoint of visible eye aperture/outline, judged from upper eyelid, lower rim and corners; NOT iris color centroid, geometric ambiguity from hair/eyelashes",
+    "chinDefinition": "candidate lowest visible jaw contour at chin turn, not mouth",
+    "uncertainty": {
+      "eyesPerAxisPx": "approximately ±8–12 each based on 10px grid and occluded contour; epistemic, not certified 95% confidence interval",
+      "chinPerAxisPx": "approximately ±5–8",
+      "eyeSeparationPx": "at least ±15–20 from combined eye-point uncertainty; sub-10px separation differences cannot be reliably classified",
+      "repeatability": "NO independent second reviewer; no 2nd blind annotation"
+    },
+    "externalCheck": "Previous audit image color-centroid changes were reviewed for consistency but are not the definition of the eye outline center."
+  },
+  "previousSpecAnchors": {
+    "screenLeftEye": [
+      425,
+      447
+    ],
+    "screenRightEye": [
+      585,
+      355
+    ],
+    "eyeMidpoint": [
+      505,
+      401
+    ],
+    "eyeSeparationPx": 184.56,
+    "chin": [
+      594,
+      587
+    ],
+    "note": "Earlier specification used visually approximated markers; direct 10px-grid review gives different right-eye midpoint (~16px), so DO NOT overwrite official candidates or claim calibrated without independent review."
+  },
+  "newMasterCandidate": {
+    "screenLeftEye": [
+      428,
+      448
+    ],
+    "screenRightEye": [
+      601,
+      351
+    ],
+    "eyeMidpoint": [
+      514.5,
+      399.5
+    ],
+    "eyeSeparationPx": 198.34,
+    "chin": [
+      599,
+      585
+    ],
+    "status": "unconfirmed, conflicts with prior uncalibrated candidate"
+  },
+  "rows": [
+    {
+      "id": "gym/smile",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-smile-alt1.webp",
+      "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          428,
+          448
+        ],
+        "screenRightEyeOutlineCenter": [
+          601,
+          351
+        ],
+        "eyeMidpoint": [
+          514.5,
+          399.5
+        ],
+        "eyeSeparationPx": 198.34,
+        "chinTip": [
+          599,
+          585
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          0,
+          0
+        ],
+        "eyeSeparationPx": 0,
+        "eyeSeparationPercent": 0,
+        "chinTip": [
+          0,
+          0
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    },
+    {
+      "id": "gym/normal",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-normal-alt1-before.webp",
+      "sha256": "d433ad6698a3524695109a29db302ea0869f5478f9fc61bcd242b710e761eda7",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          428,
+          449
+        ],
+        "screenRightEyeOutlineCenter": [
+          605,
+          354
+        ],
+        "eyeMidpoint": [
+          516.5,
+          401.5
+        ],
+        "eyeSeparationPx": 200.88,
+        "chinTip": [
+          598,
+          589
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          2,
+          2
+        ],
+        "eyeSeparationPx": 2.54,
+        "eyeSeparationPercent": 1.28,
+        "chinTip": [
+          -1,
+          4
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    },
+    {
+      "id": "gym/thinking",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-thinking-alt1.webp",
+      "sha256": "79248911e72b84e165949eb4e6029c37a022369d8fc5b691fbe25a50791b4ac5",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          422,
+          474
+        ],
+        "screenRightEyeOutlineCenter": [
+          598,
+          369
+        ],
+        "eyeMidpoint": [
+          510,
+          421.5
+        ],
+        "eyeSeparationPx": 204.94,
+        "chinTip": [
+          603,
+          603
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          -4.5,
+          22
+        ],
+        "eyeSeparationPx": 6.6,
+        "eyeSeparationPercent": 3.33,
+        "chinTip": [
+          4,
+          18
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    },
+    {
+      "id": "gym/surprised",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-surprised-alt1.webp",
+      "sha256": "9ec6a5ffc964563894db1142eec3b66e740ce0eb9ffc84ee28b7411d25450f8d",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          423,
+          465
+        ],
+        "screenRightEyeOutlineCenter": [
+          596,
+          362
+        ],
+        "eyeMidpoint": [
+          509.5,
+          413.5
+        ],
+        "eyeSeparationPx": 201.34,
+        "chinTip": [
+          602,
+          607
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          -5,
+          14
+        ],
+        "eyeSeparationPx": 3,
+        "eyeSeparationPercent": 1.51,
+        "chinTip": [
+          3,
+          22
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    },
+    {
+      "id": "gym/playful",
+      "path": "public/assets/shiori/gim/v1/shiori-gim-story-playful-alt1.webp",
+      "sha256": "5fd2c4f9429366fee6c13e9aaf2319ac304bb44b9e977887a19451bc55dbfa24",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          423,
+          475
+        ],
+        "screenRightEyeOutlineCenter": [
+          596,
+          363
+        ],
+        "eyeMidpoint": [
+          509.5,
+          419
+        ],
+        "eyeSeparationPx": 206.09,
+        "chinTip": [
+          600,
+          584
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          -5,
+          19.5
+        ],
+        "eyeSeparationPx": 7.75,
+        "eyeSeparationPercent": 3.91,
+        "chinTip": [
+          1,
+          -1
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    },
+    {
+      "id": "private/normal",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-normal-r1.webp",
+      "sha256": "3601b2ff8dce26edf0e555b58ad403aac3896a0137140c0c21bfced09e3bd2da",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          429,
+          447
+        ],
+        "screenRightEyeOutlineCenter": [
+          601,
+          351
+        ],
+        "eyeMidpoint": [
+          515,
+          399
+        ],
+        "eyeSeparationPx": 196.98,
+        "chinTip": [
+          598,
+          584
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          0.5,
+          -0.5
+        ],
+        "eyeSeparationPx": -1.36,
+        "eyeSeparationPercent": -0.69,
+        "chinTip": [
+          -1,
+          -1
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    },
+    {
+      "id": "private/thinking",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-thinking-r1.webp",
+      "sha256": "aaad7a89707b98f42538825c85db33ec381dfaafe98a782ace9cf2e1412c344f",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          429,
+          445
+        ],
+        "screenRightEyeOutlineCenter": [
+          603,
+          347
+        ],
+        "eyeMidpoint": [
+          516,
+          396
+        ],
+        "eyeSeparationPx": 199.7,
+        "chinTip": [
+          604,
+          577
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          1.5,
+          -3.5
+        ],
+        "eyeSeparationPx": 1.36,
+        "eyeSeparationPercent": 0.69,
+        "chinTip": [
+          5,
+          -8
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    },
+    {
+      "id": "private/surprised",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-surprised-r1.webp",
+      "sha256": "2a40dcd6907560ddc5ba246d0b3955d00baecc27020debccbc712eeae871e518",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          431,
+          438
+        ],
+        "screenRightEyeOutlineCenter": [
+          602,
+          339
+        ],
+        "eyeMidpoint": [
+          516.5,
+          388.5
+        ],
+        "eyeSeparationPx": 197.59,
+        "chinTip": [
+          605,
+          577
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          2,
+          -11
+        ],
+        "eyeSeparationPx": -0.75,
+        "eyeSeparationPercent": -0.38,
+        "chinTip": [
+          6,
+          -8
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    },
+    {
+      "id": "private/smile",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-smile-r1.webp",
+      "sha256": "9411deda6103e5f9cdf0e9d5f48d65dddb1ace766e1d4d4f0ce406cad443e4a9",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          429,
+          448
+        ],
+        "screenRightEyeOutlineCenter": [
+          603,
+          350
+        ],
+        "eyeMidpoint": [
+          516,
+          399
+        ],
+        "eyeSeparationPx": 199.7,
+        "chinTip": [
+          598,
+          582
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          1.5,
+          -0.5
+        ],
+        "eyeSeparationPx": 1.36,
+        "eyeSeparationPercent": 0.69,
+        "chinTip": [
+          -1,
+          -3
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    },
+    {
+      "id": "private/playful",
+      "path": "public/assets/shiori/home/v2/shiori-private-home-playful-r1.webp",
+      "sha256": "a972349a49ecf7d8c04b8327902aeadd6d7394cc1fbccb980358edf502a1eaa0",
+      "canvas": [
+        1086,
+        1448
+      ],
+      "estimate": {
+        "screenLeftEyeOutlineCenter": [
+          429,
+          448
+        ],
+        "screenRightEyeOutlineCenter": [
+          603,
+          351
+        ],
+        "eyeMidpoint": [
+          516,
+          399.5
+        ],
+        "eyeSeparationPx": 199.21,
+        "chinTip": [
+          599,
+          580
+        ]
+      },
+      "deltaFromGymSmile": {
+        "eyeMidpoint": [
+          1.5,
+          0
+        ],
+        "eyeSeparationPx": 0.87,
+        "eyeSeparationPercent": 0.44,
+        "chinTip": [
+          0,
+          -5
+        ]
+      },
+      "confidence": "manual-grid single-reviewer estimate ONLY, NOT certified/independent duplicate measurement",
+      "acceptance": "UNVERIFIED_DO_NOT_PASS",
+      "requiredFollowup": "independent 2nd reviewer mark upper/lower visible eye outline and both canthi, chin tip and eye-center definition; compare disagreement"
+    }
+  ],
+  "interpretation": [
+    "Gym thinking, surprised, playful show strong downward candidate eye midpoint shifts (about +14 to +22px in Y) compared to gym smile; chin may move inconsistently across poses/expressions.",
+    "Private portraits are closer, but private surprised has a candidate ~11px upward eye-midpoint change.",
+    "The measured eye-to-eye distance does NOT establish perspective/scale changes below uncertainty bounds.",
+    "Every image remains unverified: image size/alpha pass does NOT make pose and landmark matching pass."
+  ],
+  "verdict": "NO PASS issued for any portrait; human certified review and Android visual test pending"
+}
