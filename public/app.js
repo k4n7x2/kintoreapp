@@ -2252,7 +2252,7 @@ const privateExpressionWrap = byId("shiori-private-expression-wrap");
 const privateExpressionSelect = byId("shiori-private-expression");
 const privateTrialStatus = byId("shiori-private-trial-status");
 // 衣装／表情は既存の固定素材を使用する。
-// ジムは第1話の採用済み5表情、部屋着は7表情をホームでもランダム切替する。
+// ジムは第1話の採用済み5表情と追加3表情、部屋着は7表情をホームでもランダム切替する。
 // 画像ごとの補正値は CSS 変数へ流し、ホームの承認済み距離感を保つ。
 const trainingLayout = {
   base: { scale: 1.14, origin: "right bottom", bottom: "0px" },
@@ -2282,7 +2282,10 @@ const trainingVariantDefinitions = [
   { id: "thinking", label: "考える", file: "thinking-alt1" },
   { id: "surprised", label: "驚き", file: "surprised-alt1" },
   { id: "smile", label: "笑顔", file: "smile-alt1" },
-  { id: "playful", label: "いたずら", file: "playful-alt1" }
+  { id: "playful", label: "いたずら", file: "playful-alt1" },
+  { id: "soft_smile", label: "優しい微笑み", file: "soft_smile-alt1" },
+  { id: "wry_smile", label: "困り笑い", file: "wry_smile-alt1" },
+  { id: "closed_eye_smile", label: "目を閉じた笑顔", file: "closed_eye_smile-alt1" }
 ];
 const homePortraits = {
   training: trainingVariantDefinitions.map(({ id, label, file }) => ({
@@ -2471,7 +2474,7 @@ shioriHomeArt.addEventListener("error", () => {
     outfitStatus.textContent = isPrivateOutfit(failedOutfit)
       ? "当日の私服画像を読み込めませんでした。別Verには切り替えません。"
       : failedOutfit === "training"
-        ? "トレーニングウェア5表情を読み込めませんでした。"
+        ? "トレーニングウェア8表情を読み込めませんでした。"
         : "部屋着の画像を読み込めませんでした。場所に合わない衣装へは切り替えません。";
   }
 });
