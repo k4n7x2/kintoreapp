@@ -75,3 +75,94 @@
   .tm-progress span { transition:none; }
   .tm-item:active,.tm-primary:active,.tm-secondary:active { transform:none; }
 }
+
+/* Guided set editor v2: compact, high-hierarchy input layout. */
+.tm-workout-topline {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; min-width:0; margin-bottom:13px;
+}
+.tm-workout-topline .tm-back { padding:3px 0; min-height:44px; flex-shrink:0; }
+.tm-workout-label {
+  color:var(--muted); font-size:10px; font-weight:750; letter-spacing:.075em;
+  text-align:right; font-variant-numeric:tabular-nums;
+}
+.tm-exercise-head {
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:8px; margin-bottom:13px; min-width:0;
+}
+.tm-exercise-head h1 {
+  min-width:0; flex:1; overflow-wrap:anywhere; margin:0;
+  font-size:clamp(19px,5.7vw,25px); line-height:1.35; font-weight:800; letter-spacing:-.03em;
+}
+.tm-set-caption {
+  font-size:11px; font-weight:700; color:var(--muted);
+  flex-shrink:0; white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+.tm-set-progress {display:grid; gap:7px; margin-bottom:14px;}
+.tm-set-marker {
+  min-height:34px; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--line); border-radius:9px; background:var(--deep);
+  color:var(--muted); font-size:12px; font-weight:700; font-variant-numeric:tabular-nums;
+}
+.tm-set-marker.is-done {
+  background:var(--raised); border-color:var(--line); color:var(--success);
+  font-size:17px; font-weight:850;
+}
+.tm-set-marker.is-current {
+  background:var(--raised); color:var(--accent-soft); border-color:var(--accent);
+  box-shadow:inset 0 0 0 1px var(--accent);
+}
+.tm-prev-row {
+  display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+  min-height:45px; padding:10px 0 13px; border-bottom:1px solid var(--line);
+  margin-bottom:15px; min-width:0;
+}
+.tm-prev-row span {color:var(--muted); font-size:11px; flex-shrink:0;}
+.tm-prev-row strong {
+  font-size:clamp(12px,3.7vw,15px); text-align:right; font-weight:750;
+  color:var(--ink); font-variant-numeric:tabular-nums; overflow-wrap:anywhere;
+}
+.tm-prev-row strong.tm-prev-missing {color:var(--muted); font-size:12px; font-weight:500;}
+.tm-data-row {
+  display:grid; grid-template-columns:minmax(40px,70px) minmax(0,1fr);
+  align-items:center; gap:9px; margin:0 0 11px; min-width:0;
+}
+.tm-data-row label {font-size:14px; font-weight:750; color:var(--ink);}
+.tm-data-row .tm-stepper {
+  width:100%; min-width:0; height:52px; min-height:52px;
+  grid-template-columns:48px minmax(0,1fr) 48px; border-radius:12px;
+  background:var(--deep);
+}
+.tm-data-row .tm-stepper button {
+  min-height:50px; font-size:24px; font-weight:450;
+}
+.tm-stepper-value {
+  min-width:0; position:relative; display:flex; align-items:center; background:var(--deep);
+}
+.tm-data-row .tm-stepper input {
+  width:100%; height:50px; min-height:50px; padding:5px 32px 5px 7px;
+  font-size:22px; line-height:1; border:0; text-align:center;
+  appearance:textfield; -moz-appearance:textfield; border-radius:0;
+}
+.tm-stepper-unit {
+  position:absolute; top:50%; right:10px; transform:translateY(-50%);
+  pointer-events:none; font-size:11px; line-height:1; font-weight:750; color:var(--muted);
+}
+.tm-compact-save {
+  min-height:52px; margin:16px 0 5px; border-radius:12px;
+  font-size:14px; letter-spacing:.01em;
+}
+@media(max-width:360px) {
+  #training-mode {padding:14px 11px 18px;}
+  .tm-exercise-head {flex-wrap:wrap; gap:4px;}
+  .tm-exercise-head h1 {flex-basis:100%;}
+  .tm-set-caption {text-align:right; margin-left:auto;}
+  .tm-data-row {grid-template-columns:40px minmax(0,1fr); gap:7px;}
+  .tm-data-row label {font-size:13px;}
+  .tm-data-row .tm-stepper {grid-template-columns:43px minmax(0,1fr) 43px; min-height:48px; height:48px;}
+  .tm-data-row .tm-stepper button {min-height:46px; font-size:22px;}
+  .tm-data-row .tm-stepper input {min-height:46px; height:46px; font-size:20px;}
+  .tm-prev-row {flex-wrap:wrap; gap:3px; min-height:0;}
+  .tm-prev-row span {flex-basis:100%;}
+  .tm-prev-row strong {text-align:left;}
+}

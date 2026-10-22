@@ -20,6 +20,22 @@ async function api(path, payload) {
   return data;
 }
 
+// Pure UI rules are kept separate from DOM updates for repeatable tests.
+export function resolvePreviousSet(previous, setNumber, unit) {
+  const matches=(Array.isArray(previous)?previous:[]).filter(row =>
+    (row.entry_unit || "kg_reps") === unit &&
+    Number.isInteger(Number(row.set_number)) && Number(row.set_number) >= 1);
+  const exact=matches.find(row=>Number(row.set_number)===setNumber);
+  const fallback=matches.reduce((best,row)=>!best ||
+    Number(row.set_number)>Number(best.set_number)?row:best,null);
+  return {set:exact||fallback||null, fallback:!exact && !!fallback};
+}
+export function visibleTrainingSets(item, setNumber) {
+  const count=Math.min(4,Math.max(1,item.targetSets||3,setNumber));
+  const first=Math.max(1,setNumber-count+1);
+  return Array.from({length:count},(_,index)=>first+index);
+}
+
 export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) {
   const state = {date:"",items:[],screen:"list",selected:-1,setNumber:1,
     weight:"",reps:"",busy:false,error:"",restUntil:0,run:0,active:false};
@@ -55,31 +71,55 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
       <p class="tm-error" role="alert">${html(state.error)}</p>`;
   }
   function lastSet(item,number) {
-    const exact=item.previous.find(row=>Number(row.set_number)===number && (row.entry_unit||"kg_reps")===item.unit);
-    return exact || null;
+    return resolvePreviousSet(item.previous,number,item.unit).set;
   }
   function setView() {
     const item=selected();
     if(!item){state.screen="list";return listView();}
-    const previous=lastSet(item,state.setNumber);
-    const priorText=previous ? item.unit==="seconds" ? `${previous.duration_seconds} 秒`
-      : item.unit==="reps" ? `${previous.reps} 回`
-      : `${Number(previous.weight_kg)} kg × ${previous.reps} 回` : "前回の同セットの記録なし";
-    const isTime=item.unit==="seconds",amountName=isTime?"秒数（秒）":"回数（回）";
-    root.innerHTML=`<button type="button" class="tm-back" data-action="list">‹ 一覧に戻る</button>
-      <div class="tm-title"><h1>${html(item.name)}</h1><span>${state.setNumber} / ${item.targetSets} セット（予定）</span></div>
-      <div class="tm-previous"><small>前回・${state.setNumber}セット目</small><strong>${html(priorText)}</strong></div>
-      ${item.unit==="kg_reps"?`<div class="tm-field"><label for="tm-weight">今回の重量（kg）</label>
-       <div class="tm-stepper"><button type="button" data-action="step" data-field="weight" data-direction="-1" aria-label="重量を2.5kg減らす">−</button>
-       <input id="tm-weight" type="number" min="0" max="2000" inputmode="decimal" step="any" value="${html(state.weight)}">
-       <button type="button" data-action="step" data-field="weight" data-direction="1" aria-label="重量を2.5kg増やす">＋</button></div>
-       <small>±2.5 kg・直接入力も可能</small></div>`:""}
-      <div class="tm-field"><label for="tm-reps">今回の${amountName}</label>
-        <div class="tm-stepper"><button type="button" data-action="step" data-field="reps" data-direction="-1" aria-label="${amountName}を減らす">−</button>
-        <input id="tm-reps" type="number" min="0" inputmode="numeric" step="1" placeholder="入力" value="${html(state.reps)}">
-        <button type="button" data-action="step" data-field="reps" data-direction="1" aria-label="${amountName}を増やす">＋</button></div>
-        <small>${isTime?"±5 秒":"±1 回"}・直接入力も可能</small></div>
-      <button type="button" class="tm-primary" data-action="save" id="tm-save">1セット終了 →</button>
+    const previous=resolvePreviousSet(item.previous,state.setNumber,item.unit);
+    const prior=previous.set;
+    const priorText=prior ? item.unit==="seconds" ? `${prior.duration_seconds} 秒`
+      : item.unit==="reps" ? `${prior.reps} 回`
+      : `${Number(prior.weight_kg)} kg × ${prior.reps} 回` : "前回の記録なし";
+    const priorLabel=previous.fallback ? "前回の最終セット" : `前回・${state.setNumber}セット目`;
+    const isTime=item.unit==="seconds";
+    const amountLabel=isTime?"秒数":"回数";
+    const amountUnit=isTime?"秒":"回";
+    const extra=state.setNumber>item.targetSets;
+    const countLabel=extra?`追加セット ${state.setNumber}`:`${state.setNumber} / ${item.targetSets} セット`;
+    const chips=visibleTrainingSets(item,state.setNumber).map(number=>{
+      const saved=item.sets.some(set=>Number(set.set_number)===number);
+      const current=number===state.setNumber;
+      const className=saved?"is-done":current?"is-current":"";
+      const status=saved?"記録済み":current?"入力中":"未実施";
+      return `<span role="listitem" class="tm-set-marker ${className}" aria-label="${number}セット目・${status}">${saved?"✓":number}</span>`;
+    }).join("");
+    root.innerHTML=`<div class="tm-workout-topline">
+      <button type="button" class="tm-back" data-action="list">‹ メニュー</button>
+      <span class="tm-workout-label">WORKOUT / SET ${String(state.setNumber).padStart(2,"0")}</span>
+      </div>
+      <div class="tm-exercise-head"><h1>${html(item.name)}</h1>
+      <span class="tm-set-caption">${countLabel}</span></div>
+      <div class="tm-set-progress" role="list" aria-label="本日のセット進捗" style="grid-template-columns:repeat(${visibleTrainingSets(item,state.setNumber).length},minmax(0,1fr))">${chips}</div>
+      <div class="tm-prev-row"><span>${priorLabel}</span>
+      <strong class="${prior?"":"tm-prev-missing"}">${html(priorText)}</strong></div>
+      ${item.unit==="kg_reps"?`<div class="tm-data-row">
+        <label for="tm-weight">重量</label>
+        <div class="tm-stepper">
+          <button type="button" data-action="step" data-field="weight" data-direction="-1" aria-label="重量を2.5kg減らす">−</button>
+          <div class="tm-stepper-value"><input id="tm-weight" type="number" min="0" max="2000" inputmode="decimal" step="any" value="${html(state.weight)}" aria-label="今回の重量">
+          <span class="tm-stepper-unit" aria-hidden="true">kg</span></div>
+          <button type="button" data-action="step" data-field="weight" data-direction="1" aria-label="重量を2.5kg増やす">＋</button>
+        </div></div>`:""}
+      <div class="tm-data-row">
+        <label for="tm-reps">${amountLabel}</label>
+        <div class="tm-stepper">
+          <button type="button" data-action="step" data-field="reps" data-direction="-1" aria-label="${amountLabel}を${isTime?"5秒":"1回"}減らす">−</button>
+          <div class="tm-stepper-value"><input id="tm-reps" type="number" min="0" inputmode="numeric" step="1" placeholder="—" value="${html(state.reps)}" aria-label="今回の${amountLabel}">
+          <span class="tm-stepper-unit" aria-hidden="true">${amountUnit}</span></div>
+          <button type="button" data-action="step" data-field="reps" data-direction="1" aria-label="${amountLabel}を${isTime?"5秒":"1回"}増やす">＋</button>
+        </div></div>
+      <button type="button" class="tm-primary tm-compact-save" data-action="save" id="tm-save">✓ セットを記録する</button>
       <p class="tm-error" role="alert">${html(state.error)}</p>`;
     updateSaveButton();
   }
@@ -121,7 +161,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
     const validWeight=item.unit!=="kg_reps" ||
       (state.weight!=="" && Number.isFinite(weight) && weight>=0 && weight<=2000);
     button.disabled=state.busy || !validAmount || !validWeight;
-    button.textContent=state.busy?"保存中…":"1セット終了 →";
+    button.textContent=state.busy?"保存中…":"✓ セットを記録する";
   }
   function enterSet() {
     const item=selected();
