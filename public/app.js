@@ -2831,7 +2831,14 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+let trainingRecordNeedsReload = false;
 const trainingMode = createTrainingMode(byId("training-mode"), {
+  onSaved: () => {
+    trainingRecordNeedsReload = true;
+    if (!hasRecordChanges()) {
+      void loadWorkouts().then(loaded => { if (loaded) trainingRecordNeedsReload = false; });
+    }
+  },
   onUnauthorized: () => setAuthenticated(false),
   openRecord: () => {
     if (selectRecordDate(todayISO())) void loadWorkouts();
@@ -2894,6 +2901,9 @@ function setScreen(screen, pushHistory = true) {
     page.hidden = page.dataset.page !== screen;
   });
   if (screen === "training" && previousPage !== "training") void trainingMode.open();
+  if (screen === "record" && trainingRecordNeedsReload && !hasRecordChanges()) {
+    void loadWorkouts().then(loaded => { if (loaded) trainingRecordNeedsReload = false; });
+  }
   document.querySelectorAll(".drawer-item").forEach((item) => {
     const isCurrent = item.dataset.screen === screen;
     item.classList.toggle("is-active", isCurrent);
@@ -2929,7 +2939,7 @@ window.addEventListener("popstate", () => {
 });
 
 function setAuthenticated(next) {
-  if (!next) trainingMode.reset();
+  if (!next) { trainingMode.reset(); trainingRecordNeedsReload = false; }
   if (!next) closeSettingsPlanReset(true);
   if (!next) closeRepeatSheet(false);
   const wasAuthorized = authorized;
