@@ -7,8 +7,9 @@
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
   <link rel="stylesheet" href="/styles.css?v=20261019-private-v2-match-training-v3">
+  <link rel="stylesheet" href="/training-mode.css?v=20261022-v01">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261021-gym-eight"></script>
+  <script type="module" src="/app.js?v=20261022-training-mode-v01"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261020-daily-private-v1">
   <script type="module" src="/gallery.js?v=20261021-gym-eight"></script>
 </head>
@@ -31,6 +32,7 @@
       <div class="drawer-group"><h2>日常</h2>
         <button type="button" class="drawer-item" data-screen="home"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>ホーム</span></button>
         <button type="button" class="drawer-item" data-screen="calendar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h3v3H8z"/></svg><span>カレンダー</span></button>
+        <button type="button" class="drawer-item" data-screen="training"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6.5 6.5 11 11M4 10 10 4m-8 4 6-6m6 18 6-6m-2 8 4-4"/></svg><span>筋トレモード</span></button>
         <button type="button" class="drawer-item" data-screen="record"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11M4 10 10 4m-8 4 6-6m6 18 6-6m-2 8 4-4"/></svg><span>トレーニング記録</span></button>
         <button type="button" class="drawer-item" data-screen="talk"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-8 8 8.6 8.6 0 0 1-3.5-.7L4 20l1.2-4A8 8 0 1 1 20 11.5Z"/><path d="M8 11h8M8 14h5"/></svg><span>トーク</span></button>
         <button type="button" class="drawer-item" data-screen="notices"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span>お知らせ</span></button>
@@ -73,7 +75,7 @@
             <nav class="dashboard-hub" aria-label="ホームメニュー">
               <div class="hub-grid">
                 <button class="hub-link" type="button" data-screen="calendar" aria-label="カレンダー" title="カレンダー"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h3v3H8z"/></svg></button>
-                <button class="hub-link" type="button" data-screen="record" aria-label="トレーニング記録" title="トレーニング記録"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11M4 10 10 4m-8 4 6-6m6 18 6-6m-2 8 4-4"/></svg></button>
+                <button class="hub-link" type="button" data-screen="training" aria-label="筋トレモード" title="筋トレモード"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11M4 10 10 4m-8 4 6-6m6 18 6-6m-2 8 4-4"/></svg></button>
                 <button class="hub-link" type="button" data-screen="talk" aria-label="トーク" title="トーク"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-8 8 8.6 8.6 0 0 1-3.5-.7L4 20l1.2-4A8 8 0 1 1 20 11.5Z"/><path d="M8 11h8M8 14h5"/></svg></button>
                 <button class="hub-link" type="button" data-screen="notices" aria-label="お知らせ" title="お知らせ"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg></button>
               </div>
@@ -87,6 +89,10 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <section class="app-page" id="page-training" data-page="training" aria-label="筋トレモード" hidden>
+          <div id="training-mode" aria-live="off"></div>
         </section>
 
         <section class="app-page record-compact record-card-layout sd-fixed-page" id="page-record" data-page="record" aria-labelledby="record-heading" hidden>
