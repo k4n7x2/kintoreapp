@@ -1,4 +1,5 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
+import { createTrainingMode } from "./training-mode.js?v=20261022-v01";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
 import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js?v=20261020-daily-private-v1";
@@ -2104,7 +2105,7 @@ const loginButton = byId("login-button");
 const loginFeedback = byId("login-feedback");
 const loginSuccess = byId("login-success");
 
-const pages = new Set(["home", "calendar", "record", "talk", "notices", "analysis", "exercise-settings", "events", "gallery", "settings"]);
+const pages = new Set(["home", "calendar", "record", "training", "talk", "notices", "analysis", "exercise-settings", "events", "gallery", "settings"]);
 
 // 背景はGitHubの固定素材。場所はログインのたびにランダム選択し、端末には保存しない。
 const sceneLocations = ["gym", ...REGULAR_SCENE_LOCATIONS];
@@ -2830,11 +2831,19 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+const trainingMode = createTrainingMode(byId("training-mode"), {
+  onUnauthorized: () => setAuthenticated(false),
+  openRecord: () => {
+    if (selectRecordDate(todayISO())) void loadWorkouts();
+  }
+});
+
 function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
   if (repeatSheetOpen && screen !== "record") closeRepeatSheet(false);
   if (screen !== "settings") closeSettingsPlanReset();
   const previousPage = activePage;
+  if (previousPage === "training" && screen !== "training") trainingMode.leave();
   syncDailyPrivateOutfit();
   if (screen !== "calendar") setCalendarMonthPicker(false);
   if (drawerOpen) setDrawerOpen(false);
@@ -2884,6 +2893,7 @@ function setScreen(screen, pushHistory = true) {
   document.querySelectorAll("[data-page]").forEach((page) => {
     page.hidden = page.dataset.page !== screen;
   });
+  if (screen === "training" && previousPage !== "training") void trainingMode.open();
   document.querySelectorAll(".drawer-item").forEach((item) => {
     const isCurrent = item.dataset.screen === screen;
     item.classList.toggle("is-active", isCurrent);
@@ -2919,6 +2929,7 @@ window.addEventListener("popstate", () => {
 });
 
 function setAuthenticated(next) {
+  if (!next) trainingMode.reset();
   if (!next) closeSettingsPlanReset(true);
   if (!next) closeRepeatSheet(false);
   const wasAuthorized = authorized;
