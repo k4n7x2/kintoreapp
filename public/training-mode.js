@@ -137,9 +137,10 @@ export function createTrainingMode(root, {onUnauthorized, openRecord}) {
     stopTimer();
     state.selected=index;
     const item=selected();
-    state.setNumber=Math.min(12,Math.max(0,...item.sets.map(s=>Number(s.set_number)||0))+1);
+    state.setNumber=Math.max(0,...item.sets.map(s=>Number(s.set_number)||0))+1;
     if(state.setNumber>12){state.error="この種目は上限の12セットに達しています。記録画面で編集してください。";state.screen="list";render();return;}
-    state.error="";state.screen="set";render();
+    state.error="";state.busy=true;
+    root.innerHTML='<p class="tm-loading" role="status">前回の記録を確認中…</p>';
     const token=state.run;
     if(!item.previousLoaded){
       try{
@@ -148,7 +149,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord}) {
         item.previous=Array.isArray(data.sets)?data.sets:[];item.previousLoaded=true;
       }catch(error){if(error.status===401){onUnauthorized();return;}item.previous=[];}
     }
-    if(state.active && state.run===token && selected()===item)enterSet();
+    if(state.active && state.run===token && selected()===item){state.busy=false;enterSet();}
   }
   async function save() {
     if(state.busy || state.screen!=="set")return;
