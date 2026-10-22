@@ -104,6 +104,16 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 - 週間予定は`(weekday,starts_on)`で設定履歴を保持する。未設定も明示的な`none`状態として保存し旧週次ルールとの競合を防ぐ。旧0005／0007データは削除せず、以前のスナップショット繰り返しは新規登録UIを終了して既存編集のみ残す。
 - `GET /api/training-setup`で設定、`GET /api/training-setup/day?date=...`で当日リンク、`POST /api/training-setup/templates`でテンプレ登録、`DELETE /api/training-setup/templates/:id`で削除、`PUT /api/training-setup/week`で週間予定を保存。認証と同一Origin制限は既存APIと共通。
 - 予定全削除では`gym_weekly_slots`も削除するが、テンプレート自体・来館・実績は残す。0008は2026-10-19の本番Buildログで自動適用成功を確認済み。Android実機での操作・個人記録の変更前後の照合は別途検証する。
+### 筋トレモード（2026-10-22 試験実装）
+
+- ホームの旧「トレーニング記録」ショートカットを「筋トレモード」に変更。旧記録画面はドロワー・カレンダーから引き続き利用できる。
+- 今日の予定に紐づいた週間テンプレート（0008）、有効な旧繰り返し内容（0007）、今日の保存済みセットを取得して種目一覧を組み立てる。予定外の保存済み種目も残す。休息日・メニューが空の日は空状態と既存記録への導線を表示する。予定種目は実績として自動保存しない。
+- 種目を選ぶと `GET /api/workouts/recent?name=...&before=...` で前回の同じセットを参照。重量は前回値を初期入力、回数は未入力から開始。重量は±2.5kg、回数は±1、秒数は±5秒のステッパー（直接入力可能）。
+- 「1セット終了」で `PUT /api/training-mode/set` に1セットだけ保存し、成功時のみ90秒のインターバル画面へ移動。「次のセットへ」「この種目を終了する」を選ぶ。予定セット数を超えても最大12セットまで続けられる。
+- `PUT /api/training-mode/finish` で種目完了を記録し、一覧では未実施・途中・完了を区別。追加の `0010_training_mode_exercises.sql` は完了フラグだけを保存し、既存の `workout_sessions` / `workout_sets` と予定・来館・種目マスターは変更しない。
+- 既存単一種目セッションの同じセット番号だけを差し替える。旧形式の複数種目セッションと衝突すると409を返して旧記録画面での編集を案内し、既存セットを消さない。書き込みは署名Cookie認証・同一Origin JSON・D1 batchを維持し、ブラウザ永続ストレージに個人情報を保存しない。
+- `GET /api/training-mode/day?date=YYYY-MM-DD` が当日のセットと完了状態を返す。認証/APIの応答・D1スキーマ適用はCloudflare Workers Builds以降に確認する。
+
 ## API（個人用）
 
 | HTTP | エンドポイント | 内容 |
