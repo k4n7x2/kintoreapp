@@ -20,7 +20,7 @@ async function api(path, payload) {
   return data;
 }
 
-export function createTrainingMode(root, {onUnauthorized, openRecord}) {
+export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) {
   const state = {date:"",items:[],screen:"list",selected:-1,setNumber:1,
     weight:"",reps:"",busy:false,error:"",restUntil:0,run:0,active:false};
   let timer=null;
@@ -170,6 +170,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord}) {
       item.sets=item.sets.filter(row=>Number(row.set_number)!==num);
       item.sets.push({...payload,entry_unit:item.unit});
       item.finished=false;
+      if (typeof onSaved === "function") onSaved();
       state.screen="rest";state.restUntil=Date.now()+90000;state.error="";render();
     }catch(error) {
       if(error.status===401){onUnauthorized();return;}
@@ -219,7 +220,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord}) {
       if(entry?.planned&&entry?.source==="weekly-template"&&weekly.template?.items) {
         for(const item of weekly.template.items)add(item.name,item.unit,item.sets);
       }else if(entry?.planned&&entry?.source==="repeat") {
-        const occurrence=(repeat.occurrences||[]).find(x=>x.kind==="gym");
+        const occurrence=(repeat.occurrences||[]).filter(x=>x.kind==="gym").at(-1);
         for(const item of occurrence?.exercises||[])add(item.name,item.unit,item.sets?.length);
       }
       // Saved sets are always visible, even if the weekly plan was later changed.
