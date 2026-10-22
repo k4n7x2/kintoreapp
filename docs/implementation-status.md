@@ -1,3 +1,5 @@
+> 2026-10-22 公開確認補足：筋トレモードv0.1の機能コードはmainにあるが、作業ブランチのCloudflare Previewビルドは`npx wrangler preview`のプレビュー用D1設定不足で失敗。Productionは`main`・`npm run db:migrate:remote && npm run deploy`が設定されていることをCloudflare画面で確認。本番デプロイ・0010のD1適用・Android操作は成功ログを確認するまで未確認として扱う。
+
 ## 2026-10-22 筋トレモード v0.1（実装／本番検証待ち）
 
 - 開始main `920c5ad43fa10ab604ebca1545e017a617bcdb51`。ホームの記録ショートカットを筋トレモードへ差し替え、ドロワーと従来記録画面の経路は維持。
