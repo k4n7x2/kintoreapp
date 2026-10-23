@@ -33,6 +33,11 @@ class FakeD1 {
       this.menus.push({id,title:args[0],items_json:args[1]});
       return {meta:{last_row_id:id}};
     }
+    if(sql.startsWith("UPDATE workout_menu_templates SET title=")){
+      const item=this.menus.find(x=>x.id===args[2]);
+      if(item){item.title=args[0];item.items_json=args[1];}
+      return {success:!!item};
+    }
     if(sql.startsWith("INSERT INTO gym_weekly_slots")){
       this.slots=this.slots.filter(x=>x.weekday!==args[0]||x.starts_on!==args[1]);
       this.slots.push({weekday:args[0],starts_on:args[1],kind:args[2],template_id:args[3]});
@@ -85,6 +90,41 @@ test("weekly schedule links the template automatically without making seven dail
   assert.equal(thu.body.slot.kind,"rest");
   assert.equal(thu.body.template,null);
   assert.equal(db.slots.length,7);
+});
+test("updating an existing template retains its ID, links, and stored workout isolation",async()=>{
+  const db=new FakeD1();
+  const created=await api(db,"/api/training-setup/templates","POST",menu);
+  const id=created.body.id;
+  await api(db,"/api/training-setup/week","PUT",{
+    starts_on:"2026-10-19",slots:seven(id)
+  });
+  const revised={title:"肩・腕の日",items:[
+    {name:"ショルダープレス",unit:"kg_reps",sets:3,note:"軽めに"},
+    {name:"アームカール",unit:"kg_reps",sets:2,note:""}
+  ]};
+  const result=await api(db,"/api/training-setup/templates/"+id,"PUT",revised);
+  assert.equal(result.status,200);
+  assert.equal(result.body.template.id,id);
+  assert.equal(db.menus.length,1);
+  const day=await api(db,"/api/training-setup/day?date=2026-10-27");
+  assert.equal(day.body.slot.template_id,id);
+  assert.deepEqual(day.body.template.items,revised.items);
+  assert.equal(day.body.template.title,revised.title);
+  assert.equal(db.writes.some(x=>/workout_sessions|workout_sets/.test(x)),false);
+});
+test("template edits reject bad contents and unknown IDs without data loss",async()=>{
+  const db=new FakeD1();
+  const created=await api(db,"/api/training-setup/templates","POST",menu);
+  const id=created.body.id;
+  const before=JSON.stringify(db.menus);
+  assert.equal((await api(db,"/api/training-setup/templates/"+id,"PUT",{
+    title:"重複",items:[...menu.items,...menu.items]
+  })).status,400);
+  assert.equal((await api(db,"/api/training-setup/templates/"+id,"PUT",{
+    title:"空",items:[]
+  })).status,400);
+  assert.equal((await api(db,"/api/training-setup/templates/999","PUT",menu)).status,404);
+  assert.equal(JSON.stringify(db.menus),before);
 });
 test("editing weekly setup preserves earlier dates through versioned weekday slots",async()=>{
   const db=new FakeD1();
