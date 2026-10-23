@@ -103,6 +103,7 @@ Cloudflare Zero Trust / Accessは使用しない。Runtime Secret `APP_PASSWORD`
 - テンプレート自動展開は未実施の入力下書き。前回重量・回数は既存の前回実績表示から参照し、勝手に実績を保存しない。既に保存した種目や編集中の入力を上書きしない。休息日と日別例外を優先する。
 - 週間予定は`(weekday,starts_on)`で設定履歴を保持する。未設定も明示的な`none`状態として保存し旧週次ルールとの競合を防ぐ。旧0005／0007データは削除せず、以前のスナップショット繰り返しは新規登録UIを終了して既存編集のみ残す。
 - `GET /api/training-setup`で設定、`GET /api/training-setup/day?date=...`で当日リンク、`POST /api/training-setup/templates`でテンプレ登録、`PUT /api/training-setup/templates/:id`で保存済みテンプレートの更新、`DELETE /api/training-setup/templates/:id`で削除、`PUT /api/training-setup/week`で週間予定を保存。認証と同一Origin制限は既存APIと共通。
+- 保存済みテンプレートの「編集」は設定画面とは独立した全画面対応ダイアログ。メニュー一覧から種目の詳細へ進む既存記録画面に近い構成。種目追加・変更では認証済み `GET /api/exercises` を使用し、種目マスターと実施済み種目を候補として表示。部位・名前で絞り込み可能で、未登録の種目名も入力できる。変更保存は同じテンプレートIDを維持し、曜日の紐づけ・既存の実績を変更しない。
 - 予定全削除では`gym_weekly_slots`も削除するが、テンプレート自体・来館・実績は残す。0008は2026-10-19の本番Buildログで自動適用成功を確認済み。Android実機での操作・個人記録の変更前後の照合は別途検証する。
 ### 筋トレモード（2026-10-22 試験実装）
 
