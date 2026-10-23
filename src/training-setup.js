@@ -78,6 +78,23 @@ export async function handleTrainingSetupAPI(db,url,request,method,{respond,vali
       return respond({saved:true,id:saved.meta?.last_row_id??null},201);
     }
     const hit=/^\/api\/training-setup\/templates\/(\d+)$/.exec(path);
+    if(hit&&method==="PUT"){
+      const id=Number(hit[1]);
+      if(!Number.isSafeInteger(id)||id<1)return respond({error:"invalid_id"},400);
+      const parsed=await readJSON(request,8000);
+      if(parsed.error)return respond({error:parsed.error},parsed.status);
+      const item=normalizeTemplate(parsed.value);
+      if(!item)return respond({error:"invalid_template"},400);
+      const existing=await db.prepare(
+        "SELECT id,title,items_json FROM workout_menu_templates WHERE id=?"
+      ).bind(id).first();
+      if(!existing)return respond({error:"not_found"},404);
+      await db.prepare(
+        "UPDATE workout_menu_templates SET title=?,items_json=?,updated_at=CURRENT_TIMESTAMP WHERE id=?"
+      ).bind(item.title,JSON.stringify(item.items),id).run();
+      // The ID, weekday links, and completed workout sessions are unchanged.
+      return respond({saved:true,id,template:{id,...item}});
+    }
     if(hit&&method==="DELETE"){
       const id=Number(hit[1]);
       if(!Number.isSafeInteger(id)||id<1)return respond({error:"invalid_id"},400);
