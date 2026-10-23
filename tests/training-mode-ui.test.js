@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {resolvePreviousSet,visibleTrainingSets} from "../public/training-mode.js";
+import {resolvePreviousSet,initialTrainingSetValues,visibleTrainingSets} from "../public/training-mode.js";
 
 test("exact previous set wins, including same unit filter",()=>{
   const rows=[{set_number:1,entry_unit:"kg_reps",weight_kg:40,reps:10},
@@ -32,8 +32,44 @@ test("set view keeps editable steppers with embedded units, without shiori panel
   assert.match(js,/data-action="step" data-field="reps"/);
   assert.match(js,/class="tm-stepper-unit"/);
   assert.match(js,/追加セット/);
-  assert.match(js,/state\.reps=own\?String\(item\.unit/);
+  assert.match(js,/initialTrainingSetValues\(item,state\.setNumber\)/);
   assert.match(css,/\.tm-data-row\s*\{/);
   assert.match(css,/\.tm-compact-save\s*\{/);
   assert.doesNotMatch(js,/shiori-training-frame/);
+});
+
+test("reps prefill from matching previous set for first and later sets",()=>{
+  const item={unit:"kg_reps",sets:[],previous:[
+    {set_number:1,entry_unit:"kg_reps",weight_kg:40,reps:10},
+    {set_number:2,entry_unit:"kg_reps",weight_kg:42.5,reps:8},
+    {set_number:3,entry_unit:"kg_reps",weight_kg:42.5,reps:7}
+  ]};
+  assert.deepEqual(initialTrainingSetValues(item,1),{weight:"40",reps:"10"});
+  assert.deepEqual(initialTrainingSetValues(item,2),{weight:"42.5",reps:"8"});
+  assert.deepEqual(initialTrainingSetValues(item,3),{weight:"42.5",reps:"7"});
+});
+test("extra sets inherit previous final set's weight and reps",()=>{
+  const item={unit:"kg_reps",sets:[],previous:[
+    {set_number:1,entry_unit:"kg_reps",weight_kg:35,reps:12},
+    {set_number:3,entry_unit:"kg_reps",weight_kg:40,reps:8}
+  ]};
+  assert.deepEqual(initialTrainingSetValues(item,4),{weight:"40",reps:"8"});
+  assert.deepEqual(initialTrainingSetValues(item,5),{weight:"40",reps:"8"});
+});
+test("saved same-day set takes priority over previous-session defaults",()=>{
+  const item={unit:"kg_reps",
+    sets:[{set_number:2,weight_kg:30,reps:12}],
+    previous:[{set_number:2,entry_unit:"kg_reps",weight_kg:35,reps:9}]
+  };
+  assert.deepEqual(initialTrainingSetValues(item,2),{weight:"30",reps:"12"});
+});
+test("no prior reps remains blank; zero reps are not prefilled",()=>{
+  assert.deepEqual(initialTrainingSetValues({unit:"kg_reps",sets:[],previous:[]},1),{weight:"0",reps:""});
+  assert.deepEqual(initialTrainingSetValues({unit:"kg_reps",sets:[],previous:[{set_number:1,entry_unit:"kg_reps",weight_kg:30,reps:0}]},1),{weight:"30",reps:""});
+});
+test("reps-only and seconds exercises prefill their corresponding units",()=>{
+  const bodyweight={unit:"reps",sets:[],previous:[{set_number:1,entry_unit:"reps",weight_kg:0,reps:15}]};
+  const time={unit:"seconds",sets:[],previous:[{set_number:1,entry_unit:"seconds",weight_kg:0,reps:0,duration_seconds:60}]};
+  assert.deepEqual(initialTrainingSetValues(bodyweight,1),{weight:"0",reps:"15"});
+  assert.deepEqual(initialTrainingSetValues(time,1),{weight:"0",reps:"60"});
 });

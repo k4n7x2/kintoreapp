@@ -30,6 +30,19 @@ export function resolvePreviousSet(previous, setNumber, unit) {
     Number(row.set_number)>Number(best.set_number)?row:best,null);
   return {set:exact||fallback||null, fallback:!exact && !!fallback};
 }
+// Resolve only the editor's initial values. Nothing is saved until the user confirms a set.
+export function initialTrainingSetValues(item, setNumber) {
+  const previous=resolvePreviousSet(item.previous,setNumber,item.unit).set;
+  const own=item.sets.find(row=>Number(row.set_number)===setNumber);
+  const weight=own?.weight_kg ?? previous?.weight_kg ?? 0;
+  const amount=item.unit==="seconds"
+    ? own?.duration_seconds ?? previous?.duration_seconds
+    : own?.reps ?? previous?.reps;
+  return {
+    weight:String(weight),
+    reps:Number.isInteger(amount) && amount>0 ? String(amount) : ""
+  };
+}
 export function visibleTrainingSets(item, setNumber) {
   const count=Math.min(4,Math.max(1,item.targetSets||3,setNumber));
   const first=Math.max(1,setNumber-count+1);
@@ -69,9 +82,6 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
       <p class="tm-help">種目を選ぶと、前回の重量・回数を確認できます。</p>
       <button type="button" class="tm-link" data-action="record">記録画面で種目・予定を編集</button>
       <p class="tm-error" role="alert">${html(state.error)}</p>`;
-  }
-  function lastSet(item,number) {
-    return resolvePreviousSet(item.previous,number,item.unit).set;
   }
   function setView() {
     const item=selected();
@@ -166,10 +176,9 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
   function enterSet() {
     const item=selected();
     state.screen="set";state.error="";state.busy=false;
-    const previous=lastSet(item,state.setNumber);
-    const own=item.sets.find(row=>Number(row.set_number)===state.setNumber);
-    state.weight=String(own?.weight_kg ?? previous?.weight_kg ?? 0);
-    state.reps=own?String(item.unit==="seconds"?own.duration_seconds:own.reps):"";
+    const defaults=initialTrainingSetValues(item,state.setNumber);
+    state.weight=defaults.weight;
+    state.reps=defaults.reps;
     render();
   }
   async function choose(index) {
