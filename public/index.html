@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261023-template-editor-v1">
+  <link rel="stylesheet" href="/styles.css?v=20261023-template-window-v2">
   <link rel="stylesheet" href="/training-mode.css?v=20261023-v03">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261023-template-editor-v1"></script>
+  <script type="module" src="/app.js?v=20261023-template-window-v2"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261020-daily-private-v1">
   <script type="module" src="/gallery.js?v=20261021-gym-eight"></script>
 </head>
@@ -540,22 +540,8 @@
           <section class="section weekly-templates-section" aria-labelledby="weekly-templates-heading">
             <div class="section-heading"><h2 id="weekly-templates-heading">メニューテンプレート</h2></div>
             <div class="panel weekly-templates-panel">
-              <p class="field-hint">記録画面で保存したメニューをここで確認・編集・削除できます。</p>
+              <p class="field-hint">記録画面で保存したメニューを確認・編集・削除できます。編集は専用ウインドウで行います。</p>
               <div id="weekly-templates-list" class="weekly-templates-list"></div>
-              <section id="weekly-template-editor" class="weekly-template-editor" aria-labelledby="weekly-template-editor-heading" hidden>
-                <h3 id="weekly-template-editor-heading">テンプレートを編集</h3>
-                <label class="weekly-template-title-field" for="weekly-template-edit-title">テンプレート名
-                  <input id="weekly-template-edit-title" type="text" maxlength="60" autocomplete="off" required>
-                </label>
-                <div id="weekly-template-edit-items" class="weekly-template-edit-items" aria-label="テンプレートの種目"></div>
-                <button type="button" id="weekly-template-edit-add" class="weekly-template-edit-add">＋ 種目を追加</button>
-                <p class="weekly-template-edit-hint">変更は紐づけ済みの曜日のメニューに反映されます。過去の筋トレ記録や現在の入力内容は変更しません。</p>
-                <div class="weekly-template-edit-actions">
-                  <button type="button" id="weekly-template-edit-cancel" class="secondary-action">キャンセル</button>
-                  <button type="button" id="weekly-template-edit-save">変更を保存</button>
-                </div>
-                <p id="weekly-template-edit-feedback" class="feedback" role="status" aria-live="polite"></p>
-              </section>
               <p id="weekly-templates-feedback" class="feedback" role="status" aria-live="polite"></p>
             </div>
           </section>
@@ -690,6 +676,72 @@
     </section>
     <footer id="app-footer" hidden>kintoreapp · Build your own rhythm.</footer>
   </div>
+    <dialog id="weekly-template-editor" class="weekly-template-editor" aria-labelledby="weekly-template-editor-heading" aria-modal="true">
+      <div class="weekly-template-window">
+        <header class="weekly-template-window-head">
+          <button type="button" id="weekly-template-edit-back" class="weekly-template-window-back" aria-label="戻る">‹ 戻る</button>
+          <h2 id="weekly-template-editor-heading">テンプレート編集</h2>
+          <button type="button" id="weekly-template-edit-close" class="weekly-template-window-close" aria-label="閉じる">×</button>
+        </header>
+        <div class="weekly-template-window-scroll">
+          <div id="weekly-template-edit-list-view" class="weekly-template-editor-view">
+            <label class="weekly-template-title-field" for="weekly-template-edit-title">テンプレート名
+              <input id="weekly-template-edit-title" type="text" maxlength="60" autocomplete="off" required>
+            </label>
+            <div class="weekly-template-edit-section-head"><strong>登録する種目</strong><small>タップして詳細を編集</small></div>
+            <div id="weekly-template-edit-items" class="weekly-template-edit-items" aria-label="テンプレートの種目"></div>
+            <button type="button" id="weekly-template-edit-add" class="weekly-template-edit-add">＋ 種目を追加</button>
+            <p class="weekly-template-edit-hint">曜日の紐づけは維持されます。実施済みの記録は変更されません。</p>
+          </div>
+          <div id="weekly-template-edit-picker-view" class="weekly-template-editor-view" hidden>
+            <h3>種目を選択</h3>
+            <label class="weekly-template-filter-field" for="weekly-template-picker-part">部位で絞り込む
+              <select id="weekly-template-picker-part">
+                <option value="すべて">すべての部位</option>
+                <option value="胸">胸</option><option value="背中">背中</option>
+                <option value="肩">肩</option><option value="腕">腕</option>
+                <option value="脚">脚</option><option value="腹">腹</option>
+                <option value="体幹">体幹</option><option value="その他">その他</option>
+              </select>
+            </label>
+            <label class="weekly-template-filter-field" for="weekly-template-picker-search">種目名
+              <input id="weekly-template-picker-search" type="search" maxlength="60" autocomplete="off" placeholder="検索・入力">
+            </label>
+            <div id="weekly-template-picker-list" class="weekly-template-picker-list" aria-label="登録済み種目の候補"></div>
+            <button type="button" id="weekly-template-picker-manual" class="weekly-template-picker-manual" hidden>入力した種目名を使用</button>
+            <p id="weekly-template-picker-feedback" class="feedback" role="status" aria-live="polite"></p>
+          </div>
+          <div id="weekly-template-edit-detail-view" class="weekly-template-editor-view" hidden>
+            <h3 id="weekly-template-detail-name">種目の詳細</h3>
+            <button type="button" id="weekly-template-detail-change" class="weekly-template-detail-change">別の種目を選ぶ ›</button>
+            <div class="weekly-template-detail-card">
+              <label class="weekly-template-detail-field" for="weekly-template-detail-unit">記録単位
+                <select id="weekly-template-detail-unit">
+                  <option value="kg_reps">重量・回数</option>
+                  <option value="reps">回数のみ</option>
+                  <option value="seconds">秒数</option>
+                </select>
+              </label>
+              <label class="weekly-template-detail-field" for="weekly-template-detail-sets">セット数</label>
+              <div class="weekly-template-set-stepper">
+                <button type="button" id="weekly-template-detail-minus" aria-label="セット数を減らす">−</button>
+                <input id="weekly-template-detail-sets" type="number" min="1" max="12" step="1" inputmode="numeric" aria-label="セット数">
+                <button type="button" id="weekly-template-detail-plus" aria-label="セット数を増やす">＋</button>
+              </div>
+              <label class="weekly-template-detail-field" for="weekly-template-detail-note">メモ（任意）
+                <textarea id="weekly-template-detail-note" rows="3" maxlength="300" placeholder="フォームや注意点など"></textarea>
+              </label>
+            </div>
+            <button type="button" id="weekly-template-detail-done" class="weekly-template-detail-done">✓ この種目の設定を確定</button>
+          </div>
+          <p id="weekly-template-edit-feedback" class="feedback" role="status" aria-live="polite"></p>
+        </div>
+        <footer class="weekly-template-window-foot">
+          <button type="button" id="weekly-template-edit-cancel" class="secondary-action">キャンセル</button>
+          <button type="button" id="weekly-template-edit-save">変更を保存</button>
+        </footer>
+      </div>
+    </dialog>
 </body>
 </html>
 
