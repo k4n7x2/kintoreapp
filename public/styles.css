@@ -3219,3 +3219,53 @@ body.is-authenticated.is-sd-page #app-screen {
   border: 1px solid var(--bubble-line);
   border-radius: 9px;
 }
+
+
+/* Saved training menu editor: compact single in-page card for Android portrait. */
+#weekly-template-editor[hidden] {display:none!important;}
+.weekly-template-actions {display:flex!important;gap:6px;align-items:center;flex:none;}
+.weekly-template-actions button {min-height:44px;min-width:54px;padding:8px 10px;font-size:12px;}
+.weekly-template-editor {
+  display:grid;gap:12px;margin-top:5px;padding:13px 11px;
+  background:var(--surface);border:1px solid var(--line);border-radius:13px;min-width:0;
+}
+.weekly-template-editor h3 {margin:0;font-size:15px;color:var(--ink);}
+.weekly-template-title-field,.weekly-template-edit-item label {
+  display:grid;gap:5px;min-width:0;font-size:12px;font-weight:700;color:var(--muted);
+}
+.weekly-template-editor input,.weekly-template-editor select,.weekly-template-editor textarea {
+  box-sizing:border-box;width:100%;min-width:0;min-height:44px;
+  border:1px solid var(--line);border-radius:9px;
+  background:var(--deep);color:var(--ink);padding:8px 10px;font:inherit;font-size:14px;
+}
+.weekly-template-editor textarea {min-height:54px;resize:vertical;}
+.weekly-template-edit-items {display:grid;gap:9px;}
+.weekly-template-edit-item {
+  display:grid;gap:9px;padding:11px 10px;border:1px solid var(--line);
+  background:var(--raised);border-radius:11px;min-width:0;
+}
+.weekly-template-edit-item-heading {display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.weekly-template-edit-item-heading strong {font-size:12px;color:var(--ink);}
+.weekly-template-edit-item-controls {display:flex;gap:5px;}
+.weekly-template-edit-item-controls button {
+  min-width:40px;min-height:44px;padding:7px;
+  border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  color:var(--ink);font:inherit;font-size:13px;cursor:pointer;
+}
+.weekly-template-edit-metrics {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.65fr);gap:8px;}
+.weekly-template-edit-add {width:100%;min-height:44px;background:var(--raised);
+  color:var(--ink);border:1px dashed var(--line);border-radius:9px;font-weight:700;}
+.weekly-template-edit-hint {margin:0;font-size:11px;line-height:1.6;color:var(--muted);}
+.weekly-template-edit-actions {display:grid;grid-template-columns:1fr 1.3fr;gap:8px;}
+.weekly-template-edit-actions button {min-height:46px;border-radius:10px;font-weight:750;font-size:13px;}
+#weekly-template-edit-save {border:0;background:var(--accent);color:var(--on-accent);}
+.weekly-template-editor button:disabled {opacity:.45;cursor:default;}
+.weekly-template-editor :is(input,textarea,select,button):focus-visible,
+.weekly-template-actions button:focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+@media(max-width:360px) {
+  .weekly-template-item {padding:8px;gap:5px;}
+  .weekly-template-actions {gap:4px;}
+  .weekly-template-actions button {min-width:46px;padding:6px;font-size:11px;}
+  .weekly-template-editor {padding:11px 8px;}
+  .weekly-template-edit-item {padding:9px 7px;}
+}
