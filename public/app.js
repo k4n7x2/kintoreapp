@@ -1,4 +1,5 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
+import { createSavedTemplateEditor } from "./saved-template-editor.js?v=20261023-v01";
 import { createTrainingMode } from "./training-mode.js?v=20261023-v02";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
@@ -3125,6 +3126,20 @@ const weekSave=byId("weekly-setup-save");
 const menuList=byId("weekly-templates-list");
 const menuFeedback=byId("weekly-templates-feedback");
 let weeklySetupReady=false,weeklySetupBusy=false,weeklyMenus=[],weeklySlotVersions=[];
+const savedTemplateEditor=createSavedTemplateEditor({
+  host:byId("weekly-template-editor"),
+  request:fetchJSON,
+  onUnauthorized:()=>setAuthenticated(false),
+  onUpdated:template=>{
+    weeklyMenus=weeklyMenus.map(old=>old.id===template.id?template:old);
+    // Preserve unsaved weekday choices: only refresh option labels and menu list.
+    for(const option of weekContainer.querySelectorAll(".weekly-setup-template option")){
+      if(option.value===String(template.id))option.textContent=template.title;
+    }
+    renderWeeklyTemplateList();
+    menuFeedback.textContent="テンプレートを更新しました。曜日の紐づけと筋トレ実績はそのままです。";
+  }
+});
 function weeklySlotForEditor(weekday) {
   return weeklySlotVersions.filter(x=>x.weekday===weekday && x.starts_on<=todayISO())
     .sort((a,b)=>b.starts_on.localeCompare(a.starts_on))[0]??null;
@@ -3168,6 +3183,10 @@ function renderTrainingSetup() {
     row.append(dayLabel,kind,menu);
     weekContainer.append(row);
   }
+  renderWeeklyTemplateList();
+}
+function renderWeeklyTemplateList(){
+  menuList.replaceChildren();
   if(!weeklyMenus.length){
     const empty=document.createElement("p");
     empty.className="field-hint";
@@ -3183,6 +3202,16 @@ function renderTrainingSetup() {
     const summary=document.createElement("small");
     summary.textContent=template.items.map(x=>x.name+" "+x.sets+"セット").join("・");
     detail.append(name,summary);
+    const actions=document.createElement("div");
+    actions.className="weekly-template-actions";
+    const edit=document.createElement("button");
+    edit.type="button";edit.textContent="編集";edit.className="secondary-action";
+    edit.setAttribute("aria-label",template.title+"を編集");
+    edit.disabled=weeklySetupBusy;
+    edit.addEventListener("click",()=>{
+      menuFeedback.textContent="";
+      savedTemplateEditor.open(template);
+    });
     const remove=document.createElement("button");
     remove.type="button";remove.textContent="削除";remove.className="secondary-action";
     remove.setAttribute("aria-label",template.title+"を削除");
@@ -3202,8 +3231,10 @@ function renderTrainingSetup() {
         menuFeedback.textContent="削除できませんでした。";
       }finally{weeklySetupBusy=false;}
     });
-    row.append(detail,remove);menuList.append(row);
+    actions.append(edit,remove);
+    row.append(detail,actions);menuList.append(row);
   }
+
 }
 async function loadTrainingSetup(){
   if(!authorized)return;
