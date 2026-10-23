@@ -1,5 +1,5 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
-import { createSavedTemplateEditor } from "./saved-template-editor.js?v=20261023-v01";
+import { createSavedTemplateEditor } from "./saved-template-editor.js?v=20261023-window-v02";
 import { createTrainingMode } from "./training-mode.js?v=20261023-v02";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
@@ -3210,7 +3210,7 @@ function renderWeeklyTemplateList(){
     edit.disabled=weeklySetupBusy;
     edit.addEventListener("click",()=>{
       menuFeedback.textContent="";
-      savedTemplateEditor.open(template);
+      void savedTemplateEditor.open(template);
     });
     const remove=document.createElement("button");
     remove.type="button";remove.textContent="削除";remove.className="secondary-action";
