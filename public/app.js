@@ -2850,6 +2850,7 @@ function setScreen(screen, pushHistory = true) {
   if (!authorized || !pages.has(screen)) return;
   if (repeatSheetOpen && screen !== "record") closeRepeatSheet(false);
   if (screen !== "settings") closeSettingsPlanReset();
+  if (screen !== "settings" && savedTemplateEditor.isOpen()) savedTemplateEditor.close(true);
   const previousPage = activePage;
   if (previousPage === "training" && screen !== "training") trainingMode.leave();
   syncDailyPrivateOutfit();
@@ -2942,6 +2943,7 @@ window.addEventListener("popstate", () => {
 function setAuthenticated(next) {
   if (!next) { trainingMode.reset(); trainingRecordNeedsReload = false; }
   if (!next) closeSettingsPlanReset(true);
+  if (!next && savedTemplateEditor.isOpen()) savedTemplateEditor.close(true);
   if (!next) closeRepeatSheet(false);
   const wasAuthorized = authorized;
   if (!next || !wasAuthorized) {
