@@ -96,7 +96,23 @@ export function createSavedTemplateEditor({host,request,onUpdated,onUnauthorized
     return node;
   };
   const draft=()=>({title:titleInput.value,items:items.map(item=>({...item}))});
-  const sameDraft=()=>JSON.stringify(draft())===original;
+  const sameDraft=()=>{
+    const snapshot=draft();
+    // The detail inputs are still in the DOM until "確定" is pressed.
+    if(view==="detail"&&activeIndex>=0&&snapshot.items[activeIndex]){
+      snapshot.items[activeIndex]={
+        ...snapshot.items[activeIndex],
+        unit:detailUnit.value,sets:detailSets.value,
+        note:detailNote.value
+      };
+    }
+    // Normalize the draft and initial sets to strings for consistent comparison.
+    const serial=value=>JSON.stringify({
+      title:value.title,
+      items:value.items.map(item=>({...item,sets:String(item.sets)}))
+    });
+    return serial(snapshot)===serial(JSON.parse(original));
+  };
   const visible=()=>currentId!==null&&host.open;
   function setView(next){
     view=next;
@@ -262,7 +278,8 @@ export function createSavedTemplateEditor({host,request,onUpdated,onUnauthorized
     pickerPart.value="すべて";pickerSearch.value="";
     if(!host.open)host.showModal();
     setView("list");
-    titleInput.focus();
+    // Keep the keyboard closed on entry; the menu should be visible first.
+    backButton.focus();
     const run=++requestId;
     try{
       const data=await request("/api/exercises");
