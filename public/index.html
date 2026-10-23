@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#1c1a28">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261019-private-v2-match-training-v3">
+  <link rel="stylesheet" href="/styles.css?v=20261023-template-editor-v1">
   <link rel="stylesheet" href="/training-mode.css?v=20261023-v03">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261023-training-guided-v02"></script>
+  <script type="module" src="/app.js?v=20261023-template-editor-v1"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261020-daily-private-v1">
   <script type="module" src="/gallery.js?v=20261021-gym-eight"></script>
 </head>
@@ -540,8 +540,22 @@
           <section class="section weekly-templates-section" aria-labelledby="weekly-templates-heading">
             <div class="section-heading"><h2 id="weekly-templates-heading">メニューテンプレート</h2></div>
             <div class="panel weekly-templates-panel">
-              <p class="field-hint">記録画面で種目を組んで「テンプレートに保存」。ここで登録済みメニューを確認・削除できます。</p>
+              <p class="field-hint">記録画面で保存したメニューをここで確認・編集・削除できます。</p>
               <div id="weekly-templates-list" class="weekly-templates-list"></div>
+              <section id="weekly-template-editor" class="weekly-template-editor" aria-labelledby="weekly-template-editor-heading" hidden>
+                <h3 id="weekly-template-editor-heading">テンプレートを編集</h3>
+                <label class="weekly-template-title-field" for="weekly-template-edit-title">テンプレート名
+                  <input id="weekly-template-edit-title" type="text" maxlength="60" autocomplete="off" required>
+                </label>
+                <div id="weekly-template-edit-items" class="weekly-template-edit-items" aria-label="テンプレートの種目"></div>
+                <button type="button" id="weekly-template-edit-add" class="weekly-template-edit-add">＋ 種目を追加</button>
+                <p class="weekly-template-edit-hint">変更は紐づけ済みの曜日のメニューに反映されます。過去の筋トレ記録や現在の入力内容は変更しません。</p>
+                <div class="weekly-template-edit-actions">
+                  <button type="button" id="weekly-template-edit-cancel" class="secondary-action">キャンセル</button>
+                  <button type="button" id="weekly-template-edit-save">変更を保存</button>
+                </div>
+                <p id="weekly-template-edit-feedback" class="feedback" role="status" aria-live="polite"></p>
+              </section>
               <p id="weekly-templates-feedback" class="feedback" role="status" aria-live="polite"></p>
             </div>
           </section>
