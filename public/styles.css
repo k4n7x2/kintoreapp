@@ -3047,7 +3047,7 @@ body.is-authenticated.is-sd-page #app-screen {
 #page-calendar .calendar-day__status.is-planned, #page-calendar .legend-icon.is-planned { color: var(--accent); opacity: .55; }
 #page-calendar .calendar-day__status.is-workout, #page-calendar .legend-icon.is-workout { color: var(--success); }
 #page-calendar .calendar-day__status.is-rest, #page-calendar .legend-icon.is-rest { color: var(--subtle); }
-#page-calendar .calendar-day.is-workout { background: var(--completed); color: var(--ink); font-weight: 750; }
+/* The day background is colored only after attendance is explicitly recorded. */
 #page-calendar .calendar-day.is-rest { color: var(--muted); }
 #page-calendar .calendar-day.is-planned::before { content: none; }
 #page-calendar .calendar-day.has-workout { box-shadow: none; }
