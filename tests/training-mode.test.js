@@ -17,9 +17,15 @@ class FakeD1 {
       if(sql.startsWith("SELECT s.id FROM workout_sessions s JOIN"))
         return db.sessions.find(s=>s.date===args[0] &&
           db.sets.some(x=>x.session_id===s.id&&x.exercise_name===args[1]))??null;
+      if(sql.startsWith("SELECT ws.id FROM workout_sets ws JOIN") && sql.includes("ws.set_number=?"))
+        return db.sets.find(x=>x.exercise_name===args[1] &&
+          x.set_number===args[2] &&
+          db.sessions.some(s=>s.id===x.session_id&&s.date===args[0]))??null;
       if(sql.startsWith("SELECT ws.id FROM workout_sets"))
         return db.sets.find(x=>x.exercise_name===args[1]&&
           db.sessions.some(s=>s.id===x.session_id&&s.date===args[0]))??null;
+      if(sql.startsWith("SELECT completed_sets FROM training_mode_exercises"))
+        return db.progress.find(x=>x.date===args[0]&&x.name===args[1])??null;
       return null;
     },
     async all() {
@@ -27,7 +33,7 @@ class FakeD1 {
         return {results:db.sets.filter(x=>db.sessions.some(s=>s.id===x.session_id&&s.date===args[0]))};
       if(sql.startsWith("SELECT exercise_name, finished"))
         return {results:db.progress.filter(x=>x.date===args[0])
-          .map(x=>({exercise_name:x.name,finished:x.finished}))};
+          .map(x=>({exercise_name:x.name,finished:x.finished,completed_sets:x.completed_sets}))};
       return {results:[]};
     },
     async run() {
@@ -41,8 +47,13 @@ class FakeD1 {
           weight_kg:args[3],reps:args[4],entry_unit:args[5],duration_seconds:args[6]});
       if(sql.startsWith("INSERT INTO training_mode_exercises")) {
         let state=db.progress.find(x=>x.date===args[0]&&x.name===args[1]);
-        if(!state)db.progress.push(state={date:args[0],name:args[1],finished:0});
-        state.finished=sql.includes("VALUES(?,?,1)")?1:0;
+        if(!state)db.progress.push(state={date:args[0],name:args[1],finished:0,completed_sets:0});
+        state.completed_sets=Math.min(12,state.completed_sets+1);
+        state.finished=0;
+      }
+      if(sql.startsWith("UPDATE training_mode_exercises SET finished=1")) {
+        const state=db.progress.find(x=>x.date===args[0]&&x.name===args[1]);
+        if(state)state.finished=1;
       }
       return {success:true};
     }
@@ -80,13 +91,20 @@ test("set-by-set saves preserve earlier sets, completion and resumable progress"
   assert.equal(db.sessions.length,1);
   assert.equal((await request(db,"/api/training-mode/finish","PUT",base)).status,200);
   assert.equal(db.progress[0].finished,1);
-  await request(db,"/api/training-mode/set","PUT",{...second,weight_kg:42.5,reps:8});
-  assert.equal(db.sets.length,2);
-  assert.deepEqual(db.sets.map(x=>x.reps),[10,8]);
+  assert.equal(db.progress[0].completed_sets,2);
+  const duplicate=await request(db,"/api/training-mode/set","PUT",{...second,weight_kg:42.5,reps:8});
+  assert.equal(duplicate.status,409);
+  assert.equal(db.progress[0].completed_sets,2);
+  const third={...second,set_number:3,weight_kg:42.5,reps:8};
+  assert.equal((await request(db,"/api/training-mode/set","PUT",third)).status,200);
+  assert.equal(db.sets.length,3);
+  assert.deepEqual(db.sets.map(x=>x.reps),[10,9,8]);
   assert.equal(db.progress[0].finished,0);
+  assert.equal(db.progress[0].completed_sets,3);
   const day=await request(db,"/api/training-mode/day?date="+date);
   assert.equal(day.status,200);
-  assert.equal(day.body.sets.length,2);
+  assert.equal(day.body.sets.length,3);
+  assert.equal(day.body.progress[0].completed_sets,3);
   assert.equal(day.body.progress[0].finished,0);
 });
 
@@ -100,4 +118,25 @@ test("legacy sessions with multiple exercise names are never rewritten",async()=
   assert.equal(response.status,409);
   assert.equal(response.body.error,"legacy_session_conflict");
   assert.equal(db.sets.length,2);
+});
+
+test("record-only sets never start training mode; next training save appends",async()=>{
+  const db=new FakeD1();
+  db.sessions.push({id:"record-only",date});
+  for(let i=1;i<=3;i++)db.sets.push({id:i,session_id:"record-only",
+    exercise_name:"チェストプレス",set_number:i,weight_kg:40,reps:10});
+  let day=await request(db,"/api/training-mode/day?date="+date);
+  assert.equal(day.body.sets.length,3);
+  assert.equal(day.body.progress.length,0);
+  assert.equal((await request(db,"/api/training-mode/finish","PUT",base)).status,409);
+  assert.equal((await request(db,"/api/training-mode/set","PUT",
+    {...base,set_number:4,weight_kg:40,reps:10})).status,200);
+  day=await request(db,"/api/training-mode/day?date="+date);
+  assert.equal(day.body.sets.length,4);
+  assert.equal(day.body.progress[0].completed_sets,1);
+  db.sets[0].weight_kg=45; // Record-editor modification must not change mode progress.
+  day=await request(db,"/api/training-mode/day?date="+date);
+  assert.equal(day.body.progress[0].completed_sets,1);
+  assert.equal((await request(db,"/api/training-mode/finish","PUT",base)).status,200);
+  assert.equal(db.progress[0].finished,1);
 });

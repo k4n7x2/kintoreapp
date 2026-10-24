@@ -59,14 +59,14 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
   function selected(){return state.items[state.selected];}
   function listView() {
     const total=state.items.length;
-    const complete=state.items.filter(item=>item.finished && item.sets.length).length;
+    const complete=state.items.filter(item=>item.finished && item.modeSets>0).length;
     const rows=state.items.map((item,index)=>{
-      const count=item.sets.length, finished=item.finished && count>0;
-      const status=finished?"完了":count?"途中":"未実施";
+      const count=item.sets.length,modeCount=item.modeSets,finished=item.finished && modeCount>0;
+      const status=finished?"完了":modeCount?"途中":count?"未開始・記録あり":"未実施";
       return `<button type="button" class="tm-item ${finished?"tm-item--done":""}"
-        data-action="choose" data-index="${index}" aria-label="${html(item.name)}、${status}、${count}セット記録">
+        data-action="choose" data-index="${index}" aria-label="${html(item.name)}、${status}、筋トレモード${modeCount}セット">
         <span class="tm-item-main"><strong>${html(item.name)}</strong>
-        <small>${count} / ${Math.max(count,item.targetSets)} セット</small></span>
+        <small>${modeCount} / ${Math.max(modeCount,item.targetSets)} セット${count&&!modeCount?" · 記録 "+count+"セット":""}</small></span>
         <span class="tm-item-status">${finished?"✓ ":""}${status}</span>
       </button>`;
     }).join("");
@@ -86,31 +86,32 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
   function setView() {
     const item=selected();
     if(!item){state.screen="list";return listView();}
-    const previous=resolvePreviousSet(item.previous,state.setNumber,item.unit);
+    const modeNumber=item.modeSets+1;
+    const previous=resolvePreviousSet(item.previous,modeNumber,item.unit);
     const prior=previous.set;
     const priorText=prior ? item.unit==="seconds" ? `${prior.duration_seconds} 秒`
       : item.unit==="reps" ? `${prior.reps} 回`
       : `${Number(prior.weight_kg)} kg × ${prior.reps} 回` : "前回の記録なし";
-    const priorLabel=previous.fallback ? "前回の最終セット" : `前回・${state.setNumber}セット目`;
+    const priorLabel=previous.fallback ? "前回の最終セット" : `前回・${modeNumber}セット目`;
     const isTime=item.unit==="seconds";
     const amountLabel=isTime?"秒数":"回数";
     const amountUnit=isTime?"秒":"回";
-    const extra=state.setNumber>item.targetSets;
-    const countLabel=extra?`追加セット ${state.setNumber}`:`${state.setNumber} / ${item.targetSets} セット`;
-    const chips=visibleTrainingSets(item,state.setNumber).map(number=>{
-      const saved=item.sets.some(set=>Number(set.set_number)===number);
-      const current=number===state.setNumber;
+    const extra=modeNumber>item.targetSets;
+    const countLabel=extra?`追加セット ${modeNumber}`:`${modeNumber} / ${item.targetSets} セット`;
+    const chips=visibleTrainingSets(item,modeNumber).map(number=>{
+      const saved=number<=item.modeSets;
+      const current=number===modeNumber;
       const className=saved?"is-done":current?"is-current":"";
       const status=saved?"記録済み":current?"入力中":"未実施";
       return `<span role="listitem" class="tm-set-marker ${className}" aria-label="${number}セット目・${status}">${saved?"✓":number}</span>`;
     }).join("");
     root.innerHTML=`<div class="tm-workout-topline">
       <button type="button" class="tm-back" data-action="list">‹ メニュー</button>
-      <span class="tm-workout-label">WORKOUT / SET ${String(state.setNumber).padStart(2,"0")}</span>
+      <span class="tm-workout-label">WORKOUT / SET ${String(modeNumber).padStart(2,"0")}</span>
       </div>
       <div class="tm-exercise-head"><h1>${html(item.name)}</h1>
       <span class="tm-set-caption">${countLabel}</span></div>
-      <div class="tm-set-progress" role="list" aria-label="本日のセット進捗" style="grid-template-columns:repeat(${visibleTrainingSets(item,state.setNumber).length},minmax(0,1fr))">${chips}</div>
+      <div class="tm-set-progress" role="list" aria-label="本日のセット進捗" style="grid-template-columns:repeat(${visibleTrainingSets(item,modeNumber).length},minmax(0,1fr))">${chips}</div>
       <div class="tm-prev-row"><span>${priorLabel}</span>
       <strong class="${prior?"":"tm-prev-missing"}">${html(priorText)}</strong></div>
       ${item.unit==="kg_reps"?`<div class="tm-data-row">
@@ -137,7 +138,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
     const item=selected();
     root.innerHTML=`<button type="button" class="tm-back" data-action="list">‹ 一覧に戻る</button>
       <div class="tm-rest"><div class="tm-clock-icon" aria-hidden="true">◷</div>
-      <h1>インターバル</h1><p>${html(item.name)} ・ ${state.setNumber}セット目完了</p>
+      <h1>インターバル</h1><p>${html(item.name)} ・ ${item.modeSets}セット目完了</p>
       <strong id="tm-clock" role="timer">01:30</strong><small id="tm-clock-caption">休憩時間</small></div>
       <button type="button" class="tm-primary" data-action="next"${state.setNumber>=12?" disabled":""}>次のセットへ →</button>
       <button type="button" class="tm-secondary" data-action="finish">この種目を終了する</button>
@@ -176,7 +177,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
   function enterSet() {
     const item=selected();
     state.screen="set";state.error="";state.busy=false;
-    const defaults=initialTrainingSetValues(item,state.setNumber);
+    const defaults=initialTrainingSetValues(item,item.modeSets+1);
     state.weight=defaults.weight;
     state.reps=defaults.reps;
     render();
@@ -218,12 +219,13 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
       if(!state.active)return;
       item.sets=item.sets.filter(row=>Number(row.set_number)!==num);
       item.sets.push({...payload,entry_unit:item.unit});
+      item.modeSets=Math.min(12,item.modeSets+1);
       item.finished=false;
       if (typeof onSaved === "function") onSaved();
       state.screen="rest";state.restUntil=Date.now()+90000;state.error="";render();
     }catch(error) {
       if(error.status===401){onUnauthorized();return;}
-      state.error=error.status===409?"旧形式の記録と重複します。記録画面から編集してください。":
+      state.error=error.status===409?"同じセット番号の記録があるか旧形式の記録と競合しています。画面を開き直して確認してください。":
         "保存できませんでした。接続を確認してもう一度押してください。";
       state.busy=false;render();
     }finally{state.busy=false;}
@@ -264,7 +266,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
         const key=nameKey(name);if(!key)return;
         if(!items.has(key))items.set(key,{name:key,unit:unit||"kg_reps",
           targetSets:Math.min(12,Math.max(1,targetSets||3)),
-          sets:[],finished:false,previous:[],previousLoaded:false});
+          sets:[],modeSets:0,finished:false,previous:[],previousLoaded:false});
       };
       if(entry?.planned&&entry?.source==="weekly-template"&&weekly.template?.items) {
         for(const item of weekly.template.items)add(item.name,item.unit,item.sets);
@@ -285,7 +287,10 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
       }
       for(const row of day.progress||[]){
         const item=items.get(nameKey(row.exercise_name));
-        if(item)item.finished=!!row.finished && item.sets.length>0;
+        if(item){
+          item.modeSets=Math.min(12,Math.max(0,Number(row.completed_sets)||0));
+          item.finished=!!row.finished && item.modeSets>0;
+        }
       }
       state.items=[...items.values()];
       render();

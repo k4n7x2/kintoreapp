@@ -28,7 +28,7 @@ async function readDay(db, date) {
       "FROM workout_sets ws JOIN workout_sessions s ON s.id=ws.session_id " +
       "WHERE s.performed_on=? ORDER BY s.updated_at DESC, s.created_at DESC, ws.id DESC LIMIT 500")
       .bind(date).all(),
-    db.prepare("SELECT exercise_name, finished FROM training_mode_exercises WHERE performed_on=?")
+    db.prepare("SELECT exercise_name, finished, completed_sets FROM training_mode_exercises WHERE performed_on=?")
       .bind(date).all()
   ]);
   return { date, sets: sets.results ?? [], progress: states.results ?? [],
@@ -63,13 +63,16 @@ export async function handleTrainingModeAPI(db, url, request, method,
       ).bind(date,name).first();
       if (legacy) return respond({error:"legacy_session_conflict"},409);
     }
+    // Training mode always adds a new set; it must not overwrite an existing record.
+    const occupied = await db.prepare(
+      "SELECT ws.id FROM workout_sets ws JOIN workout_sessions s ON s.id=ws.session_id " +
+      "WHERE s.performed_on=? AND ws.exercise_name=? AND ws.set_number=? LIMIT 1"
+    ).bind(date,name,number).first();
+    if (occupied) return respond({error:"set_number_conflict"},409);
     const id = exclusive?.id ?? crypto.randomUUID();
     const writes = [];
     if (exclusive) {
       writes.push(db.prepare("UPDATE workout_sessions SET updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(id));
-      writes.push(db.prepare(
-        "DELETE FROM workout_sets WHERE session_id=? AND exercise_name=? AND set_number=?"
-      ).bind(id,name,number));
     } else {
       writes.push(db.prepare(
         "INSERT INTO workout_sessions(id,performed_on,note) VALUES(?,?,'')"
@@ -80,8 +83,9 @@ export async function handleTrainingModeAPI(db, url, request, method,
       "VALUES(?,?,?,?,?,?,?)"
     ).bind(id,name,number,weight,reps,unit,seconds));
     writes.push(db.prepare(
-      "INSERT INTO training_mode_exercises(performed_on,exercise_name,finished) VALUES(?,?,0) " +
-      "ON CONFLICT(performed_on,exercise_name) DO UPDATE SET finished=0,updated_at=CURRENT_TIMESTAMP"
+      "INSERT INTO training_mode_exercises(performed_on,exercise_name,finished,completed_sets) VALUES(?,?,0,1) " +
+      "ON CONFLICT(performed_on,exercise_name) DO UPDATE SET " +
+      "finished=0,completed_sets=MIN(12,completed_sets+1),updated_at=CURRENT_TIMESTAMP"
     ).bind(date,name));
     await db.batch(writes);
     return respond({saved:true, set_number:number, exercise_name:name});
@@ -99,9 +103,13 @@ export async function handleTrainingModeAPI(db, url, request, method,
       "WHERE s.performed_on=? AND ws.exercise_name=? LIMIT 1"
     ).bind(date,name).first();
     if (!found) return respond({error:"no_completed_sets"},409);
+    const progress = await db.prepare(
+      "SELECT completed_sets FROM training_mode_exercises WHERE performed_on=? AND exercise_name=?"
+    ).bind(date,name).first();
+    if (!progress || progress.completed_sets < 1) return respond({error:"no_training_mode_sets"},409);
     await db.prepare(
-      "INSERT INTO training_mode_exercises(performed_on,exercise_name,finished) VALUES(?,?,1) " +
-      "ON CONFLICT(performed_on,exercise_name) DO UPDATE SET finished=1,updated_at=CURRENT_TIMESTAMP"
+      "UPDATE training_mode_exercises SET finished=1,updated_at=CURRENT_TIMESTAMP " +
+      "WHERE performed_on=? AND exercise_name=?"
     ).bind(date,name).run();
     return respond({finished:true,exercise_name:name});
   }

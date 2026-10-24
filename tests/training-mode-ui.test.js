@@ -32,7 +32,7 @@ test("set view keeps editable steppers with embedded units, without shiori panel
   assert.match(js,/data-action="step" data-field="reps"/);
   assert.match(js,/class="tm-stepper-unit"/);
   assert.match(js,/追加セット/);
-  assert.match(js,/initialTrainingSetValues\(item,state\.setNumber\)/);
+  assert.match(js,/initialTrainingSetValues\(item,item\.modeSets\+1\)/);
   assert.match(css,/\.tm-data-row\s*\{/);
   assert.match(css,/\.tm-compact-save\s*\{/);
   assert.doesNotMatch(js,/shiori-training-frame/);
@@ -72,4 +72,13 @@ test("reps-only and seconds exercises prefill their corresponding units",()=>{
   const time={unit:"seconds",sets:[],previous:[{set_number:1,entry_unit:"seconds",weight_kg:0,reps:0,duration_seconds:60}]};
   assert.deepEqual(initialTrainingSetValues(bodyweight,1),{weight:"0",reps:"15"});
   assert.deepEqual(initialTrainingSetValues(time,1),{weight:"0",reps:"60"});
+});
+
+test("training status and set markers use independent mode-only progress",()=>{
+  const js=readFileSync(new URL("../public/training-mode.js",import.meta.url),"utf8");
+  assert.match(js,/const count=item\.sets\.length,modeCount=item\.modeSets/);
+  assert.match(js,/const status=finished\?"完了":modeCount\?"途中"/);
+  assert.match(js,/const saved=number<=item\.modeSets/);
+  assert.match(js,/item\.modeSets=Math\.min\(12,item\.modeSets\+1\)/);
+  assert.match(js,/state\.setNumber=Math\.max\(0,\.\.\.item\.sets\.map/);
 });
