@@ -7,13 +7,14 @@ const mode=readFileSync(new URL("../src/training-mode.js",import.meta.url),"utf8
 const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
 
 test("active means at least one guided set and no explicit exercise finish",()=>{
-  assert.match(mode,/completed_sets>0 AND finished=0/);
+  assert.match(mode,/tm\.finished=0/);
+  assert.match(mode,/ws\.is_completed=1/);
   assert.match(worker,/isTrainingExerciseActive\(env\.DB,body\.performed_on,body\.exercise_name\)/);
 });
 test("record editor can update active sets in place but never drop saved set IDs",()=>{
   assert.match(worker,/training_mode_active_delete_blocked/);
-  assert.match(worker,/persisted\.some\(set=>!savedNumbers\.has\(set\.set_number\)\)/);
-  assert.match(worker,/UPDATE workout_sets SET weight_kg=\?,reps=\?,entry_unit=\?,duration_seconds=\?/);
+  assert.match(worker,/persisted\.some\(set=>!savedNumbers\.has\(Number\(set\.set_number\)\)\)/);
+  assert.match(worker,/UPDATE workout_sets SET weight_kg=\?,reps=\?,entry_unit=\?,duration_seconds=\?,is_completed=\?/);
 });
 test("exercise and legacy session deletion are blocked by the API",()=>{
   assert.match(worker,/isTrainingExerciseActive\(env\.DB,date,name\)/);

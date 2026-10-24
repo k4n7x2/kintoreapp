@@ -150,14 +150,16 @@ function normalizeExerciseLog(body) {
     const reps = set?.reps ?? 0;
     const duration = set?.duration_seconds ?? 0;
     if (typeof weight !== "number" || !Number.isFinite(weight) ||
-        weight < 0 || weight > 2000 || !Number.isInteger(reps) ||
+        weight < 0 || weight > 2000 || (set?.is_completed !== undefined &&
+        typeof set.is_completed !== "boolean") || !Number.isInteger(reps) ||
         reps < 0 || reps > 1000 || !Number.isInteger(duration) ||
         duration < 0 || duration > 36000 ||
         (unit === "reps" && weight !== 0) ||
         (unit === "seconds" && (weight !== 0 || reps !== 0 || duration < 1)) ||
         (unit !== "seconds" && duration !== 0)) return null;
     normalized.push({ exercise_name, set_number: index + 1,
-      weight_kg: weight, reps, duration_seconds: duration, entry_unit: unit });
+      weight_kg: weight, reps, duration_seconds: duration, entry_unit: unit,
+      is_completed: set.is_completed === undefined ? 1 : Number(set.is_completed) });
   }
   return { performed_on: body.performed_on, exercise_name, note: note.trim(),
     unit, sets: normalized };
@@ -195,17 +197,12 @@ async function readJSON(request, maxLength = 12000) {
 
 function insertSet(db, id, set) {
   const unit = set.entry_unit ?? "kg_reps";
-  // 0003適用前も従来の重量×回数は書き込めるようにする。
-  if (unit === "kg_reps") {
-    return db.prepare(
-      "INSERT INTO workout_sets (session_id, exercise_name, set_number, weight_kg, reps) VALUES (?, ?, ?, ?, ?)"
-    ).bind(id, set.exercise_name, set.set_number, set.weight_kg, set.reps);
-  }
+  const completed = set.is_completed === 0 || set.is_completed === false ? 0 : 1;
   return db.prepare(
-    "INSERT INTO workout_sets (session_id, exercise_name, set_number, weight_kg, reps, entry_unit, duration_seconds) " +
-    "VALUES (?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO workout_sets (session_id, exercise_name, set_number, weight_kg, reps, " +
+    "entry_unit, duration_seconds, is_completed) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   ).bind(id, set.exercise_name, set.set_number, set.weight_kg, set.reps,
-    unit, set.duration_seconds ?? 0);
+    unit, set.duration_seconds ?? 0, completed);
 }
 function isMissingCatalog(error) {
   return /no such table:\s*(?:main\.)?exercise_catalog/i.test(String(error?.message ?? error));
@@ -406,41 +403,43 @@ export default {
             ).bind(body.performed_on, body.exercise_name, body.exercise_name).first();
             const id = existing?.id ?? crypto.randomUUID();
             const isActive = await isTrainingExerciseActive(env.DB,body.performed_on,body.exercise_name);
-            if (isActive) {
-              if (!existing) return respond({error:"training_mode_active_conflict"},409);
-              const original = await env.DB.prepare(
-                "SELECT id,set_number FROM workout_sets WHERE session_id=? " +
+            if (existing) {
+              const original=await env.DB.prepare(
+                "SELECT id,set_number,is_completed FROM workout_sets WHERE session_id=? " +
                 "AND exercise_name=? ORDER BY set_number,id"
               ).bind(id,body.exercise_name).all();
               const persisted=original.results??[];
+              const byNumber=new Map(persisted.map(row=>[Number(row.set_number),row]));
               const savedNumbers=new Set(body.sets.map(set=>set.set_number));
-              if (persisted.some(set=>!savedNumbers.has(set.set_number)) ||
+              if (isActive && (persisted.some(set=>!savedNumbers.has(Number(set.set_number))) ||
                   persisted.length>body.sets.length ||
-                  persisted.some(set=>set.set_number<1 || set.set_number>12)) {
+                  persisted.some(set=>set.set_number<1 || set.set_number>12))) {
                 return respond({error:"training_mode_active_delete_blocked"},409);
               }
-              // Active sets retain their IDs. Edit weight/reps in place, only append extras.
-              const byNumber=new Map(persisted.map(row=>[Number(row.set_number),row]));
+              const completionChanged=persisted.some(set=>{
+                const next=body.sets.find(row=>row.set_number===Number(set.set_number));
+                return !next || Number(set.is_completed)!==next.is_completed;
+              }) || body.sets.some(set=>!byNumber.has(set.set_number));
               await env.DB.batch([
-                env.DB.prepare("UPDATE workout_sessions SET note=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+                env.DB.prepare("UPDATE workout_sessions SET note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
                   .bind(body.note,id),
+                ...persisted.filter(set=>!savedNumbers.has(Number(set.set_number)))
+                  .map(set=>env.DB.prepare("DELETE FROM workout_sets WHERE id=?").bind(set.id)),
                 ...body.sets.map(set=>{
                   const old=byNumber.get(set.set_number);
                   return old ? env.DB.prepare(
-                    "UPDATE workout_sets SET weight_kg=?,reps=?,entry_unit=?,duration_seconds=? " +
+                    "UPDATE workout_sets SET weight_kg=?,reps=?,entry_unit=?,duration_seconds=?,is_completed=? " +
                     "WHERE id=? AND session_id=?"
-                  ).bind(set.weight_kg,set.reps,set.entry_unit,set.duration_seconds,old.id,id)
+                  ).bind(set.weight_kg,set.reps,set.entry_unit,set.duration_seconds,set.is_completed,old.id,id)
                   : insertSet(env.DB,id,set);
-                })
-              ]);
-            } else if (existing) {
-              await env.DB.batch([
-                env.DB.prepare("UPDATE workout_sessions SET note=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
-                  .bind(body.note, id),
-                env.DB.prepare("DELETE FROM workout_sets WHERE session_id=?").bind(id),
-                ...body.sets.map(set => insertSet(env.DB, id, set))
+                }),
+                ...(completionChanged ? [env.DB.prepare(
+                  "UPDATE training_mode_exercises SET finished=0,updated_at=CURRENT_TIMESTAMP " +
+                  "WHERE performed_on=? AND exercise_name=?"
+                ).bind(body.performed_on,body.exercise_name)] : [])
               ]);
             } else {
+              if (isActive) return respond({error:"training_mode_active_conflict"},409);
               await env.DB.batch([
                 env.DB.prepare("INSERT INTO workout_sessions(id, performed_on, note) VALUES(?, ?, ?)")
                   .bind(id, body.performed_on, body.note),
@@ -481,7 +480,9 @@ export default {
               ...sessionIds.map(id => env.DB.prepare(
                 "DELETE FROM workout_sessions WHERE id = ? " +
                 "AND NOT EXISTS (SELECT 1 FROM workout_sets WHERE session_id = ?)"
-              ).bind(id, id))
+              ).bind(id, id)),
+              env.DB.prepare("DELETE FROM training_mode_exercises WHERE performed_on=? AND exercise_name=?")
+                .bind(date,name)
             ]);
             return respond({ deleted: true, performed_on: date, exercise_name: name });
           }
@@ -494,7 +495,7 @@ export default {
               "ws.set_number ASC, ws.id ASC LIMIT 1201";
             const history = await fetchWorkoutSets(
               () => env.DB.prepare("SELECT s.performed_on, ws.set_number, ws.weight_kg, ws.reps, " +
-                "ws.entry_unit, ws.duration_seconds " + suffix).bind(name).all(),
+                "ws.entry_unit, ws.duration_seconds, ws.is_completed " + suffix).bind(name).all(),
               () => env.DB.prepare("SELECT s.performed_on, ws.set_number, ws.weight_kg, ws.reps " +
                 suffix).bind(name).all()
             );
@@ -515,7 +516,7 @@ export default {
                 ") ORDER BY session_id, id";
               const sets = await fetchWorkoutSets(
                 () => env.DB.prepare("SELECT session_id, exercise_name, set_number, weight_kg, reps, " +
-                  "entry_unit, duration_seconds " + suffix).bind(...workouts.map(record => record.id)).all(),
+                  "entry_unit, duration_seconds, is_completed " + suffix).bind(...workouts.map(record => record.id)).all(),
                 () => env.DB.prepare("SELECT session_id, exercise_name, set_number, weight_kg, reps " +
                   suffix).bind(...workouts.map(record => record.id)).all()
               );
@@ -541,7 +542,7 @@ export default {
             const params = before ? [name,name,before] : [name,name];
             const recent = await fetchWorkoutSets(
               () => env.DB.prepare("SELECT ws.weight_kg, ws.reps, ws.set_number, s.performed_on, " +
-                "ws.entry_unit, ws.duration_seconds " + suffix).bind(...params).all(),
+                "ws.entry_unit, ws.duration_seconds, ws.is_completed " + suffix).bind(...params).all(),
               () => env.DB.prepare("SELECT ws.weight_kg, ws.reps, ws.set_number, s.performed_on " +
                 suffix).bind(...params).all()
             );
@@ -575,7 +576,7 @@ export default {
               "JOIN workout_sessions s ON s.id=ws.session_id " +
               "JOIN training_mode_exercises tm ON tm.performed_on=s.performed_on " +
               "AND tm.exercise_name=ws.exercise_name " +
-              "WHERE ws.session_id=? AND tm.completed_sets>0 AND tm.finished=0 LIMIT 1"
+              "WHERE ws.session_id=? AND ws.is_completed=1 AND tm.finished=0 LIMIT 1"
             ).bind(id).first();
             if (activeSets) return respond({error:"training_mode_active_delete_blocked"},409);
 

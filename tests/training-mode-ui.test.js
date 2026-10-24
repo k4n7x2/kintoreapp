@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {resolvePreviousSet,initialTrainingSetValues,visibleTrainingSets} from "../public/training-mode.js";
+import {resolvePreviousSet,initialTrainingSetValues,visibleTrainingSets,completedTrainingSets,nextTrainingSetNumber} from "../public/training-mode.js";
 
 test("exact previous set wins, including same unit filter",()=>{
   const rows=[{set_number:1,entry_unit:"kg_reps",weight_kg:40,reps:10},
@@ -32,7 +32,7 @@ test("set view keeps editable steppers with embedded units, without shiori panel
   assert.match(js,/data-action="step" data-field="reps"/);
   assert.match(js,/class="tm-stepper-unit"/);
   assert.match(js,/追加セット/);
-  assert.match(js,/initialTrainingSetValues\(item,item\.modeSets\+1\)/);
+  assert.match(js,/initialTrainingSetValues\(item,state\.setNumber\)/);
   assert.match(css,/\.tm-data-row\s*\{/);
   assert.match(css,/\.tm-compact-save\s*\{/);
   assert.doesNotMatch(js,/shiori-training-frame/);
@@ -78,10 +78,24 @@ test("training status and set markers use independent mode-only progress",()=>{
   const js=readFileSync(new URL("../public/training-mode.js",import.meta.url),"utf8");
   assert.match(js,/const count=item\.sets\.length,modeCount=item\.modeSets/);
   assert.match(js,/const status=finished\?"完了":modeCount\?"途中"/);
-  assert.match(js,/const saved=number<=item\.modeSets/);
-  assert.match(js,/item\.modeSets=Math\.min\(12,item\.modeSets\+1\)/);
-  assert.match(js,/state\.setNumber=item\.modeSets\+1/);
+  assert.match(js,/const saved=item\.sets\.some/);
+  assert.match(js,/item\.modeSets=completedTrainingSets\(item\)/);
+  assert.match(js,/state\.setNumber=nextTrainingSetNumber\(item\)/);
   assert.match(js,/expected_completed_sets:item\.modeSets/);
   assert.match(js,/replace_set_id:Number\(existing\.id\)/);
   assert.match(js,/if\(!confirm\(/);
+});
+
+test("set completion uses checked flags, including gaps and historic sets",()=>{
+  const item={sets:[
+    {set_number:1,is_completed:1},
+    {set_number:2,is_completed:0},
+    {set_number:3,is_completed:1}
+  ]};
+  assert.equal(completedTrainingSets(item),2);
+  assert.equal(nextTrainingSetNumber(item),2);
+  item.sets[1].is_completed=1;
+  assert.equal(nextTrainingSetNumber(item),4);
+  assert.equal(completedTrainingSets({sets:[]}),0);
+  assert.equal(nextTrainingSetNumber({sets:Array.from({length:12},(_,i)=>({set_number:i+1,is_completed:1}))}),13);
 });

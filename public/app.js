@@ -1,6 +1,6 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
 import { createSavedTemplateEditor } from "./saved-template-editor.js?v=20261023-window-v02";
-import { createTrainingMode } from "./training-mode.js?v=20261024-consistent-sets-v01";
+import { createTrainingMode } from "./training-mode.js?v=20261024-set-completion-v01";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
 import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js?v=20261020-daily-private-v1";
@@ -185,8 +185,11 @@ async function refreshTrainingDeleteLocks(date) {
   try {
     const day=await fetchJSON("/api/training-mode/day?date="+encodeURIComponent(date));
     if(request!==trainingDeleteLocksRequest || !authorized || saveDate.value!==date)return;
+    const checked=new Set((day.sets||[])
+      .filter(row=>Number(row.is_completed)===1)
+      .map(row=>normalizeExerciseName(row.exercise_name)));
     trainingDeleteLocks=new Set((day.progress||[])
-      .filter(p=>Number(p.completed_sets)>0 && !p.finished)
+      .filter(p=>!p.finished && checked.has(normalizeExerciseName(p.exercise_name)))
       .map(p=>normalizeExerciseName(p.exercise_name)));
     trainingDeleteLocksLoading=false;
   }catch(error) {
@@ -605,6 +608,20 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
   if (unit !== "kg_reps") row.classList.add("is-simple-unit");
   const number = document.createElement("span");
   number.className = "set-number";
+  const numberText = document.createElement("span");
+  numberText.className = "set-number-index";
+  const completionLabel = document.createElement("label");
+  completionLabel.className = "set-completion-label";
+  const completion = document.createElement("input");
+  completion.className = "set-completed";
+  completion.type = "checkbox";
+  completion.checked = set.is_completed === true || Number(set.is_completed) === 1;
+  completionLabel.append(completion, document.createTextNode("実施"));
+  number.append(numberText, completionLabel);
+  completion.addEventListener("change", () => {
+    container.exerciseCard?.renderSummary?.();
+    updateDraftIndicators();
+  });
   const weightLabel = document.createElement("div");
   weightLabel.className = "set-metric";
   const previousWeight = document.createElement("button");
@@ -696,7 +713,9 @@ function updateSetScrollLimit(container) {
 }
 function renumberSets(container) {
   container.querySelectorAll(".exercise-set").forEach((row, index) => {
-    row.querySelector(".set-number").textContent = (index + 1) + "セット";
+    row.querySelector(".set-number-index").textContent = (index + 1) + "セット";
+    row.querySelector(".set-completed").setAttribute("aria-label",
+      (index + 1) + "セット目を実施済みにする");
     for (const [selector, label] of [[".set-weight", "重量"], [".set-reps", "回数"]]) {
       const input = row.querySelector(selector);
       const wrapper = input?.closest(".set-inline-stepper");
@@ -901,7 +920,8 @@ function cardDraftSnapshot(card) {
     unit: card.unit,
     note: card.noteValue || "",
     sets: [...card.rows.querySelectorAll(".exercise-set")].map(row => [
-      row.querySelector(".set-weight").value, row.querySelector(".set-reps").value
+      row.querySelector(".set-weight").value, row.querySelector(".set-reps").value,
+      row.querySelector(".set-completed").checked
     ])
   });
 }
@@ -1233,6 +1253,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     heading.textContent = chosen || "新しい種目";
     summary.setAttribute("aria-label", (chosen || "新しい種目") + "のセットを編集");
     const currentSets = [...rows.querySelectorAll(".exercise-set")];
+    const completed = currentSets.filter(row=>row.querySelector(".set-completed").checked).length;
     const values = currentSets.map(row => {
       const kg = row.querySelector(".set-weight").value;
       const amount = row.querySelector(".set-reps").value || "—";
@@ -1241,9 +1262,9 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
         (kg || "—") + "kg × " + amount + "回";
     });
     const uniform = values.length && values.every(value => value === values[0]);
-    current.textContent = !values.length ? "セットなし" :
+    current.textContent = (!values.length ? "セットなし" :
       uniform ? values[0] + " × " + values.length + "セット" :
-      values.join(" / ");
+      values.join(" / ")) + (values.length ? " · 実施 " + completed + "/" + values.length : "");
   };
   card.renderPrevious = () => {
     const compatible = previous.filter(set => (set.entry_unit || "kg_reps") === card.unit);
@@ -1313,7 +1334,7 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
     if (rows.querySelector(".exercise-set") &&
         !confirm("入力中のセットを前回の内容に置き換えますか？")) return;
     rows.replaceChildren();
-    for (const set of compatible) newSetRow(rows, set);
+    for (const set of compatible) newSetRow(rows, {...set,is_completed:0});
     card.renderPrevious();
     card.renderSummary();
     feedback.textContent = "前回のセットを反映しました。";
@@ -1325,7 +1346,9 @@ function addExercise(name = "", sets = [{ weight_kg: 0, reps: 10 }], note = "", 
   body.append(previousLabel, rows, actions, feedback);
   card.append(summary, body);
   exerciseList.appendChild(card);
-  for (const set of sets) newSetRow(rows, set);
+  for (const set of sets) newSetRow(rows, {
+    ...set, is_completed: set.is_completed ?? (saved ? 1 : 0)
+  });
   card.renderSummary();
   card.renderPrevious();
   card.querySelectorAll("input, button").forEach(el => { el.disabled = !dbReady; });
@@ -1599,7 +1622,8 @@ function collectExerciseSets(card) {
     sets.push({
       weight_kg: card.unit === "kg_reps" ? weight : 0,
       reps: card.unit === "seconds" ? 0 : value,
-      duration_seconds: card.unit === "seconds" ? value : 0
+      duration_seconds: card.unit === "seconds" ? value : 0,
+      is_completed: row.querySelector(".set-completed").checked
     });
   }
   return sets;

@@ -49,6 +49,16 @@ export function visibleTrainingSets(item, setNumber) {
   return Array.from({length:count},(_,index)=>first+index);
 }
 
+export function completedTrainingSets(item) {
+  return (item.sets||[]).filter(row=>Number(row.is_completed)===1).length;
+}
+export function nextTrainingSetNumber(item) {
+  const done=new Set((item.sets||[]).filter(row=>Number(row.is_completed)===1)
+    .map(row=>Number(row.set_number)));
+  for(let number=1;number<=12;number++)if(!done.has(number))return number;
+  return 13;
+}
+
 export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, onFinished}) {
   const state = {date:"",items:[],screen:"list",selected:-1,setNumber:1,
     weight:"",reps:"",busy:false,error:"",restUntil:0,run:0,active:false};
@@ -86,7 +96,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
   function setView() {
     const item=selected();
     if(!item){state.screen="list";return listView();}
-    const modeNumber=item.modeSets+1;
+    const modeNumber=state.setNumber;
     const previous=resolvePreviousSet(item.previous,modeNumber,item.unit);
     const prior=previous.set;
     const priorText=prior ? item.unit==="seconds" ? `${prior.duration_seconds} 秒`
@@ -99,7 +109,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
     const extra=modeNumber>item.targetSets;
     const countLabel=extra?`追加セット ${modeNumber}`:`${modeNumber} / ${item.targetSets} セット`;
     const chips=visibleTrainingSets(item,modeNumber).map(number=>{
-      const saved=number<=item.modeSets;
+      const saved=item.sets.some(row=>Number(row.set_number)===number && Number(row.is_completed)===1);
       const current=number===modeNumber;
       const className=saved?"is-done":current?"is-current":"";
       const status=saved?"記録済み":current?"入力中":"未実施";
@@ -138,9 +148,9 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
     const item=selected();
     root.innerHTML=`<button type="button" class="tm-back" data-action="list">‹ 一覧に戻る</button>
       <div class="tm-rest"><div class="tm-clock-icon" aria-hidden="true">◷</div>
-      <h1>インターバル</h1><p>${html(item.name)} ・ ${item.modeSets}セット目完了</p>
+      <h1>インターバル</h1><p>${html(item.name)} ・ ${state.setNumber}セット目完了</p>
       <strong id="tm-clock" role="timer">01:30</strong><small id="tm-clock-caption">休憩時間</small></div>
-      <button type="button" class="tm-primary" data-action="next"${state.setNumber>=12?" disabled":""}>次のセットへ →</button>
+      <button type="button" class="tm-primary" data-action="next"${nextTrainingSetNumber(item)>12?" disabled":""}>次のセットへ →</button>
       <button type="button" class="tm-secondary" data-action="finish">この種目を終了する</button>
       <p class="tm-error" role="alert">${html(state.error)}</p>`;
     stopTimer();
@@ -177,7 +187,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
   function enterSet() {
     const item=selected();
     state.screen="set";state.error="";state.busy=false;
-    const defaults=initialTrainingSetValues(item,item.modeSets+1);
+    const defaults=initialTrainingSetValues(item,state.setNumber);
     state.weight=defaults.weight;
     state.reps=defaults.reps;
     render();
@@ -187,7 +197,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
     stopTimer();
     state.selected=index;
     const item=selected();
-    state.setNumber=item.modeSets+1;
+    state.setNumber=nextTrainingSetNumber(item);
     if(state.setNumber>12){state.error="この種目は上限の12セットに達しています。記録画面で編集してください。";state.screen="list";render();return;}
     state.error="";state.busy=true;
     root.innerHTML='<p class="tm-loading" role="status">前回の記録を確認中…</p>';
@@ -232,8 +242,8 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
       const saved=await api("/api/training-mode/set",payload);
       if(!state.active)return;
       item.sets=item.sets.filter(row=>Number(row.set_number)!==num);
-      item.sets.push({...payload,id:existing?.id??saved.id,entry_unit:item.unit});
-      item.modeSets=Math.min(12,item.modeSets+1);
+      item.sets.push({...payload,id:existing?.id??saved.id,entry_unit:item.unit,is_completed:1});
+      item.modeSets=completedTrainingSets(item);
       item.finished=false;
       if (typeof onSaved === "function") onSaved();
       state.screen="rest";state.restUntil=Date.now()+90000;state.error="";render();
@@ -304,11 +314,14 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
       for(const row of day.progress||[]){
         const item=items.get(nameKey(row.exercise_name));
         if(item){
-          item.modeSets=Math.min(12,Math.max(0,Number(row.completed_sets)||0));
-          item.finished=!!row.finished && item.modeSets>0;
+          item.finished=!!row.finished;
         }
       }
       state.items=[...items.values()];
+      for(const item of state.items){
+        item.modeSets=completedTrainingSets(item);
+        item.finished=item.finished && item.modeSets>0;
+      }
       render();
     }catch(error) {
       if(!state.active||token!==state.run)return;
@@ -337,8 +350,9 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
       render();
     }else if(action==="save")void save();
     else if(action==="next"){
-      if(state.setNumber>=12)return;
-      stopTimer();state.setNumber=item.modeSets+1;enterSet();
+      const next=nextTrainingSetNumber(selected());
+      if(next>12)return;
+      stopTimer();state.setNumber=next;enterSet();
     }else if(action==="finish")void finish();
     else if(action==="record")openRecord();
     else if(action==="reload")void open();

@@ -25,5 +25,5 @@ test("stale record drafts cannot overwrite new training-mode sets",()=>{
 });
 
 test("app entrypoint cache is invalidated",()=>{
-  assert.match(html,/\/app\.js\?v=20261024-record-sync-v02/);
+  assert.match(html,/\/app\.js\?v=20261024-set-completion-v01/);
 });
