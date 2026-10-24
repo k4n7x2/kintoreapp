@@ -1415,10 +1415,17 @@ async function loadWorkouts() {
         calendarTouchAtStart === calendarDialogueInteractionId) {
       showSideDialogue("calendar");
     }
-    if (pendingRecordDate && pendingRecordDate.slice(0, 7) === month && activePage === "record") {
+    // Only rebuild the record editor after fresh data arrives, and never discard drafts.
+    if (pendingRecordDate && pendingRecordDate.slice(0, 7) === month &&
+        activePage === "record" && selectedDate === pendingRecordDate &&
+        !hasRecordChanges()) {
       const date = pendingRecordDate;
       pendingRecordDate = "";
       hydrateStoredRecordForDate(date);
+      if (trainingRecordNeedsReload && date === todayISO()) {
+        trainingRecordNeedsReload = false;
+        overviewFeedback.textContent = "";
+      }
     }
     refreshPreviousReferences();
     if (pendingExerciseToOpen && activePage === "record") {
@@ -1820,6 +1827,11 @@ byId("workout-form").addEventListener("submit", async event => {
   event.preventDefault();
   const card = activeExerciseCard;
   if (!authorized || !dbReady || !card || exerciseSaveInFlight) return;
+  // A stale editor must not overwrite sets that were just saved in training mode.
+  if (trainingRecordNeedsReload && saveDate.value === todayISO()) {
+    saveFeedback.textContent = "筋トレモードで新しい記録が保存されています。未保存の入力は保持しました。日付を開き直して最新の記録を確認してください。";
+    return;
+  }
   let sets;
   try { sets = collectExerciseSets(card); }
   catch (error) { saveFeedback.textContent = error.message; return; }
@@ -2836,14 +2848,11 @@ let trainingRecordNeedsReload = false;
 const trainingMode = createTrainingMode(byId("training-mode"), {
   onSaved: () => {
     trainingRecordNeedsReload = true;
-    if (!hasRecordChanges()) {
-      void loadWorkouts().then(loaded => { if (loaded) trainingRecordNeedsReload = false; });
-    }
+    // Refresh calendar/history in the background; record cards refresh on entry.
+    void loadWorkouts();
   },
   onUnauthorized: () => setAuthenticated(false),
-  openRecord: () => {
-    if (selectRecordDate(todayISO())) void loadWorkouts();
-  }
+  openRecord: () => { selectRecordDate(todayISO()); }
 });
 
 function setScreen(screen, pushHistory = true) {
@@ -2903,8 +2912,16 @@ function setScreen(screen, pushHistory = true) {
     page.hidden = page.dataset.page !== screen;
   });
   if (screen === "training" && previousPage !== "training") void trainingMode.open();
-  if (screen === "record" && trainingRecordNeedsReload && !hasRecordChanges()) {
-    void loadWorkouts().then(loaded => { if (loaded) trainingRecordNeedsReload = false; });
+  if (screen === "record" && trainingRecordNeedsReload) {
+    if (hasRecordChanges()) {
+      // Keep unfinished edits intact; ask the user to reopen the date before saving.
+      const message = "筋トレモードの新しい記録があります。未保存の入力を保持しているため、最新の記録はまだ表示していません。";
+      overviewFeedback.textContent = message;
+      if (activeExerciseCard) saveFeedback.textContent = message;
+    } else {
+      pendingRecordDate = selectedDate;
+      void loadWorkouts();
+    }
   }
   document.querySelectorAll(".drawer-item").forEach((item) => {
     const isCurrent = item.dataset.screen === screen;
