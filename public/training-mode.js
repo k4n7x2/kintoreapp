@@ -49,7 +49,7 @@ export function visibleTrainingSets(item, setNumber) {
   return Array.from({length:count},(_,index)=>first+index);
 }
 
-export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) {
+export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, onFinished}) {
   const state = {date:"",items:[],screen:"list",selected:-1,setNumber:1,
     weight:"",reps:"",busy:false,error:"",restUntil:0,run:0,active:false};
   let timer=null;
@@ -187,7 +187,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
     stopTimer();
     state.selected=index;
     const item=selected();
-    state.setNumber=Math.max(0,...item.sets.map(s=>Number(s.set_number)||0))+1;
+    state.setNumber=item.modeSets+1;
     if(state.setNumber>12){state.error="この種目は上限の12セットに達しています。記録画面で編集してください。";state.screen="list";render();return;}
     state.error="";state.busy=true;
     root.innerHTML='<p class="tm-loading" role="status">前回の記録を確認中…</p>';
@@ -209,23 +209,37 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
     if(state.reps===""||!Number.isInteger(amount)||amount<1||
        amount>(item.unit==="seconds"?36000:1000)||
        (item.unit==="kg_reps"&&(state.weight===""||!Number.isFinite(weight)||weight<0||weight>2000)))return;
+    const existing=item.sets.find(row=>Number(row.set_number)===num);
+    if(existing) {
+      const previous=existing.entry_unit==="seconds"
+        ? Number(existing.duration_seconds)+"秒"
+        : existing.entry_unit==="reps" ? Number(existing.reps)+"回"
+        : Number(existing.weight_kg)+"kg × "+Number(existing.reps)+"回";
+      if(!Number.isInteger(Number(existing.id)) || Number(existing.id)<1) {
+        state.error="既存セットの確認ができません。メニューを開き直してください。";
+        render();return;
+      }
+      if(!confirm(num+"セット目には「"+previous+"」の記録があります。\n今回の重量・回数に置き換えますか？"))return;
+    }
     state.busy=true;state.error="";updateSaveButton();
     const payload={performed_on:state.date,exercise_name:item.name,unit:item.unit,
-      set_number:num,weight_kg:item.unit==="kg_reps"?weight:0,
+      set_number:num,expected_completed_sets:item.modeSets,
+      ...(existing?{replace_set_id:Number(existing.id)}:{}),
+      weight_kg:item.unit==="kg_reps"?weight:0,
       reps:item.unit==="seconds"?0:amount,
       duration_seconds:item.unit==="seconds"?amount:0};
     try{
-      await api("/api/training-mode/set",payload);
+      const saved=await api("/api/training-mode/set",payload);
       if(!state.active)return;
       item.sets=item.sets.filter(row=>Number(row.set_number)!==num);
-      item.sets.push({...payload,entry_unit:item.unit});
+      item.sets.push({...payload,id:existing?.id??saved.id,entry_unit:item.unit});
       item.modeSets=Math.min(12,item.modeSets+1);
       item.finished=false;
       if (typeof onSaved === "function") onSaved();
       state.screen="rest";state.restUntil=Date.now()+90000;state.error="";render();
     }catch(error) {
       if(error.status===401){onUnauthorized();return;}
-      state.error=error.status===409?"同じセット番号の記録があるか旧形式の記録と競合しています。画面を開き直して確認してください。":
+      state.error=error.status===409?"記録が別画面で更新されたか、以前の保存形式と競合しています。メニューを開き直して確認してください。":
         "保存できませんでした。接続を確認してもう一度押してください。";
       state.busy=false;render();
     }finally{state.busy=false;}
@@ -237,7 +251,9 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
     try{
       await api("/api/training-mode/finish",{performed_on:state.date,exercise_name:item.name});
       if(!state.active)return;
-      item.finished=true;state.screen="list";state.error="";render();
+      item.finished=true;state.screen="list";state.error="";
+      if(typeof onFinished==="function")onFinished();
+      render();
     }catch(error){
       if(error.status===401){onUnauthorized();return;}
       state.error="種目の終了状態を保存できませんでした。再度操作してください。";
@@ -322,7 +338,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved}) 
     }else if(action==="save")void save();
     else if(action==="next"){
       if(state.setNumber>=12)return;
-      stopTimer();state.setNumber++;enterSet();
+      stopTimer();state.setNumber=item.modeSets+1;enterSet();
     }else if(action==="finish")void finish();
     else if(action==="record")openRecord();
     else if(action==="reload")void open();

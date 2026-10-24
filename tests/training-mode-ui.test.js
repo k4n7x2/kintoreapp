@@ -80,5 +80,8 @@ test("training status and set markers use independent mode-only progress",()=>{
   assert.match(js,/const status=finished\?"完了":modeCount\?"途中"/);
   assert.match(js,/const saved=number<=item\.modeSets/);
   assert.match(js,/item\.modeSets=Math\.min\(12,item\.modeSets\+1\)/);
-  assert.match(js,/state\.setNumber=Math\.max\(0,\.\.\.item\.sets\.map/);
+  assert.match(js,/state\.setNumber=item\.modeSets\+1/);
+  assert.match(js,/expected_completed_sets:item\.modeSets/);
+  assert.match(js,/replace_set_id:Number\(existing\.id\)/);
+  assert.match(js,/if\(!confirm\(/);
 });

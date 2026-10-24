@@ -2,7 +2,7 @@ import { handleRepeatAPI } from "./workout-repeat.js";
 import { handleCalendarAPI } from "./calendar-api.js";
 import { handlePlanResetAPI } from "./plan-reset.js";
 import { handleTrainingSetupAPI } from "./training-setup.js";
-import { handleTrainingModeAPI } from "./training-mode.js";
+import { handleTrainingModeAPI, isTrainingExerciseActive } from "./training-mode.js";
 import { readGymPresence, writeGymPresence } from "./gym-presence.js";
 // 個人用ログイン。パスワードはCloudflare Secret APP_PASSWORDにのみ保存。
 // パスワードも筋トレ記録もGitHub/ブラウザStorageには保存しない。
@@ -405,7 +405,35 @@ export default {
               "ORDER BY s.updated_at DESC, s.created_at DESC, s.id DESC LIMIT 1"
             ).bind(body.performed_on, body.exercise_name, body.exercise_name).first();
             const id = existing?.id ?? crypto.randomUUID();
-            if (existing) {
+            const isActive = await isTrainingExerciseActive(env.DB,body.performed_on,body.exercise_name);
+            if (isActive) {
+              if (!existing) return respond({error:"training_mode_active_conflict"},409);
+              const original = await env.DB.prepare(
+                "SELECT id,set_number FROM workout_sets WHERE session_id=? " +
+                "AND exercise_name=? ORDER BY set_number,id"
+              ).bind(id,body.exercise_name).all();
+              const persisted=original.results??[];
+              const savedNumbers=new Set(body.sets.map(set=>set.set_number));
+              if (persisted.some(set=>!savedNumbers.has(set.set_number)) ||
+                  persisted.length>body.sets.length ||
+                  persisted.some(set=>set.set_number<1 || set.set_number>12)) {
+                return respond({error:"training_mode_active_delete_blocked"},409);
+              }
+              // Active sets retain their IDs. Edit weight/reps in place, only append extras.
+              const byNumber=new Map(persisted.map(row=>[Number(row.set_number),row]));
+              await env.DB.batch([
+                env.DB.prepare("UPDATE workout_sessions SET note=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+                  .bind(body.note,id),
+                ...body.sets.map(set=>{
+                  const old=byNumber.get(set.set_number);
+                  return old ? env.DB.prepare(
+                    "UPDATE workout_sets SET weight_kg=?,reps=?,entry_unit=?,duration_seconds=? " +
+                    "WHERE id=? AND session_id=?"
+                  ).bind(set.weight_kg,set.reps,set.entry_unit,set.duration_seconds,old.id,id)
+                  : insertSet(env.DB,id,set);
+                })
+              ]);
+            } else if (existing) {
               await env.DB.batch([
                 env.DB.prepare("UPDATE workout_sessions SET note=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
                   .bind(body.note, id),
@@ -433,6 +461,9 @@ export default {
             if (!value || typeof value !== "object" || Array.isArray(value) ||
                 !validDate(date) || !name) {
               return respond({ error: "invalid_exercise_log" }, 400);
+            }
+            if (await isTrainingExerciseActive(env.DB,date,name)) {
+              return respond({error:"training_mode_active_delete_blocked"},409);
             }
             // 種目名が正規化される前の既存セットも、同じ名前として照合する。
             const records = await env.DB.prepare(
@@ -538,6 +569,15 @@ export default {
             const id = sessionMatch[1];
             const existing = await env.DB.prepare("SELECT id FROM workout_sessions WHERE id = ?").bind(id).first();
             if (!existing) return respond({ error: "not_found" }, 404);
+            // The legacy session endpoints cannot remove sets of an active exercise.
+            const activeSets = await env.DB.prepare(
+              "SELECT 1 AS locked FROM workout_sets ws " +
+              "JOIN workout_sessions s ON s.id=ws.session_id " +
+              "JOIN training_mode_exercises tm ON tm.performed_on=s.performed_on " +
+              "AND tm.exercise_name=ws.exercise_name " +
+              "WHERE ws.session_id=? AND tm.completed_sets>0 AND tm.finished=0 LIMIT 1"
+            ).bind(id).first();
+            if (activeSets) return respond({error:"training_mode_active_delete_blocked"},409);
 
             if (method === "DELETE") {
               await env.DB.batch([

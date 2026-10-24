@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {normalizeTrainingSet,handleTrainingModeAPI} from "../src/training-mode.js";
+import {normalizeTrainingSet,handleTrainingModeAPI,isTrainingExerciseActive} from "../src/training-mode.js";
 
 const date = "2026-10-22";
 const validDate = value => /^20\d\d-\d\d-\d\d$/.test(value||"");
@@ -17,10 +17,13 @@ class FakeD1 {
       if(sql.startsWith("SELECT s.id FROM workout_sessions s JOIN"))
         return db.sessions.find(s=>s.date===args[0] &&
           db.sets.some(x=>x.session_id===s.id&&x.exercise_name===args[1]))??null;
-      if(sql.startsWith("SELECT ws.id FROM workout_sets ws JOIN") && sql.includes("ws.set_number=?"))
+      if(sql.startsWith("SELECT ws.id, ws.session_id FROM workout_sets ws JOIN"))
         return db.sets.find(x=>x.exercise_name===args[1] &&
           x.set_number===args[2] &&
           db.sessions.some(s=>s.id===x.session_id&&s.date===args[0]))??null;
+      if(sql.startsWith("SELECT 1 AS active FROM training_mode_exercises"))
+        return db.progress.find(x=>x.date===args[0]&&x.name===args[1] &&
+          x.completed_sets>0 && !x.finished)??null;
       if(sql.startsWith("SELECT ws.id FROM workout_sets"))
         return db.sets.find(x=>x.exercise_name===args[1]&&
           db.sessions.some(s=>s.id===x.session_id&&s.date===args[0]))??null;
@@ -45,6 +48,11 @@ class FakeD1 {
       if(sql.startsWith("INSERT INTO workout_sets"))
         db.sets.push({id:db.next++,session_id:args[0],exercise_name:args[1],set_number:args[2],
           weight_kg:args[3],reps:args[4],entry_unit:args[5],duration_seconds:args[6]});
+      if(sql.startsWith("UPDATE workout_sets SET weight_kg=")) {
+        const row=db.sets.find(x=>x.id===args[4]&&x.session_id===args[5]&&x.exercise_name===args[6]&&x.set_number===args[7]);
+        if(!row)throw Error("missing target set");
+        row.weight_kg=args[0];row.reps=args[1];row.entry_unit=args[2];row.duration_seconds=args[3];
+      }
       if(sql.startsWith("INSERT INTO training_mode_exercises")) {
         let state=db.progress.find(x=>x.date===args[0]&&x.name===args[1]);
         if(!state)db.progress.push(state={date:args[0],name:args[1],finished:0,completed_sets:0});
@@ -83,8 +91,8 @@ test("validates one set and rejects invalid numbers",()=>{
 test("set-by-set saves preserve earlier sets, completion and resumable progress",async()=>{
   const db=new FakeD1();
   assert.equal((await request(db,"/api/training-mode/finish","PUT",base)).status,409);
-  const first={...base,set_number:1,weight_kg:40,reps:10};
-  const second={...base,set_number:2,weight_kg:40,reps:9};
+  const first={...base,set_number:1,expected_completed_sets:0,weight_kg:40,reps:10};
+  const second={...base,set_number:2,expected_completed_sets:1,weight_kg:40,reps:9};
   assert.equal((await request(db,"/api/training-mode/set","PUT",first)).status,200);
   assert.equal((await request(db,"/api/training-mode/set","PUT",second)).status,200);
   assert.deepEqual(db.sets.map(x=>x.reps),[10,9]);
@@ -95,7 +103,7 @@ test("set-by-set saves preserve earlier sets, completion and resumable progress"
   const duplicate=await request(db,"/api/training-mode/set","PUT",{...second,weight_kg:42.5,reps:8});
   assert.equal(duplicate.status,409);
   assert.equal(db.progress[0].completed_sets,2);
-  const third={...second,set_number:3,weight_kg:42.5,reps:8};
+  const third={...second,set_number:3,expected_completed_sets:2,weight_kg:42.5,reps:8};
   assert.equal((await request(db,"/api/training-mode/set","PUT",third)).status,200);
   assert.equal(db.sets.length,3);
   assert.deepEqual(db.sets.map(x=>x.reps),[10,9,8]);
@@ -114,29 +122,54 @@ test("legacy sessions with multiple exercise names are never rewritten",async()=
   db.sets.push({session_id:"legacy",exercise_name:"チェストプレス",set_number:1,reps:10});
   db.sets.push({session_id:"legacy",exercise_name:"アームカール",set_number:1,reps:10});
   const response=await request(db,"/api/training-mode/set","PUT",
-    {...base,set_number:1,weight_kg:40,reps:10});
+    {...base,set_number:1,expected_completed_sets:0,weight_kg:40,reps:10});
   assert.equal(response.status,409);
   assert.equal(response.body.error,"legacy_session_conflict");
   assert.equal(db.sets.length,2);
 });
 
-test("record-only sets never start training mode; next training save appends",async()=>{
+test("preexisting manual sets require confirmation and share matching set numbers",async()=>{
   const db=new FakeD1();
   db.sessions.push({id:"record-only",date});
   for(let i=1;i<=3;i++)db.sets.push({id:i,session_id:"record-only",
     exercise_name:"チェストプレス",set_number:i,weight_kg:40,reps:10});
+  db.next=4;
   let day=await request(db,"/api/training-mode/day?date="+date);
   assert.equal(day.body.sets.length,3);
   assert.equal(day.body.progress.length,0);
   assert.equal((await request(db,"/api/training-mode/finish","PUT",base)).status,409);
+  const first={...base,set_number:1,expected_completed_sets:0,weight_kg:42.5,reps:9};
+  assert.equal((await request(db,"/api/training-mode/set","PUT",first)).status,409);
+  assert.equal(db.sets[0].weight_kg,40);
   assert.equal((await request(db,"/api/training-mode/set","PUT",
-    {...base,set_number:4,weight_kg:40,reps:10})).status,200);
+    {...first,replace_set_id:1})).status,200);
   day=await request(db,"/api/training-mode/day?date="+date);
-  assert.equal(day.body.sets.length,4);
+  assert.equal(day.body.sets.length,3); // No phantom 4th set.
+  assert.deepEqual(db.sets.map(x=>x.set_number),[1,2,3]);
+  assert.equal(db.sets[0].weight_kg,42.5);
+  assert.equal(db.sets[0].id,1); // Same persisted set was updated.
   assert.equal(day.body.progress[0].completed_sets,1);
-  db.sets[0].weight_kg=45; // Record-editor modification must not change mode progress.
+  assert.ok(await isTrainingExerciseActive(db,date,base.exercise_name));
+  assert.equal((await request(db,"/api/training-mode/set","PUT",
+    {...first,replace_set_id:1})).status,409); // Stale progress.
+  const second={...base,set_number:2,expected_completed_sets:1,weight_kg:45,reps:8};
+  assert.equal((await request(db,"/api/training-mode/set","PUT",
+    {...second,replace_set_id:999})).status,409);
+  assert.equal((await request(db,"/api/training-mode/set","PUT",
+    {...second,replace_set_id:2})).status,200);
   day=await request(db,"/api/training-mode/day?date="+date);
-  assert.equal(day.body.progress[0].completed_sets,1);
+  assert.equal(day.body.progress[0].completed_sets,2);
+  db.sets[0].weight_kg=47.5; // Record-editor correction must not change mode progress.
+  day=await request(db,"/api/training-mode/day?date="+date);
+  assert.equal(day.body.progress[0].completed_sets,2);
   assert.equal((await request(db,"/api/training-mode/finish","PUT",base)).status,200);
   assert.equal(db.progress[0].finished,1);
+  assert.equal(await isTrainingExerciseActive(db,date,base.exercise_name),false);
+});
+
+test("set number must equal the guided progress number",async()=>{
+  const db=new FakeD1();
+  assert.equal((await request(db,"/api/training-mode/set","PUT",
+    {...base,set_number:2,expected_completed_sets:0,weight_kg:40,reps:10})).status,400);
+  assert.equal(db.sets.length,0);
 });

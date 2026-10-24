@@ -1,6 +1,6 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
 import { createSavedTemplateEditor } from "./saved-template-editor.js?v=20261023-window-v02";
-import { createTrainingMode } from "./training-mode.js?v=20261024-independent-progress-v01";
+import { createTrainingMode } from "./training-mode.js?v=20261024-consistent-sets-v01";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
 import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js?v=20261020-daily-private-v1";
@@ -151,6 +151,53 @@ function formatLoggedSet(set, unit = set?.entry_unit || "kg_reps") {
 let activeExerciseCard = null;
 let recordBaseline = "";
 let pendingRecordDate = "";
+let trainingDeleteLocks = new Set();
+let trainingDeleteLocksLoading = true;
+let trainingDeleteLocksDate = "";
+let trainingDeleteLocksRequest = 0;
+function isTrainingDeleteBlocked(name) {
+  return trainingDeleteLocksLoading || trainingDeleteLocksDate !== saveDate.value ||
+    trainingDeleteLocks.has(normalizeExerciseName(name));
+}
+function updateTrainingDeleteControls() {
+  for (const card of exerciseList.querySelectorAll(".exercise-card")) {
+    const blocked=isTrainingDeleteBlocked(card.nameInput.value);
+    for (const button of card.rows.querySelectorAll(".set-delete-button")) {
+      button.disabled=!dbReady || blocked;
+      button.title=blocked ? "筋トレモード実施中、または状態確認中のため削除できません" : "このセットを削除";
+    }
+  }
+  const blocked=activeExerciseCard && isTrainingDeleteBlocked(activeExerciseCard.nameInput.value);
+  deleteExerciseButton.disabled=!dbReady || !!blocked;
+  deleteExerciseButton.title=blocked ? "筋トレモード実施中、または状態確認中のため削除できません" : "この種目を削除";
+  const active=activeExerciseCard &&
+    trainingDeleteLocks.has(normalizeExerciseName(activeExerciseCard.nameInput.value));
+  const message="筋トレモード実施中のためセットと種目は削除できません。重量・回数は編集できます。";
+  if(active && !trainingDeleteLocksLoading && !saveFeedback.textContent)saveFeedback.textContent=message;
+  else if(!active && saveFeedback.textContent===message)saveFeedback.textContent="";
+}
+async function refreshTrainingDeleteLocks(date) {
+  const request=++trainingDeleteLocksRequest;
+  trainingDeleteLocksDate=date;
+  trainingDeleteLocksLoading=true;
+  trainingDeleteLocks=new Set();
+  updateTrainingDeleteControls();
+  try {
+    const day=await fetchJSON("/api/training-mode/day?date="+encodeURIComponent(date));
+    if(request!==trainingDeleteLocksRequest || !authorized || saveDate.value!==date)return;
+    trainingDeleteLocks=new Set((day.progress||[])
+      .filter(p=>Number(p.completed_sets)>0 && !p.finished)
+      .map(p=>normalizeExerciseName(p.exercise_name)));
+    trainingDeleteLocksLoading=false;
+  }catch(error) {
+    if(request!==trainingDeleteLocksRequest || !authorized)return;
+    // Fail closed for deletes, leave weight/reps editing available.
+    trainingDeleteLocksLoading=true;
+    if(error.status===401){setAuthenticated(false);return;}
+    overviewFeedback.textContent="筋トレモードの状態を確認できないため削除操作を停止しています。";
+  }
+  updateTrainingDeleteControls();
+}
 let calendarSaving = false;
 let calendarStatusDate = "";
 let calendarStatusMessage = "";
@@ -322,6 +369,7 @@ function hydrateStoredRecordForDate(date) {
   for (const [name, group] of groups) addExercise(name, group.sets, group.note, true);
   updateExerciseEmpty();
   markRecordBaseline();
+  void refreshTrainingDeleteLocks(date);
   loadRepeatForDate(date);
 }
 function selectRecordDate(date, { navigate = true } = {}) {
@@ -462,6 +510,7 @@ function setReady(ready) {
   document.querySelectorAll("#exercise-list .set-weight, #exercise-list .set-reps, #record-editor-host .set-weight, #record-editor-host .set-reps")
     .forEach(updateInlineStepButtons);
   renderRepeatEditor();
+  updateTrainingDeleteControls();
 }
 
 
@@ -608,15 +657,17 @@ function newSetRow(container, set = { weight_kg: 0, reps: 10 }) {
     reps.dispatchEvent(new Event("input", { bubbles: true }));
   });
   const remove = document.createElement("button");
-  remove.type = "button"; remove.className = "secondary-action";
+  remove.type = "button"; remove.className = "secondary-action set-delete-button";
   remove.textContent = "×"; remove.setAttribute("aria-label", "このセットを削除");
   remove.addEventListener("click", () => {
+    if(isTrainingDeleteBlocked(container.exerciseCard?.nameInput.value))return;
     row.remove();
     renumberSets(container);
   });
   row.append(number, weightLabel, repsLabel, remove);
   container.appendChild(row);
   renumberSets(container);
+  updateTrainingDeleteControls();
   return row;
 }
 // 3セット分だけを上限にし、4セット目以降はセット領域内でスクロールさせる。
@@ -925,6 +976,7 @@ function openExerciseEditor(card, origin = "record") {
   recordNoteDetails.open = !!saveNote.value;
   saveFeedback.textContent = "";
   updateDraftIndicators();
+  updateTrainingDeleteControls();
   byId("record-scroll").scrollTop = 0;
   byId("record-editor-back").focus();
 }
@@ -936,6 +988,10 @@ window.addEventListener("resize", () => {
 async function deleteSelectedExercise() {
   const card = activeExerciseCard;
   if (!authorized || !dbReady || !card) return;
+  if(isTrainingDeleteBlocked(card.nameInput.value)){
+    saveFeedback.textContent="筋トレモード実施中、または状態確認中のため種目を削除できません。";
+    return;
+  }
   const date = saveDate.value;
   const name = normalizeExerciseName(card.nameInput.value);
   const isPersisted = !!card.savedOnServer;
@@ -979,7 +1035,9 @@ async function deleteSelectedExercise() {
       return;
     }
     setReady(true);
-    saveFeedback.textContent = error.status === 404
+    saveFeedback.textContent = error.status === 409
+      ? "筋トレモード実施中の種目は削除できません。終了後に操作してください。"
+      : error.status === 404
       ? "この日の保存済み記録が見つかりません。"
       : "種目を削除できませんでした。接続状態を確認してください。";
   }
@@ -1895,7 +1953,9 @@ byId("workout-form").addEventListener("submit", async event => {
         loginFeedback.textContent = "ログイン期限が切れました。";
       } else if (authorized) {
         setReady(true);
-        saveFeedback.textContent = "保存できませんでした。接続状態を確認してください。";
+        saveFeedback.textContent = error.status===409
+          ? "筋トレモード実施中のセットは削除できません。最新の記録を確認してください。"
+          : "保存できませんでした。接続状態を確認してください。";
       }
       return;
     }
@@ -2853,6 +2913,7 @@ const trainingMode = createTrainingMode(byId("training-mode"), {
     void loadWorkouts();
   },
   onUnauthorized: () => setAuthenticated(false),
+  onFinished: () => { trainingRecordNeedsReload = true; void loadWorkouts(); },
   openRecord: () => { selectRecordDate(todayISO()); }
 });
 
@@ -3047,6 +3108,10 @@ function setAuthenticated(next) {
     completeDates.clear();
     selectedDate = todayISO();
     pendingRecordDate = "";
+    trainingDeleteLocks=new Set();
+    trainingDeleteLocksLoading=true;
+    trainingDeleteLocksDate="";
+    ++trainingDeleteLocksRequest;
     pendingAnalysisRecord = null;
     editorEntry = "record";
     analysisSaveNotice = "";
