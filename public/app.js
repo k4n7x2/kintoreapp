@@ -2221,6 +2221,8 @@ let gymPresenceActive = false;
 let gymPresenceLeaseUntil = 0;
 let gymPresenceRequestId = 0;
 let gymPresencePending = null;
+let gymAttendancePending = null;
+let gymAttendanceRequestId = 0;
 let gymPreviewOverride = false;
 function currentGymVisuals() {
   return resolveGymVisuals({
@@ -2270,6 +2272,42 @@ async function refreshGymPresence() {
   })();
   gymPresencePending = request;
   void request.finally(() => { if (gymPresencePending === request) gymPresencePending = null; });
+  return request;
+}
+
+// A foreground action alone can record a visit; 30-second presence polling stays read-only.
+async function registerGymAttendance() {
+  if (!authorized || document.hidden) return;
+  if (gymAttendancePending) return gymAttendancePending;
+  const id = ++gymAttendanceRequestId;
+  const request = (async () => {
+    try {
+      const response = await fetchJSON("/api/gym-presence/check-in", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: "{}"
+      });
+      if (id !== gymAttendanceRequestId || !authorized) return;
+      const leaseMs = gymLeaseDuration(response);
+      updateGymPresence(leaseMs > 0, leaseMs);
+      if (response.attended === true && typeof response.on_date === "string" &&
+          response.on_date.slice(0, 7) === currentMonth()) {
+        if (calendarAvailable) {
+          calendarDays.set(response.on_date, {
+            ...calendarDays.get(response.on_date), attended: true
+          });
+          renderCalendar();
+        }
+        // Discard any in-flight calendar read that started before the upsert.
+        if (response.changed === true) void loadWorkouts();
+      }
+    } catch (error) {
+      if (id !== gymAttendanceRequestId || !authorized) return;
+      if (error.status === 401) { setAuthenticated(false); return; }
+      // Preserve the gym background/clothing feature if attendance is unavailable.
+      void refreshGymPresence();
+    }
+  })();
+  gymAttendancePending = request;
+  void request.finally(() => { if (gymAttendancePending === request) gymAttendancePending = null; });
   return request;
 }
 
@@ -2333,11 +2371,11 @@ setInterval(() => {
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
     refreshScene();
-    void refreshGymPresence();
+    void registerGymAttendance();
   }
 });
-window.addEventListener("focus", () => { refreshScene(); void refreshGymPresence(); });
-window.addEventListener("pageshow", () => { refreshScene(); void refreshGymPresence(); });
+window.addEventListener("focus", () => { refreshScene(); void registerGymAttendance(); });
+window.addEventListener("pageshow", () => { refreshScene(); void registerGymAttendance(); });
 
 
 // ホームの既存セリフ候補を必要時だけ取得する。端末には永続保存しない。
@@ -3052,6 +3090,8 @@ function setAuthenticated(next) {
   if (!next || !wasAuthorized) {
     ++gymPresenceRequestId;
     gymPresencePending = null;
+    ++gymAttendanceRequestId;
+    gymAttendancePending = null;
     gymPresenceActive = false;
     gymPresenceLeaseUntil = 0;
     gymPreviewOverride = false;
@@ -3090,7 +3130,7 @@ function setAuthenticated(next) {
     refreshOutfit();
     authStatus.textContent = "ログイン済み（自分専用）";
     setScreen("home", false);
-    void refreshGymPresence();
+    void registerGymAttendance();
   } else {
     sceneLocation = null;
     sceneTime = null;

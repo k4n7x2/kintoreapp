@@ -4,6 +4,7 @@ import { handlePlanResetAPI } from "./plan-reset.js";
 import { handleTrainingSetupAPI } from "./training-setup.js";
 import { handleTrainingModeAPI, isTrainingExerciseActive } from "./training-mode.js";
 import { readGymPresence, writeGymPresence } from "./gym-presence.js";
+import { checkInGymAttendance } from "./gym-attendance.js";
 // 個人用ログイン。パスワードはCloudflare Secret APP_PASSWORDにのみ保存。
 // パスワードも筋トレ記録もGitHub/ブラウザStorageには保存しない。
 const encoder = new TextEncoder();
@@ -278,6 +279,11 @@ export default {
       if (url.pathname === "/api/gym-presence") {
         if (method !== "GET") return respond({ error: "method_not_allowed" }, 405);
         return readGymPresence(env.DB, respond);
+      }
+      if (url.pathname === "/api/gym-presence/check-in") {
+        if (method !== "POST") return respond({ error: "method_not_allowed" }, 405);
+        if (!sameOriginJSON(request, url)) return respond({ error: "invalid_origin_or_type" }, 403);
+        return checkInGymAttendance(env.DB, respond);
       }
       if (url.pathname === "/api/session" && method === "GET") {
         return respond({ authenticated: true });
