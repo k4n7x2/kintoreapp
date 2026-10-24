@@ -387,7 +387,8 @@ function renderCalendar() {
     const iconState = resolveCalendarIcon({
       hasWorkout: completeDates.has(dateKey),
       planned: !!state?.planned,
-      rest: !!state?.rest
+      rest: !!state?.rest,
+      attended: !!state?.attended
     });
     const number = document.createElement("span");
     number.className = "calendar-day__number";

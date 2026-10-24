@@ -3045,7 +3045,9 @@ body.is-authenticated.is-sd-page #app-screen {
 #page-calendar .calendar-day__status { display: flex; align-items: center; justify-content: center; width: 19px; height: 17px; }
 #page-calendar .calendar-day__status svg { width: 16px; height: 16px; display: block; }
 #page-calendar .calendar-day__status.is-planned, #page-calendar .legend-icon.is-planned { color: var(--accent); opacity: .55; }
-#page-calendar .calendar-day__status.is-workout, #page-calendar .legend-icon.is-workout { color: var(--success); }
+/* Recorded sets keep a non-green dumbbell until a visit is explicitly saved. */
+#page-calendar .calendar-day__status.is-workout, #page-calendar .legend-icon.is-workout { color: var(--accent); opacity: .75; }
+#page-calendar .calendar-day__status.is-attended, #page-calendar .legend-icon.is-attended { color: var(--success); opacity: 1; }
 #page-calendar .calendar-day__status.is-rest, #page-calendar .legend-icon.is-rest { color: var(--subtle); }
 /* The day background is colored only after attendance is explicitly recorded. */
 #page-calendar .calendar-day.is-rest { color: var(--muted); }
