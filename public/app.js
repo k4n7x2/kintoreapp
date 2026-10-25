@@ -3,6 +3,7 @@ import { createSavedTemplateEditor } from "./saved-template-editor.js?v=20261023
 import { createTrainingMode } from "./training-mode.js?v=20261025-set-target-sync-v01";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
+import {renderAnalysisTrend, destroyAnalysisTrend, refreshAnalysisTrendTheme} from "./analysis-chart.js?v=20261025-v1";
 import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js?v=20261020-daily-private-v1";
 import { tokyoDateKey, dailyPrivateOutfit, isPrivateOutfit, millisecondsUntilNextTokyoMidnight } from "./daily-private-outfit.js?v=20261020-daily-private-v1";
 import { choosePortraitVariant } from "./home-portrait-selection.js?v=20261020-daily-private-v1";
@@ -37,6 +38,7 @@ function applyTheme(nextTheme) {
 applyTheme(window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
 themeToggle.addEventListener("click", () => {
   applyTheme(currentTheme === "light" ? "dark" : "light");
+  refreshAnalysisTrendTheme();
 });
 
 
@@ -103,6 +105,10 @@ const analysisExerciseList = byId("analysis-exercise-list");
 const analysisDateList = byId("analysis-date-list");
 const analysisExerciseFeedback = byId("analysis-exercise-feedback");
 const analysisDateFeedback = byId("analysis-date-feedback");
+const analysisChartPeriod = byId("analysis-chart-period");
+const analysisChartCanvas = byId("analysis-chart-canvas");
+const analysisChartStatus = byId("analysis-chart-status");
+let analysisTrendSets = [], analysisTrendTruncated = false;
 let selectedAnalysisExercise = "";
 let analysisListRequestId = 0;
 let analysisDatesRequestId = 0;
@@ -755,6 +761,9 @@ function analysisDateSummary(sets) {
 }
 function showAnalysisExerciseList({ reload = true } = {}) {
   ++analysisDatesRequestId;
+  destroyAnalysisTrend();
+  analysisTrendSets = [];
+  analysisTrendTruncated = false;
   analysisDateView.hidden = true;
   analysisExerciseView.hidden = false;
   if (reload) loadAnalysisExercises();
@@ -814,13 +823,24 @@ async function showAnalysisDates(rawName) {
   analysisExerciseView.hidden = true;
   analysisDateView.hidden = false;
   byId("analysis-selected-exercise").textContent = name;
+  destroyAnalysisTrend();
+  analysisTrendSets=[];
+  analysisTrendTruncated=false;
+  analysisChartCanvas.hidden=true;
+  analysisChartStatus.textContent="グラフ用データを読み込み中…";
   analysisDateList.replaceChildren();
   analysisDateFeedback.textContent = "実施日を読み込み中…";
+  if (activePage==="analysis") byId("page-analysis").querySelector(".analysis-scroll").scrollTop=0;
   byId("analysis-date-retry").hidden = true;
   const requestId = ++analysisDatesRequestId;
   try {
     const result = await fetchJSON("/api/exercises/history?name=" + encodeURIComponent(name));
     if (requestId !== analysisDatesRequestId || !authorized || selectedAnalysisExercise !== name) return;
+    analysisTrendSets = result.sets || [];
+    analysisTrendTruncated = !!result.truncated;
+    void renderAnalysisTrend({sets:analysisTrendSets,period:analysisChartPeriod.value,
+      todayKey:tokyoDateKey(new Date()),truncated:analysisTrendTruncated,
+      canvas:analysisChartCanvas,status:analysisChartStatus});
     const byDate = new Map();
     for (const set of result.sets || []) {
       if (!byDate.has(set.performed_on)) byDate.set(set.performed_on, []);
@@ -851,6 +871,9 @@ async function showAnalysisDates(rawName) {
   } catch (error) {
     if (requestId !== analysisDatesRequestId || !authorized) return;
     if (error.status === 401) { setAuthenticated(false); return; }
+    destroyAnalysisTrend();
+    analysisChartCanvas.hidden=true;
+    analysisChartStatus.textContent="グラフ用履歴を取得できませんでした。";
     analysisDateFeedback.textContent = "実施日を取得できませんでした。";
     byId("analysis-date-retry").hidden = false;
   }
@@ -894,6 +917,12 @@ function returnFromExerciseEditor() {
     closeExerciseEditor({ focus: true });
   }
 }
+analysisChartPeriod.addEventListener("change",()=>{
+  if(!selectedAnalysisExercise||!authorized||analysisDateView.hidden)return;
+  void renderAnalysisTrend({sets:analysisTrendSets,period:analysisChartPeriod.value,
+    todayKey:tokyoDateKey(new Date()),truncated:analysisTrendTruncated,
+    canvas:analysisChartCanvas,status:analysisChartStatus});
+});
 byId("analysis-part-filter").addEventListener("change", loadAnalysisExercises);
 byId("analysis-dates-back").addEventListener("click", () => {
   showAnalysisExerciseList({ reload: false });
@@ -2985,6 +3014,7 @@ function setScreen(screen, pushHistory = true) {
   if (screen !== "settings") closeSettingsPlanReset();
   if (screen !== "settings" && savedTemplateEditor.isOpen()) savedTemplateEditor.close(true);
   const previousPage = activePage;
+  if (previousPage === "analysis" && screen !== "analysis") destroyAnalysisTrend();
   if (previousPage === "training" && screen !== "training") trainingMode.leave();
   syncDailyPrivateOutfit();
   if (screen !== "calendar") setCalendarMonthPicker(false);
@@ -3179,6 +3209,9 @@ function setAuthenticated(next) {
     pendingAnalysisRecord = null;
     editorEntry = "record";
     analysisSaveNotice = "";
+    destroyAnalysisTrend();
+    analysisTrendSets=[];analysisTrendTruncated=false;
+    analysisChartCanvas.hidden=true;analysisChartStatus.textContent="";
     ++analysisListRequestId;
     ++analysisDatesRequestId;
     selectedAnalysisExercise = "";
