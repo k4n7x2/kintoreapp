@@ -1,3 +1,9 @@
+## 2026-10-25 Androidホーム画面アイコンを朝倉栞の顔アップへ変更
+
+- ユーザー指定の朝倉栞立ち絵の顔アップを使用した192×192透過WebPを `public/icons/shiori-face-192.webp` へ追加。転送元とGit blob SHAを照合して画像データの一致を確認。
+- `public/manifest.webmanifest` のアイコンおよび `public/index.html` のfavicon参照を新画像へ切り替え。アプリ名・起動URL・テーマ色、ログイン・API・記録・DBには変更なし。
+- 192pxアイコンの静的検証を `tests/web-app-manifest.test.js` に設定。512px版の追加とChrome Android実機確認、Cloudflare本番反映結果は別確認。画像は既存添付を切り出したもので新規描画なし。
+
 ## 2026-10-25 Androidホーム画面ショートカットのアイコン指定
 
 - 既存の正方形SD栞（`public/assets/shiori/gim/v1/shiori-gim-sd-training-test-r1.webp`、1254×1254px）を加工せず、`public/manifest.webmanifest` のアイコンに指定。ホーム画面での名称は `kintoreapp`、開始URLは `/`、`standalone` 表示を希望する設定。
