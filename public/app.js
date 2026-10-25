@@ -3,7 +3,7 @@ import { createSavedTemplateEditor } from "./saved-template-editor.js?v=20261023
 import { createTrainingMode } from "./training-mode.js?v=20261025-set-target-sync-v01";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
-import {renderAnalysisTrend, destroyAnalysisTrend, refreshAnalysisTrendTheme} from "./analysis-chart.js?v=20261025-v1";
+import {ANALYSIS_METRICS, buildAnalysisMetrics, renderAnalysisTrend, destroyAnalysisTrend, refreshAnalysisTrendTheme} from "./analysis-chart.js?v=20261025-v02";
 import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js?v=20261020-daily-private-v1";
 import { tokyoDateKey, dailyPrivateOutfit, isPrivateOutfit, millisecondsUntilNextTokyoMidnight } from "./daily-private-outfit.js?v=20261020-daily-private-v1";
 import { choosePortraitVariant } from "./home-portrait-selection.js?v=20261020-daily-private-v1";
@@ -109,6 +109,15 @@ const analysisChartPeriod = byId("analysis-chart-period");
 const analysisChartCanvas = byId("analysis-chart-canvas");
 const analysisChartStatus = byId("analysis-chart-status");
 let analysisTrendSets = [], analysisTrendTruncated = false;
+let analysisMetric = "e1rm";
+let analysisChartPoints = [];
+const analysisChartSummary = byId("analysis-chart-summary");
+const analysisChartNote = byId("analysis-chart-note");
+const analysisChartDay = byId("analysis-chart-day");
+const analysisChartDate = byId("analysis-chart-date");
+const analysisChartDaySets = byId("analysis-chart-day-sets");
+const analysisChartOpenRecord = byId("analysis-chart-open-record");
+const analysisMetricButtons = [...document.querySelectorAll("[data-analysis-metric]")];
 let selectedAnalysisExercise = "";
 let analysisListRequestId = 0;
 let analysisDatesRequestId = 0;
@@ -759,11 +768,74 @@ function analysisDateSummary(sets) {
   const max = Math.max(...sets.map(set => Number(set.weight_kg)));
   return Number(max.toFixed(2)) + "kg / " + sets.length + "セット";
 }
+function selectAnalysisChartDay(date) {
+  const selected = analysisChartPoints.find(point => point.date === date);
+  if (!selected) return;
+  analysisChartDate.value = selected.date;
+  analysisChartDaySets.replaceChildren();
+  for (const [index, set] of selected.sets.entries()) {
+    const row = document.createElement("div");
+    row.className = "analysis-chart-set-row";
+    const label = document.createElement("span");
+    label.textContent = (set.set_number || index + 1) + "セット目";
+    const detail = document.createElement("strong");
+    detail.textContent = set.weight + "kg × " + set.reps + "回";
+    row.append(label, detail);
+    analysisChartDaySets.appendChild(row);
+  }
+  analysisChartDay.hidden = false;
+}
+
+function refreshAnalysisChart() {
+  analysisChartPoints = buildAnalysisMetrics(analysisTrendSets, analysisMetric,
+    analysisChartPeriod.value, tokyoDateKey(new Date()));
+  const definition = ANALYSIS_METRICS[analysisMetric];
+  const points = analysisChartPoints;
+  for (const button of analysisMetricButtons) {
+    const active = button.dataset.analysisMetric === analysisMetric;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  }
+  analysisChartNote.textContent = analysisMetric === "e1rm"
+    ? "推定1RM：各セットの重量と回数から計算した推定最大筋力（Epley式）。1回は実測重量、2～30回を計算対象。疲労やフォームでも変動します。"
+    : analysisMetric === "weight"
+      ? "実施済みセットの中で、その日の最大重量を表示します。回数は下のセット一覧で確認できます。"
+      : "実施済み全セットの重量×回数の合計です。セット数や実施量によって変動し、筋力そのものを示す値ではありません。";
+  const num = value => new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 2 }).format(value);
+  analysisChartSummary.textContent = "";
+  if (points.length) {
+    const first = points[0], last = points[points.length - 1];
+    const difference = Number((last.value - first.value).toFixed(2));
+    analysisChartSummary.textContent = "直近 " + num(last.value) + definition.unit +
+      (points.length > 1 ? " ／ 期間内の初回比 " +
+        (difference > 0 ? "+" : "") + num(difference) + definition.unit : " ／ 記録1日");
+  }
+  const previous = analysisChartDate.value;
+  analysisChartDate.replaceChildren();
+  for (const point of points) {
+    const option = document.createElement("option");
+    option.value = point.date;
+    option.textContent = point.date;
+    analysisChartDate.appendChild(option);
+  }
+  if (points.length) {
+    selectAnalysisChartDay(points.some(point => point.date === previous) ?
+      previous : points[points.length - 1].date);
+  } else {
+    analysisChartDay.hidden = true;
+    analysisChartDaySets.replaceChildren();
+  }
+  void renderAnalysisTrend({ points, metric:analysisMetric, truncated:analysisTrendTruncated,
+    canvas:analysisChartCanvas, status:analysisChartStatus, onSelectDate:selectAnalysisChartDay });
+}
+
 function showAnalysisExerciseList({ reload = true } = {}) {
   ++analysisDatesRequestId;
   destroyAnalysisTrend();
   analysisTrendSets = [];
   analysisTrendTruncated = false;
+  analysisChartPoints = [];
+  analysisChartDay.hidden = true;
   analysisDateView.hidden = true;
   analysisExerciseView.hidden = false;
   if (reload) loadAnalysisExercises();
@@ -826,6 +898,10 @@ async function showAnalysisDates(rawName) {
   destroyAnalysisTrend();
   analysisTrendSets=[];
   analysisTrendTruncated=false;
+  analysisChartPoints=[];
+  analysisChartDay.hidden=true;
+  analysisChartDaySets.replaceChildren();
+  analysisChartSummary.textContent="";
   analysisChartCanvas.hidden=true;
   analysisChartStatus.textContent="グラフ用データを読み込み中…";
   analysisDateList.replaceChildren();
@@ -838,9 +914,7 @@ async function showAnalysisDates(rawName) {
     if (requestId !== analysisDatesRequestId || !authorized || selectedAnalysisExercise !== name) return;
     analysisTrendSets = result.sets || [];
     analysisTrendTruncated = !!result.truncated;
-    void renderAnalysisTrend({sets:analysisTrendSets,period:analysisChartPeriod.value,
-      todayKey:tokyoDateKey(new Date()),truncated:analysisTrendTruncated,
-      canvas:analysisChartCanvas,status:analysisChartStatus});
+    refreshAnalysisChart();
     const byDate = new Map();
     for (const set of result.sets || []) {
       if (!byDate.has(set.performed_on)) byDate.set(set.performed_on, []);
@@ -919,9 +993,19 @@ function returnFromExerciseEditor() {
 }
 analysisChartPeriod.addEventListener("change",()=>{
   if(!selectedAnalysisExercise||!authorized||analysisDateView.hidden)return;
-  void renderAnalysisTrend({sets:analysisTrendSets,period:analysisChartPeriod.value,
-    todayKey:tokyoDateKey(new Date()),truncated:analysisTrendTruncated,
-    canvas:analysisChartCanvas,status:analysisChartStatus});
+  refreshAnalysisChart();
+});
+for (const button of analysisMetricButtons) {
+  button.addEventListener("click",()=>{
+    if (!authorized || analysisDateView.hidden) return;
+    analysisMetric=button.dataset.analysisMetric;
+    refreshAnalysisChart();
+  });
+}
+analysisChartDate.addEventListener("change",()=>selectAnalysisChartDay(analysisChartDate.value));
+analysisChartOpenRecord.addEventListener("click",()=>{
+  if (!authorized || !selectedAnalysisExercise || !analysisChartDate.value) return;
+  openAnalysisRecord(selectedAnalysisExercise, analysisChartDate.value);
 });
 byId("analysis-part-filter").addEventListener("change", loadAnalysisExercises);
 byId("analysis-dates-back").addEventListener("click", () => {
@@ -3211,6 +3295,12 @@ function setAuthenticated(next) {
     analysisSaveNotice = "";
     destroyAnalysisTrend();
     analysisTrendSets=[];analysisTrendTruncated=false;
+    analysisMetric="e1rm";
+    analysisChartPoints=[];
+    analysisChartDay.hidden=true;
+    analysisChartDate.replaceChildren();
+    analysisChartDaySets.replaceChildren();
+    analysisChartSummary.textContent="";
     analysisChartCanvas.hidden=true;analysisChartStatus.textContent="";
     ++analysisListRequestId;
     ++analysisDatesRequestId;

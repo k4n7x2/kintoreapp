@@ -8,10 +8,10 @@
   <link rel="icon" type="image/webp" href="/icons/shiori-face-192.webp">
   <meta name="robots" content="noindex, nofollow">
   <title>ログイン</title>
-  <link rel="stylesheet" href="/styles.css?v=20261025-analysis-mixed-v01">
+  <link rel="stylesheet" href="/styles.css?v=20261025-analysis-progress-v02">
   <link rel="stylesheet" href="/training-mode.css?v=20261023-v03">
   <link rel="stylesheet" href="/story-test.css?v=20261018-remove-legacy-r1-v1">
-  <script type="module" src="/app.js?v=20261025-analysis-mixed-v01"></script>
+  <script type="module" src="/app.js?v=20261025-analysis-progress-v02"></script>
   <link rel="stylesheet" href="/gallery.css?v=20261020-daily-private-v1">
   <script type="module" src="/gallery.js?v=20261021-gym-eight"></script>
 </head>
@@ -385,21 +385,31 @@
               <h2 id="analysis-selected-exercise"></h2>
               <section class="analysis-trend" aria-labelledby="analysis-trend-heading">
                 <div class="analysis-trend-head">
-                  <h3 id="analysis-trend-heading">重量・回数の推移</h3>
+                  <h3 id="analysis-trend-heading">成長の推移</h3>
                   <select id="analysis-chart-period" aria-label="グラフの表示期間">
                     <option value="1m">1ヶ月</option><option value="3m" selected>3ヶ月</option>
                     <option value="1y">1年</option><option value="all">全期間</option>
                   </select>
                 </div>
-                <div class="analysis-chart-legend" aria-hidden="true">
-                  <span><i class="analysis-legend-line"></i>重量（kg・左軸）</span>
-                  <span><i class="analysis-legend-bar"></i>回数（回・右軸）</span>
+                <div class="analysis-metric-tabs" role="group" aria-label="分析指標">
+                  <button type="button" class="analysis-metric is-active" data-analysis-metric="e1rm" aria-pressed="true">推定1RM</button>
+                  <button type="button" class="analysis-metric" data-analysis-metric="weight" aria-pressed="false">最大重量</button>
+                  <button type="button" class="analysis-metric" data-analysis-metric="volume" aria-pressed="false">総ボリューム</button>
                 </div>
+                <p id="analysis-chart-summary" class="analysis-chart-summary" aria-live="polite"></p>
                 <div class="analysis-chart-frame">
-                  <canvas id="analysis-chart-canvas" role="img" aria-label="重量は折れ線・回数は棒グラフの2軸推移" hidden></canvas>
+                  <canvas id="analysis-chart-canvas" role="img" aria-label="選択した分析指標の日別推移" hidden></canvas>
                 </div>
                 <p id="analysis-chart-status" role="status" aria-live="polite"></p>
-                <p class="analysis-chart-note">1日につき、実施済みの最大重量と、そのセットの回数を表示。グラフをタップすると数値を確認できます。</p>
+                <p id="analysis-chart-note" class="analysis-chart-note">推定1RMはセットの重量と回数から求めた概算値です。</p>
+                <div id="analysis-chart-day" class="analysis-chart-day" hidden>
+                  <div class="analysis-chart-day-heading">
+                    <label for="analysis-chart-date">実施済みセット</label>
+                    <select id="analysis-chart-date" aria-label="表示する実施日"></select>
+                  </div>
+                  <div id="analysis-chart-day-sets" class="analysis-chart-day-sets" aria-live="polite"></div>
+                  <button type="button" class="analysis-chart-open-record" id="analysis-chart-open-record">この日の記録を開く</button>
+                </div>
               </section>
               <h3 class="analysis-records-heading">実施日一覧</h3>
               <p class="analysis-guide">実施日を選ぶと、その日の重量・回数・セットを編集できます。</p>
