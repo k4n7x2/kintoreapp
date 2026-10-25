@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "standardId": "home-portrait-v2-trial",
+  "status": "trial-unapproved",
+  "note": "Standalone drafting experiment; does not replace v1 or certify any new image",
+  "masterSource": {
+    "title": "User-selected ideal training-wear portrait",
+    "originalAttachmentName": "11577.webp",
+    "sha256": "47804149850a46b41767c66eeff459260369d3bc6e5ae897d3b2004bff5bbdf1",
+    "originalFormat": "WEBP",
+    "raster": [
+      1086,
+      1448
+    ],
+    "colorMode": "RGBA",
+    "inGitHub": false,
+    "registeredPath": null,
+    "role": "home composition & positioning ONLY; character likeness/style still follow official 3 master references",
+    "note": "Image is user conversation attachment, not present in GitHub; same SHA bytes required before promoting trial to formal master"
+  },
+  "geometry": {
+    "coordinateFrame": "source image pixels, origin upper-left, x right y down",
+    "canvas": {
+      "width": 1086,
+      "height": 1448,
+      "lock": true
+    },
+    "anchors": {
+      "leftEyeOutlineCenter": {
+        "x": 423,
+        "y": 448
+      },
+      "rightEyeOutlineCenter": {
+        "x": 583,
+        "y": 356
+      },
+      "eyeMidpoint": {
+        "x": 503,
+        "y": 402
+      },
+      "eyeSeparationApproxPx": 184.56,
+      "headTopVisibleY": 0,
+      "chinTip": {
+        "x": 592,
+        "y": 585
+      }
+    },
+    "faceGuideBox": {
+      "left": 335,
+      "top": 240,
+      "right": 715,
+      "bottom": 590,
+      "strict": false,
+      "usage": "loose guide only, not pixel-certified face segmentation"
+    },
+    "measurementQuality": {
+      "rasterExact": [
+        "canvas",
+        "mode",
+        "source_sha256",
+        "edge occupancy",
+        "head touches top"
+      ],
+      "manualApprox": [
+        "eye points",
+        "eyeMidpoint",
+        "chinTip",
+        "faceGuideBox"
+      ],
+      "precision": "manual candidates, not repeat-annotated; DO NOT apply strict pass/fail tolerance yet"
+    },
+    "edgePolicy": {
+      "kind": "intentionalCloseUpCrop",
+      "transparentMarginRequirement": null,
+      "topCropAllowed": true,
+      "lateralCropAllowed": true,
+      "bottomCropAllowed": true,
+      "preserveApprovedFraming": true,
+      "forbidAutoTrimAndResize": true,
+      "existingImageAlphaOver32AtEdges": {
+        "topPixels": 38,
+        "leftPixels": 38,
+        "rightPixels": 318,
+        "bottomPixels": 945
+      },
+      "note": "The approved source itself reaches all four edges; v1 '10% clear left/right margin' contradicts it and is NOT inherited."
+    },
+    "pose": {
+      "basePose": "tilted face, right hand near hair, shoulder/upper body angled",
+      "sameExpressionVariants": "preserve original silhouette and clothing",
+      "clothingVariants": "same head placement & scale, body pose can change only within framing"
+    }
+  },
+  "acceptanceProposal": {
+    "afterCalibrationOnly": {
+      "eyeMidpointPerAxisPx": 6,
+      "eyeSeparationRelativePercent": 2,
+      "chinTipPerAxisPx": 8,
+      "faceGuideBox": "advisory, not fail-gate",
+      "topVisibleContour": "visual review only"
+    },
+    "evidenceRequirements": [
+      "pixel coordinates annotated twice on exact binary",
+      "source SHA256 bound to observations",
+      "image-size and real alpha check",
+      "no unintended clip or expression/body redraw",
+      "CSS same for all v2 images",
+      "Android comparison at 320/360/393/430px and short heights"
+    ],
+    "statusBeforeChecks": "TRIAL_ONLY; no automatic PASS"
+  },
+  "workflow": [
+    "Include this exact image as composition reference when an authorized image-creation request is made",
+    "Ask model for 1086x1448 RGBA and fixed eye/chin/framing; prompt cannot guarantee pixel precision",
+    "Measure actual output; align on canvas by translation and uniform scaling if feasible",
+    "Check contour/cropping & draw differences. Never stretch x and y independently",
+    "Convert copy to lossy transparent WebP quality 85 without changing canvas size",
+    "Use a new shared CSS layout path for v2 only after preview and Android QA"
+  ],
+  "compatibility": {
+    "legacyV1Canvas": [
+      941,
+      1672
+    ],
+    "replaceV1": false,
+    "modifyCurrentCSS": false,
+    "modifyCurrentPortraits": false,
+    "supersedePR14": false
+  },
+  "basisMainSHA": "f5d328f7a0432ff2c749ffcd5bf22b44bfe69dfd"
+}
