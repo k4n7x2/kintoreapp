@@ -1,6 +1,6 @@
 import { chooseRecordSaveGroup, calendarConditionGroups, savedNumericSnapshot } from "./record-dialogue-rules.js";
 import { createSavedTemplateEditor } from "./saved-template-editor.js?v=20261023-window-v02";
-import { createTrainingMode } from "./training-mode.js?v=20261024-set-completion-v01";
+import { createTrainingMode } from "./training-mode.js?v=20261025-set-target-sync-v01";
 import { chooseSdTouchGroup, registerSdTap, chooseLineWithoutRepeat, isValidSdTouchData } from "./sd-touch-rules.js";
 import { resolveCalendarIcon } from "./calendar-status.js";
 import { REGULAR_SCENE_LOCATIONS, resolveGymVisuals, gymLeaseDuration } from "./gym-presence-ui.js?v=20261020-daily-private-v1";

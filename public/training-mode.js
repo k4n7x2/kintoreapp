@@ -59,6 +59,24 @@ export function nextTrainingSetNumber(item) {
   return 13;
 }
 
+// An explicit record-editor save overrides the weekly menu's suggested set count.
+ // For old record-only days, infer from existing rows. Mode-only days keep their
+ // weekly target even after saving the first guided set.
+export function resolveTrainingTargetSets(plannedSets, savedSets, configuredSets, hasModeProgress) {
+  const configured=Number(configuredSets);
+  if (configuredSets!==null && configuredSets!==undefined &&
+      Number.isInteger(configured) && configured>=1 && configured<=12) return configured;
+  const planned=Math.min(12,Math.max(1,Number(plannedSets)||3));
+  const numbers=(savedSets||[]).map(row=>Number(row.set_number))
+    .filter(number=>Number.isInteger(number)&&number>=1&&number<=12);
+  const highest=numbers.length?Math.max(...numbers):0;
+  // Old record-editor rows may coexist with a legacy mode progress row.
+  // Unchecked rows indicate a prepared record form rather than mode-only output.
+  const hasPreparedRows=(savedSets||[]).some(row=>Number(row.is_completed)===0);
+  if (highest>0 && (!hasModeProgress || hasPreparedRows)) return highest;
+  return Math.max(planned,highest);
+}
+
 export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, onFinished}) {
   const state = {date:"",items:[],screen:"list",selected:-1,setNumber:1,
     weight:"",reps:"",busy:false,error:"",restUntil:0,run:0,active:false};
@@ -76,7 +94,7 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
       return `<button type="button" class="tm-item ${finished?"tm-item--done":""}"
         data-action="choose" data-index="${index}" aria-label="${html(item.name)}、${status}、筋トレモード${modeCount}セット">
         <span class="tm-item-main"><strong>${html(item.name)}</strong>
-        <small>${modeCount} / ${Math.max(modeCount,item.targetSets)} セット${count&&!modeCount?" · 記録 "+count+"セット":""}</small></span>
+        <small>${modeCount} / ${item.targetSets} セット${count&&!modeCount?" · 記録 "+count+"セット":""}</small></span>
         <span class="tm-item-status">${finished?"✓ ":""}${status}</span>
       </button>`;
     }).join("");
@@ -311,16 +329,15 @@ export function createTrainingMode(root, {onUnauthorized, openRecord, onSaved, o
           item.sets.push(row);seen.get(key).add(Number(row.set_number));
         }
       }
-      for(const row of day.progress||[]){
-        const item=items.get(nameKey(row.exercise_name));
-        if(item){
-          item.finished=!!row.finished;
-        }
-      }
+      const progressByName=new Map((day.progress||[])
+        .map(row=>[nameKey(row.exercise_name),row]));
       state.items=[...items.values()];
       for(const item of state.items){
+        const progress=progressByName.get(nameKey(item.name));
+        item.targetSets=resolveTrainingTargetSets(item.targetSets,item.sets,
+          progress?.configured_sets,!!progress && Number(progress.completed_sets)>0);
         item.modeSets=completedTrainingSets(item);
-        item.finished=item.finished && item.modeSets>0;
+        item.finished=!!progress?.finished && item.modeSets>0;
       }
       render();
     }catch(error) {

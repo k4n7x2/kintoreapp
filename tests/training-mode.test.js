@@ -31,6 +31,8 @@ class FakeD1 {
       if(sql.startsWith("SELECT COUNT(*) AS checked"))
         return {checked:db.sets.filter(x=>x.exercise_name===args[1] &&
           Number(x.is_completed)===1 && db.sessions.some(s=>s.id===x.session_id&&s.date===args[0])).length};
+      if(sql.startsWith("SELECT configured_sets FROM training_mode_exercises"))
+        return db.progress.find(x=>x.date===args[0]&&x.name===args[1])??null;
       if(sql.startsWith("SELECT completed_sets FROM training_mode_exercises"))
         return db.progress.find(x=>x.date===args[0]&&x.name===args[1])??null;
       return null;
@@ -42,7 +44,8 @@ class FakeD1 {
         return {results:db.sets.filter(x=>x.exercise_name===args[1]&&db.sessions.some(s=>s.id===x.session_id&&s.date===args[0]))};
       if(sql.startsWith("SELECT exercise_name, finished"))
         return {results:db.progress.filter(x=>x.date===args[0])
-          .map(x=>({exercise_name:x.name,finished:x.finished,completed_sets:x.completed_sets}))};
+          .map(x=>({exercise_name:x.name,finished:x.finished,completed_sets:x.completed_sets,
+            configured_sets:x.configured_sets}))};
       return {results:[]};
     },
     async run() {
@@ -62,9 +65,13 @@ class FakeD1 {
       }
       if(sql.startsWith("INSERT INTO training_mode_exercises")) {
         let state=db.progress.find(x=>x.date===args[0]&&x.name===args[1]);
-        if(!state)db.progress.push(state={date:args[0],name:args[1],finished:0,completed_sets:0});
+        if(!state)db.progress.push(state={date:args[0],name:args[1],finished:0,
+          completed_sets:0,configured_sets:args[2]??null});
         if(sql.includes("VALUES(?,?,1,0)"))state.finished=1;
-        else {state.completed_sets=Math.min(12,state.completed_sets+1);state.finished=0;}
+        else {
+          state.completed_sets=Math.min(12,state.completed_sets+1);state.finished=0;
+          if(state.configured_sets==null && args[2]!=null)state.configured_sets=args[2];
+        }
       }
       if(sql.startsWith("UPDATE training_mode_exercises SET finished=1")) {
         const state=db.progress.find(x=>x.date===args[0]&&x.name===args[1]);
@@ -211,4 +218,49 @@ test("historical completed sets remain complete, and the next guided set is 4",a
   assert.equal((await request(db,"/api/training-mode/set","PUT",
     {...base,set_number:4,expected_completed_sets:3,weight_kg:42.5,reps:8})).status,200);
   assert.deepEqual(db.sets.map(x=>x.set_number),[1,2,3,4]);
+});
+
+test("first guided set preserves legacy manual record target of two sets",async()=>{
+  const db=new FakeD1();
+  db.sessions.push({id:"record-only",date});
+  db.sets.push(
+    {id:1,session_id:"record-only",exercise_name:"チェストプレス",set_number:1,
+      weight_kg:35,reps:10,entry_unit:"kg_reps",is_completed:0},
+    {id:2,session_id:"record-only",exercise_name:"チェストプレス",set_number:2,
+      weight_kg:35,reps:10,entry_unit:"kg_reps",is_completed:0}
+  );
+  const result=await request(db,"/api/training-mode/set","PUT",
+    {...base,set_number:1,replace_set_id:1,expected_completed_sets:0,weight_kg:35,reps:10});
+  assert.equal(result.status,200);
+  assert.equal(db.progress[0].configured_sets,2);
+  const day=await request(db,"/api/training-mode/day?date="+date);
+  assert.equal(day.body.progress[0].configured_sets,2);
+  assert.deepEqual(day.body.sets.map(x=>x.is_completed),[1,0]);
+});
+
+test("first mode-only set does not replace scheduled three-set target",async()=>{
+  const db=new FakeD1();
+  const result=await request(db,"/api/training-mode/set","PUT",
+    {...base,set_number:1,expected_completed_sets:0,weight_kg:35,reps:10});
+  assert.equal(result.status,200);
+  assert.equal(db.progress[0].configured_sets,null);
+  const day=await request(db,"/api/training-mode/day?date="+date);
+  assert.equal(day.body.progress[0].configured_sets,null);
+});
+
+test("legacy progress row with extra unchecked record rows keeps the record target",async()=>{
+  const db=new FakeD1();
+  db.sessions.push({id:"manual-with-progress",date});
+  db.sets.push(
+    {id:1,session_id:"manual-with-progress",exercise_name:"チェストプレス",
+      set_number:1,weight_kg:35,reps:10,is_completed:1},
+    {id:2,session_id:"manual-with-progress",exercise_name:"チェストプレス",
+      set_number:2,weight_kg:35,reps:10,is_completed:0}
+  );
+  db.progress.push({date,name:"チェストプレス",finished:0,completed_sets:1,configured_sets:null});
+  const result=await request(db,"/api/training-mode/set","PUT",
+    {...base,set_number:2,replace_set_id:2,expected_completed_sets:1,weight_kg:35,reps:8});
+  assert.equal(result.status,200);
+  assert.equal(db.progress[0].configured_sets,2);
+  assert.equal(db.sets.length,2);
 });

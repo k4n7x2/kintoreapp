@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {resolvePreviousSet,initialTrainingSetValues,visibleTrainingSets,completedTrainingSets,nextTrainingSetNumber} from "../public/training-mode.js";
+import {resolvePreviousSet,initialTrainingSetValues,visibleTrainingSets,completedTrainingSets,nextTrainingSetNumber,resolveTrainingTargetSets} from "../public/training-mode.js";
 
 test("exact previous set wins, including same unit filter",()=>{
   const rows=[{set_number:1,entry_unit:"kg_reps",weight_kg:40,reps:10},
@@ -98,4 +98,25 @@ test("set completion uses checked flags, including gaps and historic sets",()=>{
   assert.equal(nextTrainingSetNumber(item),4);
   assert.equal(completedTrainingSets({sets:[]}),0);
   assert.equal(nextTrainingSetNumber({sets:Array.from({length:12},(_,i)=>({set_number:i+1,is_completed:1}))}),13);
+});
+
+test("record-editor set count overrides template and remains stable after guided saves",()=>{
+  const manual=[{set_number:1,is_completed:0},{set_number:2,is_completed:0}];
+  assert.equal(resolveTrainingTargetSets(3,manual,2,false),2);
+  assert.equal(resolveTrainingTargetSets(3,manual,2,true),2);
+  assert.equal(resolveTrainingTargetSets(3,manual,null,false),2); // existing record-only day
+  assert.equal(resolveTrainingTargetSets(3,manual,null,true),2); // old manual unchecked rows
+  assert.equal(resolveTrainingTargetSets(2,manual,4,true),4); // record changed to 4
+  assert.equal(resolveTrainingTargetSets(3,[],null,false),3); // no saved record: weekly plan
+  assert.equal(resolveTrainingTargetSets(3,[{set_number:1,is_completed:1}],null,true),3);
+  assert.equal(resolveTrainingTargetSets(3,[
+    {set_number:1,is_completed:1},{set_number:2,is_completed:0}],null,true),2);
+  assert.equal(resolveTrainingTargetSets(2,[{set_number:1,is_completed:1},
+    {set_number:2,is_completed:1},{set_number:3,is_completed:1}],null,true),3);
+});
+
+test("target display uses record-set override rather than inflating to completed count",()=>{
+  const js=readFileSync(new URL("../public/training-mode.js",import.meta.url),"utf8");
+  assert.match(js,/item\.targetSets=resolveTrainingTargetSets\(/);
+  assert.match(js,/\$\{modeCount\} \/ \$\{item\.targetSets\} セット/);
 });

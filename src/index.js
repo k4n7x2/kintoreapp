@@ -409,6 +409,14 @@ export default {
             ).bind(body.performed_on, body.exercise_name, body.exercise_name).first();
             const id = existing?.id ?? crypto.randomUUID();
             const isActive = await isTrainingExerciseActive(env.DB,body.performed_on,body.exercise_name);
+            // The record editor owns the explicitly configured set count for this date/exercise.
+            // Keep it separate from completion count and recurring menu targets.
+            const saveSetTarget=env.DB.prepare(
+              "INSERT INTO training_mode_exercises " +
+              "(performed_on,exercise_name,finished,completed_sets,configured_sets) " +
+              "VALUES(?,?,0,0,?) ON CONFLICT(performed_on,exercise_name) DO UPDATE SET " +
+              "configured_sets=excluded.configured_sets,updated_at=CURRENT_TIMESTAMP"
+            ).bind(body.performed_on,body.exercise_name,body.sets.length);
             if (existing) {
               const original=await env.DB.prepare(
                 "SELECT id,set_number,is_completed FROM workout_sets WHERE session_id=? " +
@@ -442,14 +450,16 @@ export default {
                 ...(completionChanged ? [env.DB.prepare(
                   "UPDATE training_mode_exercises SET finished=0,updated_at=CURRENT_TIMESTAMP " +
                   "WHERE performed_on=? AND exercise_name=?"
-                ).bind(body.performed_on,body.exercise_name)] : [])
+                ).bind(body.performed_on,body.exercise_name)] : []),
+                saveSetTarget
               ]);
             } else {
               if (isActive) return respond({error:"training_mode_active_conflict"},409);
               await env.DB.batch([
                 env.DB.prepare("INSERT INTO workout_sessions(id, performed_on, note) VALUES(?, ?, ?)")
                   .bind(id, body.performed_on, body.note),
-                ...body.sets.map(set => insertSet(env.DB, id, set))
+                ...body.sets.map(set => insertSet(env.DB, id, set)),
+                saveSetTarget
               ]);
             }
             return respond({ id, performed_on: body.performed_on, exercise_name: body.exercise_name,

@@ -39,7 +39,8 @@ async function readDay(db, date) {
       "FROM workout_sets ws JOIN workout_sessions s ON s.id=ws.session_id " +
       "WHERE s.performed_on=? ORDER BY s.updated_at DESC, s.created_at DESC, ws.id DESC LIMIT 500")
       .bind(date).all(),
-    db.prepare("SELECT exercise_name, finished, completed_sets FROM training_mode_exercises WHERE performed_on=?")
+    db.prepare("SELECT exercise_name, finished, completed_sets, configured_sets " +
+      "FROM training_mode_exercises WHERE performed_on=?")
       .bind(date).all()
   ]);
   return { date, sets: sets.results ?? [], progress: states.results ?? [],
@@ -113,6 +114,21 @@ export async function handleTrainingModeAPI(db, url, request, method,
       return respond({error:"set_number_conflict"},409);
     if (!occupied && replaceSetId !== null)
       return respond({error:"training_record_changed"},409);
+    // Preserve an old record-only day's set count before the first guided
+    // save creates the mode progress row; otherwise re-opening would fall back
+    // to the weekly target even though the record editor had fewer rows.
+    const existingModeState=await db.prepare(
+      "SELECT configured_sets,completed_sets FROM training_mode_exercises " +
+      "WHERE performed_on=? AND exercise_name=?"
+    ).bind(date,name).first();
+    const recordedNumbers=(recorded.results||[]).map(row=>Number(row.set_number))
+      .filter(number=>Number.isInteger(number)&&number>=1&&number<=12);
+    const hasPreparedRows=(recorded.results||[])
+      .some(row=>Number(row.is_completed)===0);
+    const canInferTarget=!existingModeState ||
+      (existingModeState.configured_sets==null && hasPreparedRows);
+    const inferredRecordTarget=canInferTarget && recordedNumbers.length
+      ? Math.max(...recordedNumbers) : null;
     const id = exclusive?.id ?? crypto.randomUUID();
     const writes = [];
     if (exclusive) {
@@ -134,10 +150,13 @@ export async function handleTrainingModeAPI(db, url, request, method,
       ).bind(id,name,number,weight,reps,unit,seconds));
     }
     writes.push(db.prepare(
-      "INSERT INTO training_mode_exercises(performed_on,exercise_name,finished,completed_sets) VALUES(?,?,0,1) " +
+      "INSERT INTO training_mode_exercises" +
+      "(performed_on,exercise_name,finished,completed_sets,configured_sets) VALUES(?,?,0,1,?) " +
       "ON CONFLICT(performed_on,exercise_name) DO UPDATE SET " +
-      "finished=0,completed_sets=MIN(12,completed_sets+1),updated_at=CURRENT_TIMESTAMP"
-    ).bind(date,name));
+      "finished=0,completed_sets=MIN(12,completed_sets+1)," +
+      "configured_sets=COALESCE(training_mode_exercises.configured_sets,excluded.configured_sets)," +
+      "updated_at=CURRENT_TIMESTAMP"
+    ).bind(date,name,inferredRecordTarget));
     await db.batch(writes);
     return respond({saved:true, set_number:number, exercise_name:name,
       replaced_existing:!!occupied});
