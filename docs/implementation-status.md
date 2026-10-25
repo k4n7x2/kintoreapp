@@ -1,3 +1,10 @@
+## 2026-10-25 Androidホーム画面ショートカットのアイコン指定
+
+- 既存の正方形SD栞（`public/assets/shiori/gim/v1/shiori-gim-sd-training-test-r1.webp`、1254×1254px）を加工せず、`public/manifest.webmanifest` のアイコンに指定。ホーム画面での名称は `kintoreapp`、開始URLは `/`、`standalone` 表示を希望する設定。
+- `public/index.html` に manifest と WebP favicon の参照を追加。ログインUI、認証・API、筋トレ実績・DB・既存画像には変更なし。オフラインキャッシュ用のService Workerは追加しない。
+- `tests/web-app-manifest.test.js` で設定値、参照、実画像のWebPサイズを検証。Android Chrome実機でのホーム画面への追加・起動、Cloudflare Workers Buildsの公開結果は別途確認。
+- 現在のアイコンは元画像（1254px）1種類のみ。Chromiumのインストール適格性を完全に満たす192px・512px専用アイコンは未制作であり、インストール導線は機種・ブラウザによって異なる。専用画像の制作・リサイズは今回の範囲外。
+
 ## 2026-10-25 アプリ起動時のジムWi-Fi来館自動登録
 
 - 開始main：`841dba4a04ceb735cb5356e7a844a35ece9c1208`。ログイン直後／アプリ前面復帰時に、認証済み `POST /api/gym-presence/check-in` を送る。サーバーが有効なWi-Fi在席状態を確認し、サーバー時計でJST当日の来館フラグだけを記録する。
